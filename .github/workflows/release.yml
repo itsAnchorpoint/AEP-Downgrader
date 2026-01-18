@@ -57,6 +57,17 @@ jobs:
     - name: Prepare Linux distribution
       if: runner.os == 'Linux'
       run: |
+        mkdir -p "AEP-Downgrader-Linux"
+        cp dist/AEP-Downgrader "AEP-Downgrader-Linux/"
+        echo "AEP Downgrader - Linux Portable Version" > "AEP-Downgrader-Linux/README.txt"
+        echo "" >> "AEP-Downgrader-Linux/README.txt"
+        echo "To run the application:" >> "AEP-Downgrader-Linux/README.txt"
+        echo "./AEP-Downgrader" >> "AEP-Downgrader-Linux/README.txt"
+
+        # Create ZIP archive
+        zip -r "AEP-Downgrader-Linux.zip" "AEP-Downgrader-Linux/"
+
+        # Also attempt to create AppImage with icon (optional)
         # Install linuxdeploy
         wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
         chmod +x linuxdeploy-x86_64.AppImage
@@ -89,11 +100,13 @@ EOF
         # Create symlink for AppRun
         ln -sf usr/bin/AEP-Downgrader AEP-Downgrader.AppDir/AppRun
 
-        # Create AppImage
-        ./linuxdeploy-x86_64.AppImage --appdir AEP-Downgrader.AppDir --executable AEP-Downgrader.AppDir/usr/bin/AEP-Downgrader --icon-file=AEP-Downgrader.AppDir/usr/share/icons/hicolor/512x512/apps/io.github.itsanchorpoint.AEPDowngrader.png --desktop-file=AEP-Downgrader.AppDir/AEP-Downgrader.desktop -o appimage
+        # Create AppImage (this might fail, but that's OK)
+        ./linuxdeploy-x86_64.AppImage --appdir AEP-Downgrader.AppDir --executable AEP-Downgrader.AppDir/usr/bin/AEP-Downgrader --icon-file=AEP-Downgrader.AppDir/usr/share/icons/hicolor/512x512/apps/io.github.itsanchorpoint.AEPDowngrader.png --desktop-file=AEP-Downgrader.AppDir/AEP-Downgrader.desktop -o appimage || echo "AppImage creation failed, but that's OK"
 
-        # Rename and prepare for upload
-        mv *.AppImage "AEP-Downgrader-Linux.AppImage"
+        # If AppImage was created, rename it
+        if [ -f "AEP-Downgrader.AppImage" ]; then
+          mv AEP-Downgrader.AppImage "AEP-Downgrader-Linux.AppImage"
+        fi
 
     - name: Prepare macOS distribution
       if: runner.os == 'macOS'
