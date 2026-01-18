@@ -133,9 +133,3 @@ Thumbs.db
 *.autosave
 *.backup
 
-# Large binary files (examples)
-*.aep
-
-# Exclude the example AEP files from git but keep the directory
-examples/dev_aeps/*
-!examples/dev_aeps/.gitkeep
