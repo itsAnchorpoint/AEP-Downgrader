@@ -1,95 +1,83 @@
-# AEP Downgrader
+<div align="center">
+  <h1>AEP Downgrader</h1>
+  <p><strong>Convert Adobe After Effects projects from newer to older versions</strong></p>
+  
+  [![License](https://img.shields.io/github/license/itsAnchorpoint/AEP-Downgrader)](LICENSE)
+  [![Release](https://img.shields.io/github/v/release/itsAnchorpoint/AEP-Downgrader)](https://github.com/itsAnchorpoint/AEP-Downgrader/releases)
+  [![Stars](https://img.shields.io/github/stars/itsAnchorpoint/AEP-Downgrader.svg)](https://github.com/itsAnchorpoint/AEP-Downgrader/stargazers)
+  [![Forks](https://img.shields.io/github/forks/itsAnchorpoint/AEP-Downgrader.svg)](https://github.com/itsAnchorpoint/AEP-Downgrader/network/members)
+  
+  ![AEP Downgrader Screenshot](assets/icon.png)
+</div>
 
-**AEP Downgrader** is a modern utility with a graphical interface for downgrading Adobe After Effects project files from newer versions to older ones.
+---
 
-## Features
+## 📋 Table of Contents
+- [About](#about)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Supported Versions](#supported-versions)
+- [Building from Source](#building-from-source)
+- [Creating Releases](#creating-releases)
+- [Contributing](#contributing)
+- [Icon Requirements](#icon-requirements)
+- [License](#license)
 
-- 🎨 **Modern GUI** with dark theme
-- 🔧 **Precise conversion** at the binary header level
-- 📊 **Supports conversion** from AE 25.x to AE 24.x and AE 23.x
-- 🧪 **Based on analysis** of real .aep files from different versions
+## 💡 About
 
-## How it Works
+AEP Downgrader is a powerful utility that enables Adobe After Effects users to convert project files from newer versions to older ones. This tool addresses a common challenge in collaborative workflows where team members use different versions of After Effects.
 
-The program analyzes specific bytes in .aep file headers that differ between AE versions:
-- In AE 25.x: bytes in head chunk have values [0x60, 0x01, 0x0f, 0x08, 0x86, 0x44] at positions [1, 3, 4, 5, 6, 7]
-- In AE 24.x: bytes in head chunk have values [0x5f, 0x05, 0x0f, 0x02, 0x86, 0x34] at positions [1, 3, 4, 5, 6, 7]
-- In AE 23.x: bytes in head chunk have values [0x5e, 0x09, 0x0b, 0x3b, 0x06, 0x37] at positions [1, 3, 4, 5, 6, 7]
+The application features a modern, dark-themed graphical user interface built with PyQt5, providing an intuitive experience for converting AEP files between different After Effects versions.
 
-The program modifies these bytes to bring the file to the format of an older version.
+## ✨ Features
 
-## Installation and Launch
+- **Modern UI**: Sleek dark-themed interface with intuitive controls
+- **Multi-Version Support**: Convert between multiple After Effects versions (23.x, 24.x, 25.x)
+- **Batch Processing**: Convert multiple files at once
+- **Automatic Detection**: Automatically detects the source version of AEP files
+- **Cross-Platform**: Works on Windows, macOS, and Linux
+- **Portable Executables**: Standalone executables with no installation required
+- **Version Selection**: Choose target version via checkboxes
+- **Progress Tracking**: Visual progress bar for conversion operations
 
-### Requirements
+## 🚀 Installation
 
-- Python 3.7+
-- PyQt5
+### Pre-built Binaries (Recommended)
 
-### Installing Dependencies
+Download the latest release from the [Releases page](https://github.com/itsAnchorpoint/AEP-Downgrader/releases):
+
+- **Windows**: Download `AEP-Downgrader-Windows.zip` and extract
+- **macOS**: Download `AEP-Downgrader-macOS.zip` and extract
+- **Linux**: Download `AEP-Downgrader-Linux.zip` and extract
+
+### From Source
 
 ```bash
-pip install PyQt5
+git clone https://github.com/itsAnchorpoint/AEP-Downgrader.git
+cd AEP-Downgrader
+./build_app.sh
 ```
 
-### Launching the Application
+## 🛠️ Usage
 
-```bash
-python src/AEPdowngrader.py
-```
+1. Launch the AEP Downgrader application
+2. Select one or multiple AEP files to convert
+3. The application will automatically detect the source version
+4. Select the target version(s) using the checkboxes
+5. Click "Convert" to start the conversion process
+6. Converted files will be saved in the same directory with version indicators in the filename
 
-## Usage
+## 🔧 Supported Versions
 
-1. Launch the application
-2. Select an input .aep file (version 25.x, 24.x, or 23.x)
-3. The application will automatically detect the file version
-4. Select target versions for conversion (only lower versions are available)
-5. Click "Convert File"
-6. Wait for the process to complete
+Currently supports conversion between:
+- Adobe After Effects 25.x → 24.x
+- Adobe After Effects 25.x → 23.x
+- Adobe After Effects 24.x → 23.x
 
-## Supported Conversions
+More version combinations can be added as needed.
 
-- AE 25.x → AE 24.x (fully compatible)
-- AE 25.x → AE 23.x (fully compatible)
-- AE 24.x → AE 23.x (fully compatible)
-
-## Examples
-
-Example files are located in the `examples/` directory:
-- `examples/dev_aeps/TEST22.x.aep` - AE 22.x project (for reference)
-- `examples/dev_aeps/TEST23.x.aep` - AE 23.x project (for reference)
-- `examples/dev_aeps/TEST24.x.aep` - AE 24.x project (for reference)
-- `examples/dev_aeps/TEST25.x.aep` - AE 25.x project (for reference)
-
-These example files were used during development to analyze differences between AE versions and validate the conversion process.
-
-## Project Structure
-
-```
-├── src/                 # Application source code
-│   └── AEPdowngrader.py # Main application file
-├── examples/           # Example files for testing
-│   └── dev_aeps/       # .aep files from different versions
-├── assets/             # Assets (icons, images)
-├── docs/               # Documentation
-├── README.md          # Documentation
-└── setup.py           # Package installation file
-```
-
-## Acknowledgments
-
-This project is partially based on research conducted in the [aep-parser](https://github.com/uwe-mayer/aep-parser) repository, which provided valuable insights into .aep file structure.
-
-## Cross-Platform Distribution
-
-AEP Downgrader is available as a portable application for multiple platforms:
-
-- **Windows**: Portable ZIP archive with executable
-- **macOS**: DMG disk image with .app bundle
-- **Linux**: AppImage or portable ZIP with executable
-
-The application is built using PyInstaller to create standalone executables that bundle all necessary dependencies.
-
-### Building from Source
+## 🏗️ Building from Source
 
 To build the application yourself:
 
@@ -104,7 +92,7 @@ Platform-specific build instructions are available in:
 - BUILD_MACOS.md
 - DISTRIBUTION.md
 
-### Creating Releases
+## 📦 Creating Releases
 
 To create a new release with cross-platform binaries:
 
@@ -116,11 +104,11 @@ To create a new release with cross-platform binaries:
 
 The release will include binaries for Windows, macOS, and Linux that users can download directly from the Releases page.
 
-## Contributing
+## 🤝 Contributing
 
 Feel free to submit issues and pull requests. For major changes, please open an issue first to discuss what you would like to change.
 
-## Icon Requirements
+## 🎨 Icon Requirements
 
 The application supports custom icons. To add an icon:
 
@@ -131,6 +119,6 @@ The application supports custom icons. To add an icon:
 
 For Windows distribution, you may also create an ICO file with multiple resolutions combined into a single file (`assets/icon.ico`).
 
-## License
+## 📄 License
 
 MIT
