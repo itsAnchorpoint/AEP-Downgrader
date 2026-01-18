@@ -1,78 +1,82 @@
 # AEP Downgrader
 
-**AEP Downgrader** — это современная утилита с графическим интерфейсом для понижения версии проектов Adobe After Effects с более новых версий до более старых.
+**AEP Downgrader** is a modern utility with a graphical interface for downgrading Adobe After Effects project files from newer versions to older ones.
 
-## Особенности
+## Features
 
-- 🎨 **Современный GUI** с тёмной темой
-- 🔧 **Точное преобразование** на уровне бинарных заголовков
-- 📊 **Поддержка преобразования** из AE 25.x в AE 24.x
-- 🧪 **Основана на анализе** реальных .aep файлов разных версий
+- 🎨 **Modern GUI** with dark theme
+- 🔧 **Precise conversion** at the binary header level
+- 📊 **Supports conversion** from AE 25.x to AE 24.x
+- 🧪 **Based on analysis** of real .aep files from different versions
 
-## Как работает
+## How it Works
 
-Программа анализирует специфические байты в заголовках .aep файлов, которые отличаются между версиями AE:
-- В AE 25.x: байты в head chunk имеют значения [0x60, 0x01, 0x0f, 0x08, 0x86, 0x44] в позициях [1, 3, 4, 5, 6, 7]
-- В AE 24.x: байты в head chunk имеют значения [0x5f, 0x05, 0x0f, 0x02, 0x86, 0x34] в позициях [1, 3, 4, 5, 6, 7]
+The program analyzes specific bytes in .aep file headers that differ between AE versions:
+- In AE 25.x: bytes in head chunk have values [0x60, 0x01, 0x0f, 0x08, 0x86, 0x44] at positions [1, 3, 4, 5, 6, 7]
+- In AE 24.x: bytes in head chunk have values [0x5f, 0x05, 0x0f, 0x02, 0x86, 0x34] at positions [1, 3, 4, 5, 6, 7]
 
-Программа изменяет эти байты, чтобы привести файл к формату более старой версии.
+The program modifies these bytes to bring the file to the format of an older version.
 
-## Установка и запуск
+## Installation and Launch
 
-### Требования
+### Requirements
 
 - Python 3.7+
 - PyQt5
 
-### Установка зависимостей
+### Installing Dependencies
 
 ```bash
 pip install PyQt5
 ```
 
-### Запуск приложения
+### Launching the Application
 
 ```bash
 python src/AEPdowngrader.py
 ```
 
-## Использование
+## Usage
 
-1. Запустите приложение
-2. Выберите входной .aep файл (версия 25.x)
-3. Укажите путь для выходного файла
-4. Нажмите "Convert File"
-5. Дождитесь завершения процесса
+1. Launch the application
+2. Select an input .aep file (version 25.x)
+3. Specify the output file path
+4. Click "Convert File"
+5. Wait for the process to complete
 
-## Поддерживаемые преобразования
+## Supported Conversions
 
-- AE 25.x → AE 24.x (полностью совместимо)
-- AE 25.x → AE 23.x (полностью совместимо)
-- AE 24.x → AE 23.x (полностью совместимо)
+- AE 25.x → AE 24.x (fully compatible)
+- AE 25.x → AE 23.x (fully compatible)
+- AE 24.x → AE 23.x (fully compatible)
 
-## Примеры
+## Examples
 
-Примеры файлов находятся в директории `examples/`:
-- `examples/main.aep` - AE 25.x (исходная версия)
-- `examples/TEST.aep` - AE 24.x (целевая версия)
-- `examples/TESTcopy.aep` - AE 22.x
+Example files are located in the `examples/` directory:
+- `examples/dev_aeps/TEST22.x.aep` - AE 22.x project (for reference)
+- `examples/dev_aeps/TEST23.x.aep` - AE 23.x project (for reference)
+- `examples/dev_aeps/TEST24.x.aep` - AE 24.x project (for reference)
+- `examples/dev_aeps/TEST25.x.aep` - AE 25.x project (for reference)
 
-## Структура проекта
+These example files were used during development to analyze differences between AE versions and validate the conversion process.
+
+## Project Structure
 
 ```
-├── src/                 # Исходный код приложения
-│   └── AEPdowngrader.py # Главный файл приложения
-├── examples/           # Примеры файлов для тестирования
-│   └── dev_aeps/       # .aep файлы разных версий
-├── assets/             # Ассеты (иконки, изображения)
-├── README.md          # Документация
-└── setup.py           # Файл установки пакета
+├── src/                 # Application source code
+│   └── AEPdowngrader.py # Main application file
+├── examples/           # Example files for testing
+│   └── dev_aeps/       # .aep files from different versions
+├── assets/             # Assets (icons, images)
+├── docs/               # Documentation
+├── README.md          # Documentation
+└── setup.py           # Package installation file
 ```
 
-## Благодарности
+## Acknowledgments
 
-Этот проект частично основан на исследованиях, проведенных в репозитории [aep-parser](https://github.com/uwe-mayer/aep-parser), который предоставил ценные сведения о структуре .aep файлов.
+This project is partially based on research conducted in the [aep-parser](https://github.com/uwe-mayer/aep-parser) repository, which provided valuable insights into .aep file structure.
 
-## Лицензия
+## License
 
 MIT
