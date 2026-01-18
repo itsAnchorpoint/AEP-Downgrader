@@ -79,6 +79,31 @@ These example files were used during development to analyze differences between 
 
 This project is partially based on research conducted in the [aep-parser](https://github.com/uwe-mayer/aep-parser) repository, which provided valuable insights into .aep file structure.
 
+## Cross-Platform Distribution
+
+AEP Downgrader is available as a portable application for multiple platforms:
+
+- **Windows**: Portable ZIP archive with executable
+- **macOS**: DMG disk image with .app bundle
+- **Linux**: AppImage or portable ZIP with executable
+
+The application is built using PyInstaller to create standalone executables that bundle all necessary dependencies.
+
+### Building from Source
+
+To build the application yourself:
+
+1. Clone the repository
+2. Create a virtual environment: `python -m venv venv`
+3. Activate it: `source venv/bin/activate` (Linux/macOS) or `venv\Scripts\activate` (Windows)
+4. Install dependencies: `pip install pyinstaller PyQt5`
+5. Build: `pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader`
+
+Platform-specific build instructions are available in:
+- BUILD_WINDOWS.md
+- BUILD_MACOS.md
+- DISTRIBUTION.md
+
 ## License
 
 MIT
