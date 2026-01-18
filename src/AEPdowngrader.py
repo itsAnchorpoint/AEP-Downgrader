@@ -208,7 +208,28 @@ class AEPDowngraderGUI(QMainWindow):
         self.init_ui()
         self.setup_connections()
         self.worker = None
-    
+
+    def get_resource_path(self, relative_path):
+        """Get absolute path to resource, works for dev and for PyInstaller"""
+        try:
+            # PyInstaller creates a temp folder and stores path in _MEIPASS
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = os.path.abspath(".")
+
+        # For PyInstaller bundled app, resources are in the executable's directory
+        bundled_path = os.path.join(base_path, relative_path)
+        if os.path.exists(bundled_path):
+            return bundled_path
+
+        # For development, look in the project structure
+        dev_path = os.path.join(os.path.dirname(__file__), '..', relative_path)
+        if os.path.exists(dev_path):
+            return dev_path
+
+        # Return the original path if nothing else works
+        return relative_path
+
     def init_ui(self):
         """Initialize the user interface"""
         self.setWindowTitle("AEP Downgrader")
@@ -216,7 +237,7 @@ class AEPDowngraderGUI(QMainWindow):
         self.setMinimumSize(800, 600)
 
         # Set window icon
-        icon_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'icon.png')
+        icon_path = self.get_resource_path('assets/icon.png')
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
 

@@ -20,7 +20,7 @@ pip install pyinstaller PyQt5
 if [ -f "assets/icon.png" ]; then
     echo "Building with icon..."
     # Build the application with icon
-    pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader --icon=assets/icon.png --add-data "assets/icon.png;assets"
+    pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader --icon=assets/icon.png --add-data "assets:assets"
 else
     echo "Building without icon..."
     # Build the application without icon
