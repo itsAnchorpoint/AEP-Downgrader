@@ -70,7 +70,7 @@ jobs:
         echo "Double-click AEP-Downgrader.app" >> "AEP-Downgrader-macOS/README.txt"
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: AEP-Downgrader-${{ runner.os }}
         path: |
