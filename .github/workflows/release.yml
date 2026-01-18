@@ -5,41 +5,23 @@ on:
     tags:
       - 'v*'  # Создает релиз при пуше тега в формате v1.0, v2.1.0 и т.д.
 
-jobs:
-  create-release:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write  # Необходимо для создания релизов
-    
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-    
-    steps:
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
+permissions:
+  contents: write
 
+jobs:
   build-and-upload:
-    needs: create-release
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: [3.9]
-    
+
     runs-on: ${{ matrix.os }}
-    
+
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -96,35 +78,12 @@ jobs:
         # Create ZIP archive
         ditto -c -k --keepParent "AEP-Downgrader-macOS" "AEP-Downgrader-macOS.zip"
 
-    - name: Upload Release Asset (Windows)
-      if: runner.os == 'Windows'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload Release Assets
+      uses: svenstaro/upload-release-action@v2
       with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./AEP-Downgrader-Windows.zip
-        asset_name: AEP-Downgrader-Windows.zip
-        asset_content_type: application/zip
-
-    - name: Upload Release Asset (Linux)
-      if: runner.os == 'Linux'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./AEP-Downgrader-Linux.zip
-        asset_name: AEP-Downgrader-Linux.zip
-        asset_content_type: application/zip
-
-    - name: Upload Release Asset (macOS)
-      if: runner.os == 'macOS'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./AEP-Downgrader-macOS.zip
-        asset_name: AEP-Downgrader-macOS.zip
-        asset_content_type: application/zip
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: AEP-Downgrader-*.zip
+        file_glob: true
+        tag: ${{ github.ref }}
+        overwrite: true
+        draft: false
