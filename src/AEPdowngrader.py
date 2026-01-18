@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QComboBox, QFileDialog, QTextEdit,
     QProgressBar, QGroupBox, QFormLayout, QMessageBox, QFrame,
-    QLineEdit, QCheckBox
+    QLineEdit, QCheckBox, QSizePolicy
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QSize
 from PyQt5.QtGui import QFont, QColor, QPalette, QIcon
@@ -212,8 +212,8 @@ class AEPDowngraderGUI(QMainWindow):
     def init_ui(self):
         """Initialize the user interface"""
         self.setWindowTitle("AEP Downgrader")
-        self.setGeometry(100, 100, 800, 600)
-        self.setMinimumSize(700, 500)
+        self.setGeometry(100, 100, 900, 700)
+        self.setMinimumSize(800, 600)
         
         # Apply dark theme
         self.apply_dark_theme()
@@ -242,30 +242,57 @@ class AEPDowngraderGUI(QMainWindow):
         # Input/Output section
         io_group = QGroupBox("File Selection")
         io_group.setStyleSheet(self.get_groupbox_style())
-        io_layout = QFormLayout(io_group)
-        
+        io_layout = QVBoxLayout(io_group)
+
         # Input file selection
+        input_label = QLabel("Input File(s):")
+        input_label.setStyleSheet(f"color: {ModernDarkTheme.TEXT}; font-weight: bold;")
+        io_layout.addWidget(input_label)
+
         input_layout = QHBoxLayout()
+        input_layout.setSpacing(5)  # Reduce spacing between line edit and button
         self.input_line_edit = QLineEdit()
-        self.input_line_edit.setPlaceholderText("Select input .aep file...")
+        self.input_line_edit.setPlaceholderText("Select input .aep file(s)... (multiple files supported)")
         self.input_line_edit.setStyleSheet(self.get_line_edit_style())
+        self.input_line_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.input_line_edit.setMinimumHeight(37)
+        self.input_line_edit.setMaximumHeight(37)
         self.input_browse_btn = QPushButton("Browse")
-        self.input_browse_btn.setStyleSheet(self.get_button_style())
+        self.input_browse_btn.setStyleSheet(self.get_compact_button_style())
+        self.input_browse_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.input_browse_btn.setFixedWidth(90)
+        self.input_browse_btn.setFixedHeight(37)
+        self.input_browse_btn.setMaximumHeight(37)
+        self.input_browse_btn.setMinimumHeight(37)
         input_layout.addWidget(self.input_line_edit)
         input_layout.addWidget(self.input_browse_btn)
-        
+        input_layout.setAlignment(Qt.AlignVCenter)  # Align items vertically centered
+        io_layout.addLayout(input_layout)
+
         # Output file selection
+        output_label = QLabel("Output Directory:")
+        output_label.setStyleSheet(f"color: {ModernDarkTheme.TEXT}; font-weight: bold;")
+        io_layout.addWidget(output_label)
+
         output_layout = QHBoxLayout()
+        output_layout.setSpacing(5)  # Reduce spacing between line edit and button
         self.output_line_edit = QLineEdit()
-        self.output_line_edit.setPlaceholderText("Specify output .aep file...")
+        self.output_line_edit.setPlaceholderText("Save near original file (default) or specify location...")
         self.output_line_edit.setStyleSheet(self.get_line_edit_style())
+        self.output_line_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.output_line_edit.setMinimumHeight(37)
+        self.output_line_edit.setMaximumHeight(37)
         self.output_browse_btn = QPushButton("Browse")
-        self.output_browse_btn.setStyleSheet(self.get_button_style())
+        self.output_browse_btn.setStyleSheet(self.get_compact_button_style())
+        self.output_browse_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.output_browse_btn.setFixedWidth(90)
+        self.output_browse_btn.setFixedHeight(37)
+        self.output_browse_btn.setMaximumHeight(37)
+        self.output_browse_btn.setMinimumHeight(37)
         output_layout.addWidget(self.output_line_edit)
         output_layout.addWidget(self.output_browse_btn)
-        
-        io_layout.addRow("Input File:", input_layout)
-        io_layout.addRow("Output File:", output_layout)
+        output_layout.setAlignment(Qt.AlignVCenter)  # Align items vertically centered
+        io_layout.addLayout(output_layout)
         
         # Conversion options
         options_group = QGroupBox("Conversion Options")
@@ -301,14 +328,15 @@ class AEPDowngraderGUI(QMainWindow):
         progress_group = QGroupBox("Progress & Log")
         progress_group.setStyleSheet(self.get_groupbox_style())
         progress_layout = QVBoxLayout(progress_group)
-        
+
         self.progress_bar = QProgressBar()
         self.progress_bar.setStyleSheet(self.get_progress_bar_style())
+        self.progress_bar.setMaximumHeight(25)  # Limit the height of progress bar
         self.log_text_edit = QTextEdit()
         self.log_text_edit.setMaximumHeight(200)
         self.log_text_edit.setStyleSheet(self.get_text_edit_style())
         self.log_text_edit.setReadOnly(True)
-        
+
         progress_layout.addWidget(self.progress_bar)
         progress_layout.addWidget(self.log_text_edit)
         
@@ -325,7 +353,7 @@ class AEPDowngraderGUI(QMainWindow):
     
     def setup_connections(self):
         """Setup signal connections"""
-        self.input_browse_btn.clicked.connect(self.browse_input_file)
+        self.input_browse_btn.clicked.connect(self.browse_input_files)
         self.output_browse_btn.clicked.connect(self.browse_output_file)
         self.convert_btn.clicked.connect(self.start_conversion)
         self.cancel_btn.clicked.connect(self.cancel_conversion)
@@ -486,6 +514,31 @@ class AEPDowngraderGUI(QMainWindow):
                 border: 1px solid #333333;
             }}
         """
+
+    def get_compact_button_style(self):
+        """Get stylesheet for compact buttons"""
+        return f"""
+            QPushButton {{
+                background-color: {ModernDarkTheme.PANEL};
+                border: 1px solid {ModernDarkTheme.BORDER};
+                border-radius: 4px;
+                padding: 6px 2px;  /* Reduced horizontal padding to align with input fields */
+                color: {ModernDarkTheme.TEXT};
+                min-height: 37px;
+                max-height: 37px;
+            }}
+            QPushButton:hover {{
+                background-color: #3e3e42;
+            }}
+            QPushButton:pressed {{
+                background-color: #2a2a2d;
+            }}
+            QPushButton:disabled {{
+                background-color: #2a2a2d;
+                color: #666666;
+                border: 1px solid #333333;
+            }}
+        """
     
     def get_primary_button_style(self):
         """Get stylesheet for primary action buttons"""
@@ -541,7 +594,7 @@ class AEPDowngraderGUI(QMainWindow):
         """
     
     def browse_input_file(self):
-        """Open file dialog to select input file"""
+        """Open file dialog to select input file (single file)"""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Select Input AEP File", "", "AEP Files (*.aep);;All Files (*)"
         )
@@ -550,16 +603,77 @@ class AEPDowngraderGUI(QMainWindow):
 
             # Detect version of the loaded file
             detected_version_str, detected_version_num = self.detect_ae_version(file_path)
-            self.detected_version_label.setText(f"Detected version: {detected_version_str}")
+            detected_version_parts = detected_version_str.split()
+            detected_version_only = detected_version_parts[0] if detected_version_parts else "Unknown"
+            self.detected_version_label.setText(f"Detected versions: {detected_version_only}")
 
             # Update checkbox states based on detected version
             self.update_version_checkboxes(detected_version_num)
 
-            # Auto-populate output if not set
+            # Auto-populate output directory if not set
             if not self.output_line_edit.text():
                 path = Path(file_path)
-                output_path = path.parent / f"{path.stem}_downgraded.aep"
-                self.output_line_edit.setText(str(output_path))
+                output_dir = path.parent
+                self.output_line_edit.setText(str(output_dir))
+                self.output_line_edit.setPlaceholderText(f"Save near original file ({output_dir})")
+
+    def browse_input_files(self):
+        """Open file dialog to select multiple input files"""
+        file_paths, _ = QFileDialog.getOpenFileNames(
+            self, "Select Input AEP Files", "", "AEP Files (*.aep);;All Files (*)"
+        )
+        if file_paths:
+            # Display count of selected files
+            self.input_line_edit.setText(f"{len(file_paths)} files selected: {', '.join([Path(fp).name for fp in file_paths[:3]])}{'...' if len(file_paths) > 3 else ''}")
+
+            # Store the actual file paths for processing
+            self.selected_input_files = file_paths
+
+            # Auto-detect versions from all files and update UI accordingly
+            if file_paths:
+                detected_versions = set()  # Use set to store unique versions
+                highest_version = 0
+                highest_version_file = file_paths[0]
+
+                for file_path in file_paths:
+                    detected_version_str, detected_version_num = self.detect_ae_version(file_path)
+                    if detected_version_num > 0:  # Valid version detected
+                        # Extract the full version string (e.g., "AE 24.x") instead of just the first word
+                        version_parts = detected_version_str.split()
+                        if len(version_parts) >= 2:
+                            detected_versions.add(f"{version_parts[0]} {version_parts[1]}")  # "AE 24.x"
+                        elif len(version_parts) >= 1:
+                            detected_versions.add(version_parts[0])
+                        if detected_version_num > highest_version:
+                            highest_version = detected_version_num
+                            highest_version_file = file_path
+
+                # Display detected versions
+                if detected_versions:
+                    # Extract version numbers and sort them in descending order
+                    def extract_version_number(version_str):
+                        # Extract the major version number from strings like "AE 24.x"
+                        try:
+                            # Split by space and take the second part ("24.x"), then split by dot and take first part ("24")
+                            return int(version_str.split()[1].split('.')[0])
+                        except (ValueError, IndexError):
+                            return 0
+
+                    sorted_versions = sorted(detected_versions, reverse=True, key=extract_version_number)
+                    versions_list = ', '.join(sorted_versions)
+                    self.detected_version_label.setText(f"Detected versions: {versions_list}")
+                else:
+                    self.detected_version_label.setText("Detected versions: Unknown")
+
+                # Update checkbox states based on the highest detected version
+                self.update_version_checkboxes(highest_version)
+
+                # Auto-populate output directory if not set
+                if not self.output_line_edit.text():
+                    first_path = Path(highest_version_file)
+                    output_dir = first_path.parent
+                    self.output_line_edit.setText(str(output_dir))
+                    self.output_line_edit.setPlaceholderText(f"Save near original files ({output_dir})")
 
     def update_version_checkboxes(self, detected_version):
         """Update checkbox states based on detected version"""
@@ -606,12 +720,12 @@ class AEPDowngraderGUI(QMainWindow):
             return f"Error: {str(e)}", 0
     
     def browse_output_file(self):
-        """Open file dialog to select output file"""
-        file_path, _ = QFileDialog.getSaveFileName(
-            self, "Select Output AEP File", "", "AEP Files (*.aep);;All Files (*)"
+        """Open file dialog to select output directory"""
+        directory = QFileDialog.getExistingDirectory(
+            self, "Select Output Directory", ""
         )
-        if file_path:
-            self.output_line_edit.setText(file_path)
+        if directory:
+            self.output_line_edit.setText(directory)
     
     def start_conversion(self):
         """Start the conversion process"""
@@ -621,16 +735,23 @@ class AEPDowngraderGUI(QMainWindow):
             QMessageBox.warning(self, "Warning", "Please select an input file")
             return
 
-        if not os.path.exists(input_path):
-            QMessageBox.critical(self, "Error", f"Input file does not exist: {input_path}")
-            return
+        # Determine if we're dealing with multiple files
+        if hasattr(self, 'selected_input_files') and self.selected_input_files:
+            input_files = self.selected_input_files
+        else:
+            # Single file mode
+            if not os.path.exists(input_path):
+                QMessageBox.critical(self, "Error", f"Input file does not exist: {input_path}")
+                return
 
-        # Check if input is an .aep file
-        if not input_path.lower().endswith('.aep'):
-            QMessageBox.critical(self, "Error", "Input file must be an .aep file")
-            return
+            # Check if input is an .aep file
+            if not input_path.lower().endswith('.aep'):
+                QMessageBox.critical(self, "Error", "Input file must be an .aep file")
+                return
 
-        # Get selected target versions (only from enabled checkboxes)
+            input_files = [input_path]
+
+        # Get selected target versions
         target_versions = []
         if self.target_24_checkbox.isEnabled() and self.target_24_checkbox.isChecked():
             target_versions.append("AE 24.x")
@@ -651,31 +772,58 @@ class AEPDowngraderGUI(QMainWindow):
         self.progress_bar.setValue(0)
         self.log_text_edit.clear()
 
-        # Create and start worker threads for each target version
-        input_path_obj = Path(input_path)
+        # Create and start worker threads for each file and target version combination
         self.active_workers = []  # Track active workers
 
-        for target_version in target_versions:
-            # Generate output filename based on input name and target version
-            version_suffix = target_version.replace(".", "").replace(" ", "")  # "AE 24x"
-            output_filename = f"{input_path_obj.stem}_{version_suffix}.aep"
-            output_path = input_path_obj.parent / output_filename
+        # Get output directory
+        output_text = self.output_line_edit.text().strip()
+        if output_text:
+            output_dir = Path(output_text)
+            if not output_dir.exists() or not output_dir.is_dir():
+                QMessageBox.critical(self, "Error", f"Output directory does not exist: {output_dir}")
+                self.reset_ui()
+                return
+        else:
+            # If no output directory specified, use the directory of the first input file
+            first_input_dir = Path(input_files[0]).parent
+            output_dir = first_input_dir
 
-            # Create worker for this conversion
-            worker = DowngradeWorker(str(input_path), str(output_path), target_version)
-            worker.progress_signal.connect(self.update_log)
-            worker.finished_signal.connect(self.single_conversion_finished)
-            self.active_workers.append(worker)
+        # Create workers for each file and each target version
+        for input_file in input_files:
+            input_path_obj = Path(input_file)
+
+            # Determine output directory for this specific file
+            if output_text:  # If user specified an output directory
+                current_output_dir = output_dir
+            else:  # Use the directory of the input file
+                current_output_dir = input_path_obj.parent
+
+            for target_version in target_versions:
+                # Generate output filename based on input name and target version
+                version_suffix = target_version.replace(".", "").replace(" ", "")  # "AE 24x"
+                output_filename = f"{input_path_obj.stem}_{version_suffix}.aep"
+                output_path = current_output_dir / output_filename
+
+                # Create worker for this conversion
+                worker = DowngradeWorker(str(input_file), str(output_path), target_version)
+                worker.progress_signal.connect(self.update_log)
+                worker.finished_signal.connect(self.single_conversion_finished)
+                self.active_workers.append(worker)
 
         # Start all workers
         self.total_workers = len(self.active_workers)
         self.completed_workers = 0
         self.successful_conversions = 0
 
+        if self.total_workers == 0:
+            QMessageBox.warning(self, "Warning", "No conversions to perform")
+            self.reset_ui()
+            return
+
         for worker in self.active_workers:
             worker.start()
 
-        self.update_log(f"Started {self.total_workers} conversion(s)")
+        self.update_log(f"Started {self.total_workers} conversion(s) for {len(input_files)} file(s)")
 
     def single_conversion_finished(self, success, message):
         """Handle completion of a single conversion"""
