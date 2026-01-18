@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=AEP Downgrader
+Exec=AEP-Downgrader
+Icon=application-x-executable
+Type=Application
+Categories=Graphics;
+Comment=Convert Adobe After Effects projects from newer to older versions
+Terminal=false
