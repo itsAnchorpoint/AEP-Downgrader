@@ -104,6 +104,18 @@ Platform-specific build instructions are available in:
 - BUILD_MACOS.md
 - DISTRIBUTION.md
 
+### Creating Releases
+
+To create a new release with cross-platform binaries:
+
+1. Update the version in relevant files
+2. Commit and push your changes
+3. Create a new tag: `git tag v1.2.3`
+4. Push the tag: `git push origin v1.2.3`
+5. GitHub Actions will automatically build and create a release with binaries for all platforms
+
+The release will include binaries for Windows, macOS, and Linux that users can download directly from the Releases page.
+
 ## License
 
 MIT
