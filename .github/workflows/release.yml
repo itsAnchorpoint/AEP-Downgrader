@@ -9,7 +9,24 @@ permissions:
   contents: write
 
 jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
   build-and-upload:
+    needs: create-release
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -124,42 +141,46 @@ EOF
       run: |
         ls -la AEP-Downgrader-*.*
 
-    - name: Upload Release Assets
-      uses: svenstaro/upload-release-action@v2
+    - name: Upload Release Assets (Windows)
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: AEP-Downgrader-Windows.zip
-        tag: ${{ github.ref }}
-        overwrite: true
-        draft: false
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./AEP-Downgrader-Windows.zip
+        asset_name: AEP-Downgrader-Windows.zip
+        asset_content_type: application/zip
       if: runner.os == 'Windows'
 
     - name: Upload Release Assets (Linux ZIP)
-      uses: svenstaro/upload-release-action@v2
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: AEP-Downgrader-Linux.zip
-        tag: ${{ github.ref }}
-        overwrite: true
-        draft: false
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./AEP-Downgrader-Linux.zip
+        asset_name: AEP-Downgrader-Linux.zip
+        asset_content_type: application/zip
       if: runner.os == 'Linux'
 
     - name: Upload Release Assets (Linux AppImage)
-      uses: svenstaro/upload-release-action@v2
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: AEP-Downgrader-Linux.AppImage
-        tag: ${{ github.ref }}
-        overwrite: true
-        draft: false
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./AEP-Downgrader-Linux.AppImage
+        asset_name: AEP-Downgrader-Linux.AppImage
+        asset_content_type: application/octet-stream
       if: runner.os == 'Linux' && hashFiles('AEP-Downgrader-Linux.AppImage') != ''
 
     - name: Upload Release Assets (macOS)
-      uses: svenstaro/upload-release-action@v2
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: AEP-Downgrader-macOS.zip
-        tag: ${{ github.ref }}
-        overwrite: true
-        draft: false
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./AEP-Downgrader-macOS.zip
+        asset_name: AEP-Downgrader-macOS.zip
+        asset_content_type: application/zip
       if: runner.os == 'macOS'
