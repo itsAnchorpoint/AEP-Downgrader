@@ -133,3 +133,24 @@ Thumbs.db
 *.autosave
 *.backup
 
+# AppImage related
+*.AppImage
+*.AppDir/
+appimagetool*
+
+# Distribution packages
+dist_packages/
+
+# Build outputs
+build/
+dist/
+
+# PyInstaller spec file
+*.spec
+
+# Scripts that shouldn't be committed
+create_*.sh
+
+# Virtual environments
+venv/
+.env
