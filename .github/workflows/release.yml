@@ -120,12 +120,46 @@ EOF
         # Create ZIP archive
         ditto -c -k --keepParent "AEP-Downgrader-macOS" "AEP-Downgrader-macOS.zip"
 
+    - name: List files for upload
+      run: |
+        ls -la AEP-Downgrader-*.*
+
     - name: Upload Release Assets
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: AEP-Downgrader-*.*
-        file_glob: true
+        file: AEP-Downgrader-Windows.zip
         tag: ${{ github.ref }}
         overwrite: true
         draft: false
+      if: runner.os == 'Windows'
+
+    - name: Upload Release Assets (Linux ZIP)
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: AEP-Downgrader-Linux.zip
+        tag: ${{ github.ref }}
+        overwrite: true
+        draft: false
+      if: runner.os == 'Linux'
+
+    - name: Upload Release Assets (Linux AppImage)
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: AEP-Downgrader-Linux.AppImage
+        tag: ${{ github.ref }}
+        overwrite: true
+        draft: false
+      if: runner.os == 'Linux' && hashFiles('AEP-Downgrader-Linux.AppImage') != ''
+
+    - name: Upload Release Assets (macOS)
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: AEP-Downgrader-macOS.zip
+        tag: ${{ github.ref }}
+        overwrite: true
+        draft: false
+      if: runner.os == 'macOS'
