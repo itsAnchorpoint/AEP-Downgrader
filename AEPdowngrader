@@ -1,0 +1,20 @@
+#!/bin/bash
+# AEP Downgrader launcher script
+
+# Change to the script's directory
+cd "$(dirname "$0")"
+
+# Check if Python is available
+if ! command -v python3 &> /dev/null; then
+    echo "Python3 is not installed. Please install Python3 first."
+    exit 1
+fi
+
+# Check if PyQt5 is installed
+if ! python3 -c "import PyQt5" &> /dev/null; then
+    echo "PyQt5 is not installed. Installing..."
+    pip3 install PyQt5
+fi
+
+# Launch the application
+python3 src/AEPdowngrader.py
