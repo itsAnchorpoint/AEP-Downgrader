@@ -214,7 +214,12 @@ class AEPDowngraderGUI(QMainWindow):
         self.setWindowTitle("AEP Downgrader")
         self.setGeometry(100, 100, 900, 700)
         self.setMinimumSize(800, 600)
-        
+
+        # Set window icon
+        icon_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'icon.png')
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
+
         # Apply dark theme
         self.apply_dark_theme()
         

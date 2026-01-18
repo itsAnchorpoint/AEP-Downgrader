@@ -1,67 +1,30 @@
 #!/bin/bash
-# build_app.sh - Script to build cross-platform distributions for AEP Downgrader
+# build_app.sh - Script to build AEP Downgrader executable
 
 set -e  # Exit on any error
 
-echo "Building AEP Downgrader cross-platform distributions..."
+echo "Building AEP Downgrader executable..."
 
-# Create dist directory
-mkdir -p dist
-
-# Build for current platform using PyInstaller
-echo "Building executable for current platform..."
-pyinstaller AEP-Downgrader.spec --clean
-
-# Determine platform and create appropriate distribution
-PLATFORM=$(uname -s)
-
-if [[ "$PLATFORM" == "Linux" ]]; then
-    echo "Creating AppImage for Linux..."
-    
-    # Install linuxdeploy if not present
-    if ! command -v linuxdeploy &> /dev/null; then
-        echo "Installing linuxdeploy..."
-        wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-        chmod +x linuxdeploy-x86_64.AppImage
-        sudo mv linuxdeploy-x86_64.AppImage /usr/local/bin/linuxdeploy
-    fi
-    
-    # Create AppDir
-    mkdir -p AEP-Downgrader.AppDir
-    cp -r dist/AEP-Downgrader/* AEP-Downgrader.AppDir/
-    
-    # Create desktop file
-    cat > AEP-Downgrader.AppDir/AEP-Downgrader.desktop << EOF
-[Desktop Entry]
-Name=AEP Downgrader
-Exec=AEP-Downgrader
-Icon=application-x-executable
-Type=Application
-Categories=Graphics;
-Comment=Convert Adobe After Effects projects from newer to older versions
-EOF
-    
-    # Create AppImage
-    linuxdeploy --appdir AEP-Downgrader.AppDir --executable AEP-Downgrader.AppDir/AEP-Downgrader --output appimage
-    mv *.AppImage dist/AEP-Downgrader-Linux.AppImage
-    
-elif [[ "$PLATFORM" == "Darwin" ]]; then
-    echo "Creating DMG for macOS..."
-    
-    # Create DMG using hdiutil (macOS utility)
-    cd dist
-    ln -s /Applications ./Applications_link
-    hdiutil create -volname "AEP-Downgrader" -srcfolder "AEP-Downgrader.app" -ov -format UDZO "AEP-Downgrader-macOS.dmg" || true
-    rm Applications_link
-    cd ..
-    
-else
-    echo "Creating ZIP archive for Windows..."
-    
-    # Create ZIP for Windows portable version
-    cd dist
-    zip -r ../dist/AEP-Downgrader-Windows.zip AEP-Downgrader/
-    cd ..
+# Create virtual environment if it doesn't exist
+if [ ! -d "venv" ]; then
+    python3 -m venv venv
 fi
 
-echo "Build completed! Check the dist/ directory for your distribution files."
+# Activate virtual environment
+source venv/bin/activate
+
+# Install dependencies
+pip install pyinstaller PyQt5
+
+# Check if icon exists and build accordingly
+if [ -f "assets/icon.png" ]; then
+    echo "Building with icon..."
+    # Build the application with icon
+    pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader --icon=assets/icon.png --add-data "assets/icon.png;assets"
+else
+    echo "Building without icon..."
+    # Build the application without icon
+    pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader
+fi
+
+echo "Build completed. The executable is located at dist/AEP-Downgrader"

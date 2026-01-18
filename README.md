@@ -116,6 +116,21 @@ To create a new release with cross-platform binaries:
 
 The release will include binaries for Windows, macOS, and Linux that users can download directly from the Releases page.
 
+## Contributing
+
+Feel free to submit issues and pull requests. For major changes, please open an issue first to discuss what you would like to change.
+
+## Icon Requirements
+
+The application supports custom icons. To add an icon:
+
+1. Create an icon in PNG format with transparency
+2. Recommended sizes: 256x256, 512x512, or 1024x1024 pixels (higher resolution icons will be downscaled as needed)
+3. Save the icon as `assets/icon.png` in the project root
+4. The application will automatically load and use this icon
+
+For Windows distribution, you may also create an ICO file with multiple resolutions combined into a single file (`assets/icon.ico`).
+
 ## License
 
 MIT
