@@ -45,9 +45,9 @@ jobs:
         # Create portable Windows package
         mkdir "AEP-Downgrader-Windows"
         copy "dist\AEP-Downgrader.exe" "AEP-Downgrader-Windows\"
-        echo AEP Downgrader - Windows Portable Version > "AEP-Downgrader-Windows\README.txt"
-        echo. >> "AEP-Downgrader-Windows\README.txt"
-        echo To run the application, double-click AEP-Downgrader.exe >> "AEP-Downgrader-Windows\README.txt"
+        echo "AEP Downgrader - Windows Portable Version" > "AEP-Downgrader-Windows\README.txt"
+        Add-Content "AEP-Downgrader-Windows\README.txt" ""
+        echo "To run the application, double-click AEP-Downgrader.exe" >> "AEP-Downgrader-Windows\README.txt"
         
     - name: Create distribution package (Linux)
       if: runner.os == 'Linux'
