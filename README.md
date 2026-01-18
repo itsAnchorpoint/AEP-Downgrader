@@ -6,7 +6,7 @@
 
 - 🎨 **Modern GUI** with dark theme
 - 🔧 **Precise conversion** at the binary header level
-- 📊 **Supports conversion** from AE 25.x to AE 24.x
+- 📊 **Supports conversion** from AE 25.x to AE 24.x and AE 23.x
 - 🧪 **Based on analysis** of real .aep files from different versions
 
 ## How it Works
@@ -14,6 +14,7 @@
 The program analyzes specific bytes in .aep file headers that differ between AE versions:
 - In AE 25.x: bytes in head chunk have values [0x60, 0x01, 0x0f, 0x08, 0x86, 0x44] at positions [1, 3, 4, 5, 6, 7]
 - In AE 24.x: bytes in head chunk have values [0x5f, 0x05, 0x0f, 0x02, 0x86, 0x34] at positions [1, 3, 4, 5, 6, 7]
+- In AE 23.x: bytes in head chunk have values [0x5e, 0x09, 0x0b, 0x3b, 0x06, 0x37] at positions [1, 3, 4, 5, 6, 7]
 
 The program modifies these bytes to bring the file to the format of an older version.
 
@@ -39,10 +40,11 @@ python src/AEPdowngrader.py
 ## Usage
 
 1. Launch the application
-2. Select an input .aep file (version 25.x)
-3. Specify the output file path
-4. Click "Convert File"
-5. Wait for the process to complete
+2. Select an input .aep file (version 25.x, 24.x, or 23.x)
+3. The application will automatically detect the file version
+4. Select target versions for conversion (only lower versions are available)
+5. Click "Convert File"
+6. Wait for the process to complete
 
 ## Supported Conversions
 
