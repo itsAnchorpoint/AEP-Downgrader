@@ -7,7 +7,7 @@
   [![Stars](https://img.shields.io/github/stars/itsAnchorpoint/AEP-Downgrader.svg)](https://github.com/itsAnchorpoint/AEP-Downgrader/stargazers)
   [![Forks](https://img.shields.io/github/forks/itsAnchorpoint/AEP-Downgrader.svg)](https://github.com/itsAnchorpoint/AEP-Downgrader/network/members)
   
-  ![AEP Downgrader Screenshot](assets/icon.png)
+  <!-- AEP Downgrader Icon -->
 </div>
 
 ---
