@@ -1,13 +1,13 @@
 <div align="center">
   <h1>AEP Downgrader</h1>
   <p><strong>Convert Adobe After Effects projects from newer to older versions</strong></p>
-  
+
   [![License](https://img.shields.io/github/license/itsAnchorpoint/AEP-Downgrader)](LICENSE)
   [![Release](https://img.shields.io/github/v/release/itsAnchorpoint/AEP-Downgrader)](https://github.com/itsAnchorpoint/AEP-Downgrader/releases)
   [![Stars](https://img.shields.io/github/stars/itsAnchorpoint/AEP-Downgrader.svg)](https://github.com/itsAnchorpoint/AEP-Downgrader/stargazers)
   [![Forks](https://img.shields.io/github/forks/itsAnchorpoint/AEP-Downgrader.svg)](https://github.com/itsAnchorpoint/AEP-Downgrader/network/members)
-  
-  <!-- AEP Downgrader Icon -->
+
+  <img src="assets/icon.png" alt="AEP Downgrader Logo" width="240" height="240">
 </div>
 
 ---
