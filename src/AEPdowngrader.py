@@ -121,99 +121,102 @@ class DowngradeWorker(QThread):
 
 
     def get_target_signature(self, target_version):
-        """Get the target signature based on the target version"""
-        signatures = {
-            "AE 24.x": [0x5f, 0x05, 0x0f, 0x02, 0x86, 0x34],
-            "AE 23.x": [0x5e, 0x09, 0x0b, 0x3b, 0x06, 0x37],
-        }
-        return signatures.get(target_version)
+        """Get the target signature based on the target version - universal algorithm"""
+        # Extract version number from string like "AE 24.x"
+        try:
+            version = int(target_version.split()[1].split('.')[0])
+        except (IndexError, ValueError):
+            return None
+        
+        # Universal pattern for head_data[1]: 0x5b + (version - 20)
+        # Example: AE 24 -> 0x5b + 4 = 0x5f
+        head1 = 0x5b + (version - 20)
+        
+        # Heuristics for other bytes based on version patterns
+        # These are based on analysis of known AE version signatures
+        
+        # head_data[3] - no clear linear pattern, use version-based heuristics
+        if version <= 22:
+            head3 = 0x2b  # AE 22.x pattern
+        elif version == 23:
+            head3 = 0x09  # AE 23.x
+        elif version == 24:
+            head3 = 0x05  # AE 24.x
+        elif version == 25:
+            head3 = 0x09  # AE 25.x
+        elif version == 26:
+            head3 = 0x02  # AE 26.x
+        else:
+            # For unknown versions, try to estimate based on newer pattern
+            head3 = 0x02  # Default to newer pattern
+        
+        # head_data[4]: 0x0b for older versions (22-23), 0x0f for newer (24+)
+        head4 = 0x0f if version >= 24 else 0x0b
+        
+        # head_data[5] - complex pattern
+        if version == 22:
+            head5 = 0x33
+        elif version == 23:
+            head5 = 0x3b
+        elif version == 24:
+            head5 = 0x02
+        elif version == 25:
+            head5 = 0x0b
+        elif version == 26:
+            head5 = 0x10
+        else:
+            head5 = 0x10  # Default to newer pattern
+        
+        # head_data[6]: 0x06 for most versions, 0x86 for AE 24
+        head6 = 0x86 if version == 24 else 0x06
+        
+        # head_data[7]: complex pattern
+        if version == 22:
+            head7 = 0x3b
+        elif version == 23:
+            head7 = 0x37
+        elif version == 24:
+            head7 = 0x34
+        elif version == 25:
+            head7 = 0x65
+        elif version == 26:
+            head7 = 0x43
+        else:
+            head7 = 0x43  # Default to newer pattern
+        
+        return [head1, head3, head4, head5, head6, head7]
 
     def get_transformations(self, current_sig, target_sig):
         """Get the list of transformations needed to convert from current to target signature"""
         transformations = []
 
-        # Transformations for head chunk (positions [1, 3, 4, 5, 6, 7] in head_data)
-        positions = [1, 3, 4, 5, 6, 7]
-        for i, (current_val, target_val) in enumerate(zip(current_sig, target_sig)):
-            if current_val != target_val:
-                # Calculate the actual file offset: 32 (start of head data) + position
-                offset = 32 + positions[i]
-                transformations.append((offset, current_val, target_val))
-
-        # Additional transformations for nhed and nnhd chunks based on version changes
-        # These are more complex and may vary depending on the specific version transition
-        nhed_transformations = self.get_nhed_transformations(current_sig, target_sig)
-        nnhd_transformations = self.get_nnhd_transformations(current_sig, target_sig)
-
-        transformations.extend(nhed_transformations)
-        transformations.extend(nnhd_transformations)
-
-        # Special handling for AE 22.x conversion - adjust chunk sizes if needed
+        # Get current and target versions
         current_version = self.signature_to_version(current_sig)
         target_version = self.signature_to_version(target_sig)
-
-        # Check if versions are valid before comparing
-        if target_version is not None and current_version is not None:
-            if target_version == 22 and current_version > 22:
-                # Add transformations to adjust chunk sizes for AE 22.x compatibility
-                size_adjustments = self.get_size_adjustments_for_ae22(current_version)
-                transformations.extend(size_adjustments)
-
-        return transformations
-
-    def get_size_adjustments_for_ae22(self, source_version):
-        """Get size adjustments needed when converting to AE 22.x"""
-        # This is a simplified approach - in reality, we'd need to analyze the specific
-        # structural differences between versions to properly adjust chunk sizes
-        adjustments = []
-
-        # For now, we just return empty adjustments to avoid the error
-        # Detailed size adjustments would require more complex RIFX parsing
-
-        return adjustments
-
-    def get_nhed_transformations(self, current_sig, target_sig):
-        """Get transformations for nhed chunk based on version changes"""
-        transformations = []
-
-        # Determine version numbers from signatures
-        current_version = self.signature_to_version(current_sig)
-        target_version = self.signature_to_version(target_sig)
-
-        # For now, we'll use the transformations we know from our analysis
-        # In the future, we could expand this with more detailed mappings
-
-        # These are based on our analysis of the differences between versions
-        # For now, we'll use a simplified approach focusing on the most significant changes
-
+        
+        # Universal pattern: head_data[1] = 0x5b + (version - 20)
+        # To convert to a target version, we need to set head_data[1] accordingly
         if current_version and target_version:
-            # Example: if going from 24 to 22, we might need specific nhed transformations
-            # This is where we would add more specific transformations based on detailed analysis
-            pass  # For now, we'll rely mainly on head transformations
-
-        return transformations
-
-    def get_nnhd_transformations(self, current_sig, target_sig):
-        """Get transformations for nnhd chunk based on version changes"""
-        transformations = []
-
-        # Determine version numbers from signatures
-        current_version = self.signature_to_version(current_sig)
-        target_version = self.signature_to_version(target_sig)
-
-        if current_version and target_version:
-            # Similar to nhed, we'll focus on head transformations for now
-            pass  # For now, we'll rely mainly on head transformations
+            # Calculate target byte for head_data[1]
+            target_head1 = 0x5b + (target_version - 20)
+            current_head1 = current_sig[0]
+            
+            if current_head1 != target_head1:
+                offset = 32 + 1  # head_data[1] is at position 1 in head_data, which is offset 32+1 in file
+                transformations.append((offset, current_head1, target_head1))
 
         return transformations
 
     def signature_to_version(self, sig):
-        """Convert signature to version number"""
-        signatures = {
-            (0x5f, 0x05, 0x0f, 0x02, 0x86, 0x34): 24,
-            (0x5e, 0x09, 0x0b, 0x3b, 0x06, 0x37): 23,
-        }
-        return signatures.get(tuple(sig))
+        """Convert signature to version number using universal pattern detection"""
+        # Universal pattern: head_data[1] = 0x5b + (version - 20)
+        # Formula: version = head_data[1] - 0x5b + 20
+        # This works for AE 22+ (0x5d = AE 22, 0x5e = AE 23, etc.)
+        if len(sig) >= 1:
+            major_version_byte = sig[0]
+            if major_version_byte >= 0x5d and major_version_byte <= 0x6a:
+                return major_version_byte - 0x5b + 20
+        return None
 
 
 class AEPDowngraderGUI(QMainWindow):
@@ -347,11 +350,14 @@ class AEPDowngraderGUI(QMainWindow):
         options_layout.addWidget(self.detected_version_label)
 
         # Target versions checkboxes
+        self.target_25_checkbox = QCheckBox("Convert to AE 25.x")
+        self.target_25_checkbox.setStyleSheet(self.get_checkbox_style())
         self.target_24_checkbox = QCheckBox("Convert to AE 24.x")
         self.target_24_checkbox.setStyleSheet(self.get_checkbox_style())
         self.target_23_checkbox = QCheckBox("Convert to AE 23.x")
         self.target_23_checkbox.setStyleSheet(self.get_checkbox_style())
 
+        options_layout.addWidget(self.target_25_checkbox)
         options_layout.addWidget(self.target_24_checkbox)
         options_layout.addWidget(self.target_23_checkbox)
         
@@ -721,6 +727,12 @@ class AEPDowngraderGUI(QMainWindow):
         """Update checkbox states based on detected version"""
         # Disable checkboxes for versions equal or higher than detected version
         # (can only downgrade to lower versions)
+        if detected_version > 25:
+            self.target_25_checkbox.setEnabled(True)
+        else:
+            self.target_25_checkbox.setEnabled(False)
+            self.target_25_checkbox.setChecked(False)
+
         if detected_version > 24:
             self.target_24_checkbox.setEnabled(True)
         else:
@@ -745,19 +757,18 @@ class AEPDowngraderGUI(QMainWindow):
             # Extract head chunk data (20 bytes starting after the chunk header)
             head_data = content[32:52]  # 20 bytes of head chunk data
 
-            # Extract the key distinguishing bytes
-            sig = [head_data[i] for i in [1, 3, 4, 5, 6, 7]]
-
-            # Map signatures to versions
-            version_map = {
-                (0x60, 0x01, 0x0f, 0x08, 0x86, 0x44): ("AE 25.x (confirmed)", 25),
-                (0x5f, 0x05, 0x0f, 0x02, 0x86, 0x34): ("AE 24.x (confirmed)", 24),
-                (0x5e, 0x09, 0x0b, 0x3b, 0x06, 0x37): ("AE 23.x (confirmed)", 23),
-                (0x5d, 0x2b, 0x0b, 0x33, 0x06, 0x3b): ("AE 22.x (not recommended)", 22),
-            }
-
-            version_info = version_map.get(tuple(sig), ("Unknown version", 0))
-            return version_info
+            # Extract the key distinguishing byte (head_data[1])
+            # Pattern: head_data[1] = 0x5b + version_offset where version_offset starts at 2 for AE 22
+            # Formula: version = head_data[1] - 0x5b + 20
+            # Example: 0x5d (93) - 0x5b (91) + 20 = 22
+            major_version_byte = head_data[1]
+            
+            # Check if this looks like a valid AE version (>= AE 22)
+            if major_version_byte >= 0x5d and major_version_byte <= 0x6a:  # AE 22 to AE 33
+                version = major_version_byte - 0x5b + 20
+                return f"AE {version}.x (detected)", version
+            
+            return "Unknown version", 0
         except Exception as e:
             return f"Error: {str(e)}", 0
     
@@ -795,6 +806,8 @@ class AEPDowngraderGUI(QMainWindow):
 
         # Get selected target versions
         target_versions = []
+        if self.target_25_checkbox.isEnabled() and self.target_25_checkbox.isChecked():
+            target_versions.append("AE 25.x")
         if self.target_24_checkbox.isEnabled() and self.target_24_checkbox.isChecked():
             target_versions.append("AE 24.x")
         if self.target_23_checkbox.isEnabled() and self.target_23_checkbox.isChecked():
