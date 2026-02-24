@@ -12,18 +12,15 @@ jobs:
   create-release:
     runs-on: ubuntu-latest
     outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      upload_url: ${{ steps.create_release.outputs.url }}
     steps:
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
 
   build-windows:
     needs: create-release
@@ -32,9 +29,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
@@ -47,24 +44,17 @@ jobs:
 
       - name: Prepare Windows distribution
         run: |
-          # Create portable Windows package
           mkdir "AEP-Downgrader-Windows"
           copy "dist\AEP-Downgrader.exe" "AEP-Downgrader-Windows\"
           echo "AEP Downgrader - Windows Portable Version" > "AEP-Downgrader-Windows\README.txt"
-          Add-Content "AEP-Downgrader-Windows\README.txt" ""
-          echo "To run the application, double-click AEP-Downgrader.exe" >> "AEP-Downgrader-Windows\README.txt"
-          # Create ZIP archive
+          Add-Content -Path "AEP-Downgrader-Windows\README.txt" -Value ""
+          Add-Content -Path "AEP-Downgrader-Windows\README.txt" -Value "To run the application, double-click AEP-Downgrader.exe"
           Compress-Archive -Path "AEP-Downgrader-Windows" -DestinationPath "AEP-Downgrader-Windows.zip"
 
       - name: Upload Windows Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./AEP-Downgrader-Windows.zip
-          asset_name: AEP-Downgrader-Windows.zip
-          asset_content_type: application/zip
+          files: ./AEP-Downgrader-Windows.zip
 
   build-linux:
     needs: create-release
@@ -73,9 +63,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
@@ -92,20 +82,13 @@ jobs:
           cp dist/AEP-Downgrader "AEP-Downgrader-Linux/"
           echo "AEP Downgrader - Linux Portable Version" > "AEP-Downgrader-Linux/README.txt"
           echo "" >> "AEP-Downgrader-Linux/README.txt"
-          echo "To run the application:" >> "AEP-Downgrader-Linux/README.txt"
-          echo "./AEP-Downgrader" >> "AEP-Downgrader-Linux/README.txt"
-          # Create ZIP archive
-          zip -r "AEP-Downgrader-Linux.zip" "AEP-Downgrader-Linux/"
+          echo "To run the application, execute AEP-Downgrader" >> "AEP-Downgrader-Linux/README.txt"
+          tar -czvf "AEP-Downgrader-Linux.tar.gz" "AEP-Downgrader-Linux"
 
       - name: Upload Linux Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./AEP-Downgrader-Linux.zip
-          asset_name: AEP-Downgrader-Linux.zip
-          asset_content_type: application/zip
+          files: ./AEP-Downgrader-Linux.tar.gz
 
   build-macos:
     needs: create-release
@@ -114,9 +97,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
@@ -130,20 +113,13 @@ jobs:
       - name: Prepare macOS distribution
         run: |
           mkdir -p "AEP-Downgrader-macOS"
-          cp -r dist/AEP-Downgrader.app "AEP-Downgrader-macOS/"
+          cp dist/AEP-Downgrader "AEP-Downgrader-macOS/"
           echo "AEP Downgrader - macOS Portable Version" > "AEP-Downgrader-macOS/README.txt"
           echo "" >> "AEP-Downgrader-macOS/README.txt"
-          echo "To run the application:" >> "AEP-Downgrader-macOS/README.txt"
-          echo "Double-click AEP-Downgrader.app" >> "AEP-Downgrader-macOS/README.txt"
-          # Create ZIP archive
-          ditto -c -k --keepParent "AEP-Downgrader-macOS" "AEP-Downgrader-macOS.zip"
+          echo "To run the application, execute ./AEP-Downgrader" >> "AEP-Downgrader-macOS/README.txt"
+          tar -czvf "AEP-Downgrader-macOS.tar.gz" "AEP-Downgrader-macOS"
 
       - name: Upload macOS Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./AEP-Downgrader-macOS.zip
-          asset_name: AEP-Downgrader-macOS.zip
-          asset_content_type: application/zip
+          files: ./AEP-Downgrader-macOS.tar.gz
