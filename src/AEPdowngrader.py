@@ -23,6 +23,9 @@ import sys
 import os
 import shutil
 import struct
+import platform
+import traceback
+import urllib.parse
 from pathlib import Path
 
 from PyQt5.QtWidgets import (
@@ -747,29 +750,105 @@ class AEPDowngraderGUI(QMainWindow):
 
     def detect_ae_version(self, file_path):
         """Detect the AE version of an .aep file based on header analysis"""
+        # Debug logging for macOS issue diagnosis
+        debug_info = []
+        debug_info.append(f"=== detect_ae_version DEBUG ===")
+        debug_info.append(f"Platform: {platform.system()}")
+        debug_info.append(f"Original file_path: {repr(file_path)}")
+        debug_info.append(f"Type of file_path: {type(file_path)}")
+        
+        # Normalize file path for macOS (handles file:// URL format from QFileDialog)
+        normalized_path = None
         try:
-            with open(file_path, 'rb') as f:
+            path_str = file_path
+            if isinstance(file_path, str):
+                # Check for file:// URL format (macOS Qt sometimes returns this)
+                if file_path.startswith('file://'):
+                    parsed = urllib.parse.urlparse(file_path)
+                    path = parsed.path
+                    # If netloc is set (e.g., file://host/path), combine netloc + path
+                    # This handles cases like file://examples/file.aep -> netloc='examples', path='/file.aep'
+                    if parsed.netloc:
+                        path = parsed.netloc + path
+                    path_str = urllib.parse.unquote(path)
+                    debug_info.append(f"After URL decode: {repr(path_str)}")
+                
+                # Handle absolute vs relative paths
+                if os.path.isabs(path_str):
+                    normalized_path = Path(path_str)
+                else:
+                    normalized_path = Path(os.path.abspath(path_str)).resolve()
+            elif isinstance(file_path, Path):
+                normalized_path = file_path.resolve()
+            else:
+                normalized_path = Path(str(file_path)).resolve()
+            
+            debug_info.append(f"Normalized path: {repr(str(normalized_path))}")
+            debug_info.append(f"Path exists: {normalized_path.exists()}")
+            debug_info.append(f"Path is file: {normalized_path.is_file()}")
+        except Exception as e:
+            debug_info.append(f"Path normalization error: {type(e).__name__}: {str(e)}")
+        
+        try:
+            # Use normalized path if available, otherwise use original
+            path_to_open = str(normalized_path) if normalized_path else file_path
+            with open(path_to_open, 'rb') as f:
                 content = f.read()
 
+            debug_info.append(f"File size: {len(content)} bytes")
+            
             if len(content) < 52:
-                return "Unknown (file too small)", 0
+                debug_info.append("File too small (< 52 bytes)")
+                result = "Unknown (file too small)", 0
+            else:
+                # Show first 64 bytes in hex for debugging
+                hex_dump = ' '.join(f'{b:02x}' for b in content[:64])
+                debug_info.append(f"First 64 bytes (hex): {hex_dump}")
+                
+                # Check RIFX header (bytes 0-3)
+                rifx_header = content[:4]
+                debug_info.append(f"RIFX header (bytes 0-3): {rifx_header} = {' '.join(f'{b:02x}' for b in rifx_header)}")
+                
+                # Check Egg! chunk (bytes 8-11)
+                egg_marker = content[8:12]
+                debug_info.append(f"Egg! marker (bytes 8-11): {egg_marker} = {' '.join(f'{b:02x}' for b in egg_marker)}")
+                
+                # Extract head chunk data (20 bytes starting after the chunk header)
+                head_data = content[32:52]  # 20 bytes of head chunk data
+                debug_info.append(f"Head data (bytes 32-51): {' '.join(f'{b:02x}' for b in head_data)}")
 
-            # Extract head chunk data (20 bytes starting after the chunk header)
-            head_data = content[32:52]  # 20 bytes of head chunk data
-
-            # Extract the key distinguishing byte (head_data[1])
-            # Pattern: head_data[1] = 0x5b + version_offset where version_offset starts at 2 for AE 22
-            # Formula: version = head_data[1] - 0x5b + 20
-            # Example: 0x5d (93) - 0x5b (91) + 20 = 22
-            major_version_byte = head_data[1]
+                # Extract the key distinguishing byte (head_data[1])
+                # Pattern: head_data[1] = 0x5b + version_offset where version_offset starts at 2 for AE 22
+                # Formula: version = head_data[1] - 0x5b + 20
+                # Example: 0x5d (93) - 0x5b (91) + 20 = 22
+                major_version_byte = head_data[1]
+                debug_info.append(f"major_version_byte (head_data[1]): {major_version_byte} (0x{major_version_byte:02x})")
+                
+                # Check if this looks like a valid AE version (>= AE 22)
+                if major_version_byte >= 0x5d and major_version_byte <= 0x6a:  # AE 22 to AE 33
+                    version = major_version_byte - 0x5b + 20
+                    debug_info.append(f"Detected version: AE {version}.x")
+                    result = f"AE {version}.x (detected)", version
+                else:
+                    debug_info.append(f"Version byte not in valid range (0x5d-0x6a)")
+                    result = "Unknown version", 0
             
-            # Check if this looks like a valid AE version (>= AE 22)
-            if major_version_byte >= 0x5d and major_version_byte <= 0x6a:  # AE 22 to AE 33
-                version = major_version_byte - 0x5b + 20
-                return f"AE {version}.x (detected)", version
+            debug_info.append(f"=== END DEBUG ===")
             
-            return "Unknown version", 0
+            # Print debug info to console
+            for line in debug_info:
+                print(f"[DEBUG] {line}")
+            
+            return result
         except Exception as e:
+            debug_info.append(f"Exception: {type(e).__name__}: {str(e)}")
+            debug_info.append(f"Traceback: {traceback.format_exc()}")
+            debug_info.append(f"=== END DEBUG ===")
+            
+            # Print debug info to console
+            for line in debug_info:
+                print(f"[DEBUG] {line}")
+            
             return f"Error: {str(e)}", 0
     
     def browse_output_file(self):
