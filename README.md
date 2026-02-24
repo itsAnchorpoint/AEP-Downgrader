@@ -48,8 +48,8 @@ The application features a modern, dark-themed graphical user interface built wi
 Download the latest release from the [Releases page](https://github.com/itsAnchorpoint/AEP-Downgrader/releases):
 
 - **Windows**: Download `AEP-Downgrader-Windows.zip` and extract
-- **macOS**: Download `AEP-Downgrader-macOS.zip` and extract
-- **Linux**: Download `AEP-Downgrader-Linux.zip` and extract
+- **macOS**: Download `AEP-Downgrader-macOS.tar.gz` and extract
+- **Linux**: Download `AEP-Downgrader-Linux.tar.gz` and extract
 
 ### From Source
 
@@ -121,4 +121,4 @@ For Windows distribution, you may also create an ICO file with multiple resoluti
 
 ## 📄 License
 
-MIT
+GNU General Public License v3.0
