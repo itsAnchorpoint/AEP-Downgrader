@@ -4,152 +4,107 @@
 
   [![License](https://img.shields.io/github/license/itsAnchorpoint/AEP-Downgrader)](LICENSE)
   [![Release](https://img.shields.io/github/v/release/itsAnchorpoint/AEP-Downgrader)](https://github.com/itsAnchorpoint/AEP-Downgrader/releases)
-  [![Stars](https://img.shields.io/github/stars/itsAnchorpoint/AEP-Downgrader.svg)](https://github.com/itsAnchorpoint/AEP-Downgrader/stargazers)
-  [![Forks](https://img.shields.io/github/forks/itsAnchorpoint/AEP-Downgrader.svg)](https://github.com/itsAnchorpoint/AEP-Downgrader/network/members)
+  [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)](https://github.com/itsAnchorpoint/AEP-Downgrader/releases)
 
-  <img src="assets/icon.png" alt="AEP Downgrader Logo" width="240" height="240">
+  <img src="assets/icon.png" alt="AEP Downgrader Logo" width="200" height="200">
 </div>
 
 ---
 
-## 📋 Table of Contents
-- [About](#about)
-- [Features](#features)
-- [Debug Mode](#-debug-mode)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Supported Versions](#supported-versions)
-- [Building from Source](#building-from-source)
-- [Creating Releases](#creating-releases)
-- [Contributing](#contributing)
-- [Icon Requirements](#icon-requirements)
-- [License](#license)
+## About
 
-## 💡 About
+AEP Downgrader converts Adobe After Effects project files (.aep) from newer versions to older ones. Useful for team workflows where members use different AE versions.
 
-AEP Downgrader is a powerful utility that enables Adobe After Effects users to convert project files from newer versions to older ones. This tool addresses a common challenge in collaborative workflows where team members use different versions of After Effects.
+Features a modern dark-themed UI built with PyQt5.
 
-The application features a modern, dark-themed graphical user interface built with PyQt5, providing an intuitive experience for converting AEP files between different After Effects versions.
+## Supported Conversions
 
-## ✨ Features
+| From | To |
+|------|-----|
+| AE 26.x | 25.x, 24.x, 23.x |
+| AE 25.x | 24.x, 23.x |
+| AE 24.x | 23.x |
+| AE 23.x | 22.x |
 
-- **Modern UI**: Sleek dark-themed interface with intuitive controls
-- **Multi-Version Support**: Convert between multiple After Effects versions (23.x, 24.x, 25.x)
-- **Batch Processing**: Convert multiple files at once
-- **Automatic Detection**: Automatically detects the source version of AEP files
-- **Cross-Platform**: Works on Windows, macOS, and Linux
-- **Portable Executables**: Standalone executables with no installation required
-- **Version Selection**: Choose target version via checkboxes
-- **Progress Tracking**: Visual progress bar for conversion operations
-- **Debug Mode**: Built-in debugging tools for troubleshooting (see below)
+## Download
 
-## 🐛 Debug Mode
+Pre-built binaries available on the [Releases page](https://github.com/itsAnchorpoint/AEP-Downgrader/releases):
 
-AEP Downgrader includes a built-in debug mode with comprehensive logging and troubleshooting capabilities.
+- **Windows**: `AEP-Downgrader-Windows.zip` → extract and run `AEP-Downgrader.exe`
+- **macOS**: `AEP-Downgrader-macOS.dmg` → open and drag app to Applications
+- **Linux**: `AEP-Downgrader-Linux.tar.gz` → extract and run `./AEP-Downgrader`
 
-### Features
+## Usage
 
-- **Detailed Logging**: Records all conversion operations, file reads/writes, and system events
-- **Memory Monitoring**: Tracks memory usage during conversion
-- **CPU Tracking**: Monitors CPU usage
-- **File Operation Monitoring**: Logs all file system operations
-- **Full Report Generation**: Export detailed debug reports
+1. Launch the application
+2. Select one or more .aep files
+3. The app automatically detects the source version
+4. Select target version(s) using checkboxes
+5. Click "Convert"
+6. Converted files are saved in the same folder with version suffix (e.g., `project_AE24x.aep`)
 
-### How to Enable
+## Debug Mode
 
-1. Open the application
-2. Go to **Debug** menu (in the menu bar)
-3. Select **Enable Debug Mode** (or press `Ctrl+D`)
-4. The debug indicator will show "DEBUG ON"
+Built-in debug logging for troubleshooting:
 
-### Viewing Logs
+1. Menu: **Debug** → **Enable Debug Mode** (or press `Ctrl+D`)
+2. View logs: **Debug** → **View Debug Logs**
+3. Export report: **Debug** → **Export Debug Report**
 
-- View live logs: **Debug** → **View Debug Logs** (`Ctrl+L`)
-- Export report: **Debug** → **Export Debug Report** (`Ctrl+E`)
-- System info: **Debug** → **System Information**
+Debug mode is included in all builds - no additional installation required.
 
-> ⚠️ **Note**: Debug mode is now fully integrated with all dependencies included in the build. No additional installation required for end users.
+## Building from Source
 
----
+### Prerequisites
+- Python 3.9+
+- pip
 
-## 🚀 Installation
-
-### Pre-built Binaries (Recommended)
-
-Download the latest release from the [Releases page](https://github.com/itsAnchorpoint/AEP-Downgrader/releases):
-
-- **Windows**: Download `AEP-Downgrader-Windows.zip` and extract
-- **macOS**: Download `AEP-Downgrader-macOS.tar.gz` and extract
-- **Linux**: Download `AEP-Downgrader-Linux.tar.gz` and extract
-
-### From Source
+### Build
 
 ```bash
+# Clone and enter directory
 git clone https://github.com/itsAnchorpoint/AEP-Downgrader.git
 cd AEP-Downgrader
-./build_app.sh
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Linux/macOS
+# venv\Scripts\activate  # Windows
+
+# Install dependencies
+pip install pyinstaller PyQt5 psutil
+
+# Build
+pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader --add-data "assets:assets" --hidden-import=psutil --hidden-import=debug_logger --collect-all=PyQt5
 ```
 
-## 🛠️ Usage
+For detailed platform-specific instructions, see:
+- [BUILD_WINDOWS.md](BUILD_WINDOWS.md)
+- [BUILD_MACOS.md](BUILD_MACOS.md)
 
-1. Launch the AEP Downgrader application
-2. Select one or multiple AEP files to convert
-3. The application will automatically detect the source version
-4. Select the target version(s) using the checkboxes
-5. Click "Convert" to start the conversion process
-6. Converted files will be saved in the same directory with version indicators in the filename
+## Development
 
-## 🔧 Supported Versions
+### Running tests
+```bash
+# Activate venv first
+source venv/bin/activate
+python src/AEPdowngrader.py
+```
 
-Currently supports conversion between:
-- Adobe After Effects 25.x → 24.x
-- Adobe After Effects 25.x → 23.x
-- Adobe After Effects 24.x → 23.x
+### Creating a release
 
-More version combinations can be added as needed.
+```bash
+# Update version in src/AEPdowngrader.py (lines 896, 1549)
+# Update version in setup.py
 
-## 🏗️ Building from Source
+git commit -m "Release v1.2.0"
+git tag v1.2.0
+git push origin main
+git push origin v1.2.0
+```
 
-To build the application yourself:
+GitHub Actions automatically builds all platforms and creates the release.
 
-1. Clone the repository
-2. Create a virtual environment: `python -m venv venv`
-3. Activate it: `source venv/bin/activate` (Linux/macOS) or `venv\Scripts\activate` (Windows)
-4. Install dependencies: `pip install pyinstaller PyQt5 psutil`
-5. Build: `pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader`
+## License
 
-Platform-specific build instructions are available in:
-- BUILD_WINDOWS.md
-- BUILD_MACOS.md
-- DISTRIBUTION.md
-
-## 📦 Creating Releases
-
-To create a new release with cross-platform binaries:
-
-1. Update the version in relevant files
-2. Commit and push your changes
-3. Create a new tag: `git tag v1.2.3`
-4. Push the tag: `git push origin v1.2.3`
-5. GitHub Actions will automatically build and create a release with binaries for all platforms
-
-The release will include binaries for Windows, macOS, and Linux that users can download directly from the Releases page.
-
-## 🤝 Contributing
-
-Feel free to submit issues and pull requests. For major changes, please open an issue first to discuss what you would like to change.
-
-## 🎨 Icon Requirements
-
-The application supports custom icons. To add an icon:
-
-1. Create an icon in PNG format with transparency
-2. Recommended sizes: 256x256, 512x512, or 1024x1024 pixels (higher resolution icons will be downscaled as needed)
-3. Save the icon as `assets/icon.png` in the project root
-4. The application will automatically load and use this icon
-
-For Windows distribution, you may also create an ICO file with multiple resolutions combined into a single file (`assets/icon.ico`).
-
-## 📄 License
-
-GNU General Public License v3.0
+GNU General Public License v3.0 - see [LICENSE](LICENSE) for details.
