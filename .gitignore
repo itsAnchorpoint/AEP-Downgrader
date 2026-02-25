@@ -129,7 +129,7 @@ ehthumbs.db
 Thumbs.db
 
 # AEP backup and temporary files
-*.aep~
+*.aep
 *.autosave
 *.backup
 
@@ -161,3 +161,7 @@ create_*.sh
 # Virtual environments
 venv/
 .env
+
+#AI referencing and testing
+plans/
+examples/
