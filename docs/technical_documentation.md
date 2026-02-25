@@ -111,3 +111,4 @@ This project is partially based on research conducted in the [aep-parser](https:
 1. **Extended Support**: Ability to handle additional structural differences between versions
 2. **Integrity Checks**: Addition of checks to ensure correctness of converted files
 3. **Additional Version Support**: Expansion of support after further research
+4. **Integrated Debug Mode**: Full debug functionality will be included in the application (currently requires separate `psutil` dependency)

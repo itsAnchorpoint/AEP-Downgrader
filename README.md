@@ -15,6 +15,7 @@
 ## 📋 Table of Contents
 - [About](#about)
 - [Features](#features)
+- [Debug Mode](#-debug-mode)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Supported Versions](#supported-versions)
@@ -40,6 +41,38 @@ The application features a modern, dark-themed graphical user interface built wi
 - **Portable Executables**: Standalone executables with no installation required
 - **Version Selection**: Choose target version via checkboxes
 - **Progress Tracking**: Visual progress bar for conversion operations
+- **Debug Mode**: Built-in debugging tools for troubleshooting (see below)
+
+## 🐛 Debug Mode
+
+AEP Downgrader includes a built-in debug mode with comprehensive logging and troubleshooting capabilities.
+
+### Features
+
+- **Detailed Logging**: Records all conversion operations, file reads/writes, and system events
+- **Memory Monitoring**: Tracks memory usage during conversion
+- **CPU Tracking**: Monitors CPU usage
+- **File Operation Monitoring**: Logs all file system operations
+- **Full Report Generation**: Export detailed debug reports
+
+### How to Enable
+
+1. Open the application
+2. Go to **Debug** menu (in the menu bar)
+3. Select **Enable Debug Mode** (or press `Ctrl+D`)
+4. The debug indicator will show "DEBUG ON"
+
+### Viewing Logs
+
+- View live logs: **Debug** → **View Debug Logs** (`Ctrl+L`)
+- Export report: **Debug** → **Export Debug Report** (`Ctrl+E`)
+- System info: **Debug** → **System Information**
+
+> ⚠️ **Note**: The debug module requires `psutil` Python package. In the next version, it will be fully integrated with all dependencies included.
+>
+> For developers: `pip install psutil` to use debug features now.
+
+---
 
 ## 🚀 Installation
 
