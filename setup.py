@@ -32,6 +32,10 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/yourusername/ae-downgrader",
     packages=find_packages(),
+    install_requires=[
+        'PyQt5>=5.15.0',
+        'psutil>=5.9.0',
+    ],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
