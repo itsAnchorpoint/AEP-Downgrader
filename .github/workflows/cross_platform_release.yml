@@ -106,20 +106,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyinstaller PyQt5 psutil
 
-      - name: Build executable
+      - name: Build app bundle
         run: |
-          pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader --add-data "assets/icon.png:assets" --hidden-import=psutil --hidden-import=debug_logger --collect-all=PyQt5 --collect-all=debug_logger
+          pyinstaller src/AEPdowngrader.py --onedir --windowed --name AEP-Downgrader --add-data "assets/icon.png:assets" --hidden-import=psutil --hidden-import=debug_logger --collect-all=PyQt5 --collect-all=debug_logger
 
-      - name: Prepare macOS distribution
+      - name: Create DMG
         run: |
-          mkdir -p "AEP-Downgrader-macOS"
-          cp dist/AEP-Downgrader "AEP-Downgrader-macOS/"
-          echo "AEP Downgrader - macOS Portable Version" > "AEP-Downgrader-macOS/README.txt"
-          echo "" >> "AEP-Downgrader-macOS/README.txt"
-          echo "To run the application, execute ./AEP-Downgrader" >> "AEP-Downgrader-macOS/README.txt"
-          tar -czvf "AEP-Downgrader-macOS.tar.gz" "AEP-Downgrader-macOS"
+          hdiutil create -volname "AEP-Downgrader" -srcfolder "dist/AEP-Downgrader.app" -ov -format UDZO -o AEP-Downgrader-macOS.dmg
 
       - name: Upload macOS Release Asset
         uses: softprops/action-gh-release@v2
         with:
-          files: ./AEP-Downgrader-macOS.tar.gz
+          files: ./AEP-Downgrader-macOS.dmg

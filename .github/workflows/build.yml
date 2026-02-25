@@ -34,10 +34,16 @@ jobs:
         pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader --add-data "assets:assets" --hidden-import=psutil --hidden-import=debug_logger --collect-all=PyQt5 --collect-all=debug_logger
         dir dist
 
-    - name: Build executable (Linux/macOS)
-      if: runner.os != 'Windows'
+    - name: Build executable (Linux)
+      if: runner.os == 'Linux'
       run: |
         pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader --add-data "assets:assets" --hidden-import=psutil --hidden-import=debug_logger --collect-all=PyQt5 --collect-all=debug_logger
+        ls -la dist/
+
+    - name: Build app bundle (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        pyinstaller src/AEPdowngrader.py --onedir --windowed --name AEP-Downgrader --add-data "assets:assets" --hidden-import=psutil --hidden-import=debug_logger --collect-all=PyQt5 --collect-all=debug_logger
         ls -la dist/
 
     - name: Create distribution package (Windows)
@@ -60,15 +66,11 @@ jobs:
         echo "To run the application:" >> "AEP-Downgrader-Linux/README.txt"
         echo "./AEP-Downgrader" >> "AEP-Downgrader-Linux/README.txt"
         
-    - name: Create distribution package (macOS)
+    - name: Create DMG (macOS)
       if: runner.os == 'macOS'
       run: |
-        mkdir -p "AEP-Downgrader-macOS"
-        cp -r dist/AEP-Downgrader.app "AEP-Downgrader-macOS/"
-        echo "AEP Downgrader - macOS Portable Version" > "AEP-Downgrader-macOS/README.txt"
-        echo "" >> "AEP-Downgrader-macOS/README.txt"
-        echo "To run the application:" >> "AEP-Downgrader-macOS/README.txt"
-        echo "Double-click AEP-Downgrader.app" >> "AEP-Downgrader-macOS/README.txt"
+        # Create DMG from app bundle
+        hdiutil create -volname "AEP-Downgrader" -srcfolder "dist/AEP-Downgrader.app" -ov -format UDZO -o AEP-Downgrader-macOS.dmg
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -76,3 +78,4 @@ jobs:
         name: AEP-Downgrader-${{ runner.os }}
         path: |
           AEP-Downgrader-*/
+          *.dmg
