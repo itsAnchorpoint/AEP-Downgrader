@@ -70,6 +70,8 @@ class PlatformInfo:
     @staticmethod
     def _get_windows_version():
         """Get Windows version details"""
+        if platform.system() != "Windows":
+            return "N/A"
         try:
             import winreg
             key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")
@@ -82,6 +84,8 @@ class PlatformInfo:
     @staticmethod
     def _get_windows_edition():
         """Get Windows edition"""
+        if platform.system() != "Windows":
+            return "N/A"
         try:
             import winreg
             key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")

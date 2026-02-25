@@ -68,9 +68,7 @@ AEP Downgrader includes a built-in debug mode with comprehensive logging and tro
 - Export report: **Debug** → **Export Debug Report** (`Ctrl+E`)
 - System info: **Debug** → **System Information**
 
-> ⚠️ **Note**: The debug module requires `psutil` Python package. In the next version, it will be fully integrated with all dependencies included.
->
-> For developers: `pip install psutil` to use debug features now.
+> ⚠️ **Note**: Debug mode is now fully integrated with all dependencies included in the build. No additional installation required for end users.
 
 ---
 
@@ -117,7 +115,7 @@ To build the application yourself:
 1. Clone the repository
 2. Create a virtual environment: `python -m venv venv`
 3. Activate it: `source venv/bin/activate` (Linux/macOS) or `venv\Scripts\activate` (Windows)
-4. Install dependencies: `pip install pyinstaller PyQt5`
+4. Install dependencies: `pip install pyinstaller PyQt5 psutil`
 5. Build: `pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader`
 
 Platform-specific build instructions are available in:

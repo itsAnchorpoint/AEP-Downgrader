@@ -36,11 +36,11 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller PyQt5
+          pip install pyinstaller PyQt5 psutil
 
       - name: Build executable
         run: |
-          pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader --add-data "assets/icon.png;assets"
+          pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader --add-data "assets/icon.png;assets" --hidden-import=psutil --hidden-import=debug_logger --collect-all=PyQt5 --collect-all=debug_logger
 
       - name: Prepare Windows distribution
         run: |
@@ -70,11 +70,11 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller PyQt5
+          pip install pyinstaller PyQt5 psutil
 
       - name: Build executable
         run: |
-          pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader --add-data "assets/icon.png:assets"
+          pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader --add-data "assets/icon.png:assets" --hidden-import=psutil --hidden-import=debug_logger --collect-all=PyQt5 --collect-all=debug_logger
 
       - name: Prepare Linux distribution
         run: |
@@ -104,11 +104,11 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller PyQt5
+          pip install pyinstaller PyQt5 psutil
 
       - name: Build executable
         run: |
-          pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader --add-data "assets/icon.png:assets"
+          pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader --add-data "assets/icon.png:assets" --hidden-import=psutil --hidden-import=debug_logger --collect-all=PyQt5 --collect-all=debug_logger
 
       - name: Prepare macOS distribution
         run: |

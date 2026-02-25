@@ -893,7 +893,7 @@ class AEPDowngraderGUI(QMainWindow):
     def show_about(self):
         """Show about dialog"""
         about_text = "AEP Downgrader\n\n"
-        about_text += "Version 1.0\n\n"
+        about_text += "Version 1.1.0\n\n"
         about_text += "Convert Adobe After Effects project files\n"
         about_text += "from newer versions to older ones.\n\n"
         about_text += f"Debug Module: {'Available' if DEBUG_MODULE_AVAILABLE else 'Not Available'}\n"
@@ -1546,7 +1546,7 @@ def main():
     
     # Set application properties
     app.setApplicationName("AEP Downgrader")
-    app.setApplicationVersion("1.0")
+    app.setApplicationVersion("1.1.0")
     
     # Create and show main window
     window = AEPDowngraderGUI()

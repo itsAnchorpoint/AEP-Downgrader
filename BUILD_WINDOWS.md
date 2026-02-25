@@ -15,12 +15,12 @@
 
 2. Install dependencies:
    ```cmd
-   pip install pyinstaller PyQt5
+   pip install pyinstaller PyQt5 psutil
    ```
 
 3. Build the executable:
    ```cmd
-   pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader --icon=assets/icon.ico
+   pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader --icon=assets/icon.ico --add-data "assets:assets" --hidden-import=psutil --hidden-import=debug_logger --collect-all=PyQt5 --collect-all=debug_logger
    ```
 
 4. Create distribution package:
