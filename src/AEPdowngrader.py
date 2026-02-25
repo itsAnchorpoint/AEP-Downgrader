@@ -28,14 +28,52 @@ import traceback
 import urllib.parse
 from pathlib import Path
 
+# Import debug logger module
+import sys
+import os
+_debug_logger_path = os.path.join(os.path.dirname(__file__))
+if _debug_logger_path not in sys.path:
+    sys.path.insert(0, _debug_logger_path)
+
+try:
+    from debug_logger import debug_logger, DebugLevel, PlatformInfo, MemoryInfo
+    DEBUG_MODULE_AVAILABLE = True
+except ImportError:
+    DEBUG_MODULE_AVAILABLE = False
+    # Create dummy debug logger if module not available
+    class DummyLogger:
+        def enable(self): return None
+        def disable(self): pass
+        def is_enabled(self): return False
+        def trace(self, *args, **kwargs): pass
+        def debug(self, *args, **kwargs): pass
+        def info(self, *args, **kwargs): pass
+        def warning(self, *args, **kwargs): pass
+        def error(self, *args, **kwargs): pass
+        def critical(self, *args, **kwargs): pass
+        def log_function_call(self, *args, **kwargs): pass
+        def log_function_result(self, *args, **kwargs): pass
+        def log_memory(self, *args, **kwargs): pass
+        def log_cpu(self, *args, **kwargs): pass
+        def log_file_read(self, *args, **kwargs): pass
+        def log_file_write(self, *args, **kwargs): pass
+        def log_file_operation(self, *args, **kwargs): pass
+        def get_log_content(self): return ""
+        def get_full_report(self): return "Debug module not available"
+        def export_logs(self, file_path=None): return None
+        def clear_logs(self): pass
+    debug_logger = DummyLogger()
+
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QComboBox, QFileDialog, QTextEdit,
     QProgressBar, QGroupBox, QFormLayout, QMessageBox, QFrame,
-    QLineEdit, QCheckBox, QSizePolicy
+    QLineEdit, QCheckBox, QSizePolicy, QAction, QMenuBar, QMenu,
+    QDialog, QDialogButtonBox, QScrollArea, QListWidget, QListWidgetItem,
+    QStatusBar, QToolBar, QWidgetAction
 )
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QSize
-from PyQt5.QtGui import QFont, QColor, QPalette, QIcon
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QSize, QTimer
+from PyQt5.QtGui import QFont, QColor, QPalette, QIcon, QTextCursor
 
 
 class ModernDarkTheme:
@@ -50,6 +88,282 @@ class ModernDarkTheme:
     SUCCESS = "#4ec978"
     ERROR = "#f48771"
     WARNING = "#ffcc66"
+    DEBUG_ACTIVE = "#ff6b6b"
+    DEBUG_INACTIVE = "#666666"
+
+
+class DebugModeIndicator(QFrame):
+    """Visual indicator for debug mode status"""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedHeight(30)
+        self.setFixedWidth(120)
+        self.debug_enabled = False
+        self.setup_ui()
+    
+    def setup_ui(self):
+        """Setup the indicator UI"""
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(10, 0, 10, 0)
+        layout.setSpacing(8)
+        
+        # Status dot
+        self.status_dot = QLabel()
+        self.status_dot.setFixedSize(12, 12)
+        self.status_dot.setAlignment(Qt.AlignCenter)
+        
+        # Status label
+        self.status_label = QLabel("DEBUG OFF")
+        font = QFont()
+        font.setPointSize(9)
+        font.setBold(True)
+        self.status_label.setFont(font)
+        
+        layout.addWidget(self.status_dot)
+        layout.addWidget(self.status_label)
+        layout.addStretch()
+        
+        self.update_appearance()
+    
+    def update_appearance(self):
+        """Update the visual appearance based on debug state"""
+        if self.debug_enabled:
+            self.setStyleSheet(f"""
+                QFrame {{
+                    background-color: #3d1a1a;
+                    border: 1px solid {ModernDarkTheme.DEBUG_ACTIVE};
+                    border-radius: 4px;
+                }}
+            """)
+            self.status_dot.setStyleSheet(f"""
+                QLabel {{
+                    background-color: {ModernDarkTheme.DEBUG_ACTIVE};
+                    border-radius: 6px;
+                    border: 1px solid #ff9999;
+                }}
+            """)
+            self.status_label.setStyleSheet(f"""
+                QLabel {{
+                    color: {ModernDarkTheme.DEBUG_ACTIVE};
+                }}
+            """)
+            self.status_label.setText("DEBUG ON")
+        else:
+            self.setStyleSheet(f"""
+                QFrame {{
+                    background-color: {ModernDarkTheme.PANEL};
+                    border: 1px solid {ModernDarkTheme.DEBUG_INACTIVE};
+                    border-radius: 4px;
+                }}
+            """)
+            self.status_dot.setStyleSheet(f"""
+                QLabel {{
+                    background-color: {ModernDarkTheme.DEBUG_INACTIVE};
+                    border-radius: 6px;
+                }}
+            """)
+            self.status_label.setStyleSheet(f"""
+                QLabel {{
+                    color: {ModernDarkTheme.TEXT_SECONDARY};
+                }}
+            """)
+            self.status_label.setText("DEBUG OFF")
+    
+    def set_debug_enabled(self, enabled):
+        """Set debug mode state"""
+        self.debug_enabled = enabled
+        self.update_appearance()
+    
+    def is_debug_enabled(self):
+        """Check if debug mode is enabled"""
+        return self.debug_enabled
+
+
+class DebugLogViewer(QDialog):
+    """Dialog for viewing debug logs"""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Debug Log Viewer")
+        self.setGeometry(200, 200, 800, 600)
+        self.setup_ui()
+    
+    def setup_ui(self):
+        """Setup the dialog UI"""
+        layout = QVBoxLayout(self)
+        
+        # Tab widget for different log sections
+        from PyQt5.QtWidgets import QTabWidget
+        self.tab_widget = QTabWidget()
+        
+        # Main log tab
+        self.log_text_edit = QTextEdit()
+        self.log_text_edit.setReadOnly(True)
+        self.log_text_edit.setStyleSheet(self.get_log_style())
+        self.tab_widget.addTab(self.log_text_edit, "Log")
+        
+        # System info tab
+        self.system_info_text = QTextEdit()
+        self.system_info_text.setReadOnly(True)
+        self.system_info_text.setStyleSheet(self.get_log_style())
+        self.tab_widget.addTab(self.system_info_text, "System Info")
+        
+        # File operations tab
+        self.file_ops_text = QTextEdit()
+        self.file_ops_text.setReadOnly(True)
+        self.file_ops_text.setStyleSheet(self.get_log_style())
+        self.tab_widget.addTab(self.file_ops_text, "File Operations")
+        
+        layout.addWidget(self.tab_widget)
+        
+        # Button bar
+        button_layout = QHBoxLayout()
+        
+        self.copy_btn = QPushButton("Copy to Clipboard")
+        self.copy_btn.setStyleSheet(self.get_compact_button_style())
+        self.copy_btn.clicked.connect(self.copy_to_clipboard)
+        
+        self.export_btn = QPushButton("Export Full Report")
+        self.export_btn.setStyleSheet(self.get_compact_button_style())
+        self.export_btn.clicked.connect(self.export_logs)
+        
+        self.clear_btn = QPushButton("Clear Logs")
+        self.clear_btn.setStyleSheet(self.get_compact_button_style())
+        self.clear_btn.clicked.connect(self.clear_logs)
+        
+        self.refresh_btn = QPushButton("Refresh")
+        self.refresh_btn.setStyleSheet(self.get_compact_button_style())
+        self.refresh_btn.clicked.connect(self.refresh_logs)
+        
+        button_layout.addWidget(self.copy_btn)
+        button_layout.addWidget(self.export_btn)
+        button_layout.addWidget(self.clear_btn)
+        button_layout.addWidget(self.refresh_btn)
+        button_layout.addStretch()
+        
+        # Close button
+        self.close_btn = QPushButton("Close")
+        self.close_btn.setStyleSheet(self.get_primary_button_style())
+        self.close_btn.clicked.connect(self.close)
+        button_layout.addWidget(self.close_btn)
+        
+        layout.addLayout(button_layout)
+        
+        # Apply dark theme
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {ModernDarkTheme.BACKGROUND};
+                color: {ModernDarkTheme.TEXT};
+            }}
+        """)
+    
+    def get_log_style(self):
+        """Get stylesheet for log text"""
+        return f"""
+            QTextEdit {{
+                background-color: #1a1a1a;
+                border: 1px solid {ModernDarkTheme.BORDER};
+                color: #00ff00;
+                font-family: 'Consolas', 'Monaco', monospace;
+                font-size: 11px;
+            }}
+        """
+    
+    def get_compact_button_style(self):
+        """Get stylesheet for compact buttons"""
+        return f"""
+            QPushButton {{
+                background-color: {ModernDarkTheme.PANEL};
+                border: 1px solid {ModernDarkTheme.BORDER};
+                border-radius: 4px;
+                padding: 6px 12px;
+                color: {ModernDarkTheme.TEXT};
+            }}
+            QPushButton:hover {{
+                background-color: #3e3e42;
+            }}
+        """
+    
+    def get_primary_button_style(self):
+        """Get stylesheet for primary buttons"""
+        return f"""
+            QPushButton {{
+                background-color: {ModernDarkTheme.HIGHLIGHT};
+                border: 1px solid {ModernDarkTheme.HIGHLIGHT};
+                border-radius: 4px;
+                padding: 8px 16px;
+                color: white;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background-color: #106ebe;
+            }}
+        """
+    
+    def refresh_logs(self):
+        """Refresh log content"""
+        if DEBUG_MODULE_AVAILABLE:
+            # Main log
+            self.log_text_edit.setPlainText(debug_logger.get_log_content())
+            
+            # System info
+            system_info = "SYSTEM INFORMATION\n" + "=" * 40 + "\n\n"
+            platform_info = PlatformInfo.get_platform_info()
+            for key, value in platform_info.items():
+                system_info += f"{key}: {value}\n"
+            system_info += "\n\nMEMORY INFORMATION\n" + "=" * 40 + "\n\n"
+            mem_info = MemoryInfo.get_memory_info()
+            for key, value in mem_info.items():
+                system_info += f"{key}: {value}\n"
+            self.system_info_text.setPlainText(system_info)
+            
+            # File operations
+            file_ops = "FILE OPERATIONS\n" + "=" * 40 + "\n\n"
+            ops = debug_logger.fs_monitor.get_operations()
+            for op in ops:
+                file_ops += f"[{op['timestamp']}] {op['type']}: {op['path']}\n"
+                if op.get('details'):
+                    for k, v in op['details'].items():
+                        file_ops += f"  {k}: {v}\n"
+            self.file_ops_text.setPlainText(file_ops)
+    
+    def copy_to_clipboard(self):
+        """Copy logs to clipboard"""
+        if DEBUG_MODULE_AVAILABLE:
+            report = debug_logger.get_full_report()
+            clipboard = QApplication.clipboard()
+            clipboard.setText(report)
+            QMessageBox.information(self, "Copied", "Debug report copied to clipboard!")
+    
+    def export_logs(self):
+        """Export logs to file"""
+        if DEBUG_MODULE_AVAILABLE:
+            file_path, _ = QFileDialog.getSaveFileName(
+                self, "Export Debug Logs", 
+                f"debug_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log",
+                "Log Files (*.log);;Text Files (*.txt);;All Files (*)"
+            )
+            if file_path:
+                exported_path = debug_logger.export_logs(file_path)
+                QMessageBox.information(self, "Exported", f"Debug report exported to:\n{exported_path}")
+    
+    def clear_logs(self):
+        """Clear logs"""
+        if DEBUG_MODULE_AVAILABLE:
+            reply = QMessageBox.question(
+                self, "Clear Logs", 
+                "Are you sure you want to clear all debug logs?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            if reply == QMessageBox.Yes:
+                debug_logger.clear_logs()
+                self.refresh_logs()
+                QMessageBox.information(self, "Cleared", "Debug logs cleared!")
+
+
+# Import datetime for timestamp formatting
+from datetime import datetime
 
 
 class DowngradeWorker(QThread):
@@ -57,20 +371,30 @@ class DowngradeWorker(QThread):
     progress_signal = pyqtSignal(str)
     finished_signal = pyqtSignal(bool, str)
 
-    def __init__(self, input_path, output_path, target_version):
+    def __init__(self, input_path, output_path, target_version, debug_enabled=False):
         super().__init__()
         self.input_path = input_path
         self.output_path = output_path
         self.target_version = target_version  # String like "AE 24.x", "AE 23.x", etc.
+        self.debug_enabled = debug_enabled
 
     def run(self):
         """Execute the downgrade operation in a separate thread"""
         try:
+            if DEBUG_MODULE_AVAILABLE and hasattr(self, 'debug_enabled') and self.debug_enabled:
+                debug_logger.log_function_call("DowngradeWorker.run", 
+                    args=(self.input_path, self.output_path, self.target_version))
+                debug_logger.log_file_operation("READ_START", self.input_path)
+            
             self.progress_signal.emit(f"Starting conversion to {self.target_version}...")
 
             # Read the input file
             with open(self.input_path, 'rb') as f:
                 content = bytearray(f.read())
+            
+            if DEBUG_MODULE_AVAILABLE and hasattr(self, 'debug_enabled') and self.debug_enabled:
+                debug_logger.log_file_read(self.input_path, len(content))
+                debug_logger.debug(f"Read {len(content)} bytes from input file")
 
             self.progress_signal.emit("Analyzing file headers...")
 
@@ -108,17 +432,27 @@ class DowngradeWorker(QThread):
                 self.progress_signal.emit("Consider using AE 23.x as target for better compatibility.")
 
             self.progress_signal.emit(f"Applied {modifications} modifications")
+            if DEBUG_MODULE_AVAILABLE and hasattr(self, 'debug_enabled') and self.debug_enabled:
+                debug_logger.log_file_operation("WRITE_START", self.output_path)
+            
             self.progress_signal.emit("Writing converted file...")
 
             # Write the modified content to output file
             with open(self.output_path, 'wb') as f:
                 f.write(content)
+            
+            if DEBUG_MODULE_AVAILABLE and hasattr(self, 'debug_enabled') and self.debug_enabled:
+                debug_logger.log_file_write(self.output_path, len(content))
+                debug_logger.debug(f"Wrote {len(content)} bytes to output file")
 
             self.progress_signal.emit("Conversion completed successfully!")
             self.finished_signal.emit(True, f"File converted successfully with {modifications} modifications")
 
         except Exception as e:
             error_msg = f"Error during conversion: {str(e)}"
+            if DEBUG_MODULE_AVAILABLE and self.debug_enabled:
+                debug_logger.error(f"Conversion failed: {error_msg}")
+                debug_logger.log_memory("After error")
             self.progress_signal.emit(error_msg)
             self.finished_signal.emit(False, error_msg)
 
@@ -227,9 +561,19 @@ class AEPDowngraderGUI(QMainWindow):
     
     def __init__(self):
         super().__init__()
+        self.debug_enabled = False
+        self.debug_log_path = None
         self.init_ui()
         self.setup_connections()
+        self.setup_menu()
         self.worker = None
+        
+        # Log application start in debug mode if it was enabled before
+        if DEBUG_MODULE_AVAILABLE:
+            debug_logger.info("Application started")
+            debug_logger.log_memory("Application start")
+        
+
 
     def get_resource_path(self, relative_path):
         """Get absolute path to resource, works for dev and for PyInstaller"""
@@ -286,6 +630,9 @@ class AEPDowngraderGUI(QMainWindow):
         subtitle_label.setFont(subtitle_font)
         subtitle_label.setAlignment(Qt.AlignCenter)
         subtitle_label.setStyleSheet(f"color: {ModernDarkTheme.TEXT_SECONDARY}; margin-bottom: 30px;")
+        
+        # Add header layout to main layout
+        
         
         # Input/Output section
         io_group = QGroupBox("File Selection")
@@ -392,6 +739,7 @@ class AEPDowngraderGUI(QMainWindow):
         progress_layout.addWidget(self.log_text_edit)
         
         # Add all widgets to main layout
+        
         main_layout.addWidget(header_label)
         main_layout.addWidget(subtitle_label)
         main_layout.addWidget(io_group)
@@ -408,6 +756,149 @@ class AEPDowngraderGUI(QMainWindow):
         self.output_browse_btn.clicked.connect(self.browse_output_file)
         self.convert_btn.clicked.connect(self.start_conversion)
         self.cancel_btn.clicked.connect(self.cancel_conversion)
+    
+    def setup_menu(self):
+        """Setup the menu bar with debug options"""
+        menubar = self.menuBar()
+        
+        # File menu
+        file_menu = menubar.addMenu("File")
+        
+        exit_action = QAction("Exit", self)
+        exit_action.setShortcut("Ctrl+Q")
+        exit_action.triggered.connect(self.close)
+        file_menu.addAction(exit_action)
+        
+        # Debug menu
+        debug_menu = menubar.addMenu("Debug")
+        
+        # Toggle debug mode action
+        self.toggle_debug_action = QAction("Enable Debug Mode", self)
+        self.toggle_debug_action.setShortcut("Ctrl+D")
+        self.toggle_debug_action.setCheckable(True)
+        self.toggle_debug_action.triggered.connect(self.toggle_debug_mode)
+        debug_menu.addAction(self.toggle_debug_action)
+        
+        debug_menu.addSeparator()
+        
+        # View debug logs action
+        view_logs_action = QAction("View Debug Logs", self)
+        view_logs_action.setShortcut("Ctrl+L")
+        view_logs_action.triggered.connect(self.show_debug_logs)
+        debug_menu.addAction(view_logs_action)
+        
+        # Export logs action
+        export_logs_action = QAction("Export Debug Report", self)
+        export_logs_action.setShortcut("Ctrl+E")
+        export_logs_action.triggered.connect(self.export_debug_report)
+        debug_menu.addAction(export_logs_action)
+        
+        debug_menu.addSeparator()
+        
+        # System info action
+        system_info_action = QAction("System Information", self)
+        system_info_action.triggered.connect(self.show_system_info)
+        debug_menu.addAction(system_info_action)
+        
+        # Help menu
+        help_menu = menubar.addMenu("Help")
+        
+        about_action = QAction("About", self)
+        about_action.triggered.connect(self.show_about)
+        help_menu.addAction(about_action)
+    
+    def toggle_debug_mode(self, checked):
+        """Toggle debug mode on/off"""
+        if checked:
+            if DEBUG_MODULE_AVAILABLE:
+                self.debug_log_path = debug_logger.enable()
+                self.debug_enabled = True
+                self.toggle_debug_action.setText("Disable Debug Mode")
+                self.update_log("[DEBUG] Debug mode enabled")
+                self.update_log(f"[DEBUG] Log file: {self.debug_log_path}")
+                debug_logger.info("Debug mode enabled by user")
+            else:
+                QMessageBox.warning(
+                    self, "Debug Mode Unavailable",
+                    "Debug module is not available. Please ensure all dependencies are installed."
+                )
+                self.toggle_debug_action.setChecked(False)
+        else:
+            if DEBUG_MODULE_AVAILABLE:
+                debug_logger.info("Debug mode disabled by user")
+                debug_logger.disable()
+                self.debug_enabled = False
+                self.toggle_debug_action.setText("Enable Debug Mode")
+                self.update_log("[DEBUG] Debug mode disabled")
+                self.debug_log_path = None
+    
+    def show_debug_logs(self):
+        """Show debug log viewer dialog"""
+        if not DEBUG_MODULE_AVAILABLE:
+            QMessageBox.warning(self, "Debug Logs", "Debug module is not available.")
+            return
+        
+        dialog = DebugLogViewer(self)
+        dialog.refresh_logs()
+        dialog.exec_()
+    
+    def export_debug_report(self):
+        """Export debug report to file"""
+        if not DEBUG_MODULE_AVAILABLE:
+            QMessageBox.warning(self, "Export", "Debug module is not available.")
+            return
+        
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Export Debug Report", 
+            f"debug_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log",
+            "Log Files (*.log);;Text Files (*.txt);;All Files (*)"
+        )
+        
+        if file_path:
+            exported_path = debug_logger.export_logs(file_path)
+            QMessageBox.information(
+                self, "Export Complete", 
+                f"Debug report exported to:\n{exported_path}"
+            )
+    
+    def show_system_info(self):
+        """Show system information dialog"""
+        if not DEBUG_MODULE_AVAILABLE:
+            QMessageBox.warning(self, "System Info", "Debug module is not available.")
+            return
+        
+        info_text = "SYSTEM INFORMATION\n"
+        info_text += "=" * 50 + "\n\n"
+        
+        # Platform info
+        info_text += "PLATFORM\n" + "-" * 30 + "\n"
+        platform_info = PlatformInfo.get_platform_info()
+        for key, value in platform_info.items():
+            info_text += f"{key}: {value}\n"
+        
+        info_text += "\nMEMORY\n" + "-" * 30 + "\n"
+        mem_info = MemoryInfo.get_memory_info()
+        for key, value in mem_info.items():
+            info_text += f"{key}: {value}\n"
+        
+        # Copy to clipboard
+        clipboard = QApplication.clipboard()
+        clipboard.setText(info_text)
+        
+        QMessageBox.information(
+            self, "System Information", 
+            f"System information:\n\n{info_text}\n\n(Copied to clipboard)"
+        )
+    
+    def show_about(self):
+        """Show about dialog"""
+        about_text = "AEP Downgrader\n\n"
+        about_text += "Version 1.0\n\n"
+        about_text += "Convert Adobe After Effects project files\n"
+        about_text += "from newer versions to older ones.\n\n"
+        about_text += f"Debug Module: {'Available' if DEBUG_MODULE_AVAILABLE else 'Not Available'}\n"
+        
+        QMessageBox.about(self, "About AEP Downgrader", about_text)
     
     def apply_dark_theme(self):
         """Apply dark theme to the application"""
@@ -670,10 +1161,18 @@ class AEPDowngraderGUI(QMainWindow):
 
     def browse_input_files(self):
         """Open file dialog to select multiple input files"""
+        if DEBUG_MODULE_AVAILABLE and self.debug_enabled:
+            debug_logger.log_function_call("browse_input_files")
+        
         file_paths, _ = QFileDialog.getOpenFileNames(
             self, "Select Input AEP Files", "", "AEP Files (*.aep);;All Files (*)"
         )
         if file_paths:
+            if DEBUG_MODULE_AVAILABLE and self.debug_enabled:
+                debug_logger.info(f"Selected {len(file_paths)} files")
+                for fp in file_paths:
+                    debug_logger.debug(f"Input file: {fp}")
+            
             # Display count of selected files
             self.input_line_edit.setText(f"{len(file_paths)} files selected: {', '.join([Path(fp).name for fp in file_paths[:3]])}{'...' if len(file_paths) > 3 else ''}")
 
@@ -835,9 +1334,10 @@ class AEPDowngraderGUI(QMainWindow):
             
             debug_info.append(f"=== END DEBUG ===")
             
-            # Print debug info to console
-            for line in debug_info:
-                print(f"[DEBUG] {line}")
+            # Print debug info to console only in debug mode
+            if self.debug_enabled:
+                for line in debug_info:
+                    print(f"[DEBUG] {line}")
             
             return result
         except Exception as e:
@@ -845,9 +1345,10 @@ class AEPDowngraderGUI(QMainWindow):
             debug_info.append(f"Traceback: {traceback.format_exc()}")
             debug_info.append(f"=== END DEBUG ===")
             
-            # Print debug info to console
-            for line in debug_info:
-                print(f"[DEBUG] {line}")
+            # Print debug info to console only in debug mode
+            if self.debug_enabled:
+                for line in debug_info:
+                    print(f"[DEBUG] {line}")
             
             return f"Error: {str(e)}", 0
     
@@ -861,6 +1362,10 @@ class AEPDowngraderGUI(QMainWindow):
     
     def start_conversion(self):
         """Start the conversion process"""
+        if DEBUG_MODULE_AVAILABLE and self.debug_enabled:
+            debug_logger.log_function_call("start_conversion")
+            debug_logger.log_memory("Before conversion")
+        
         input_path = self.input_line_edit.text().strip()
 
         if not input_path:
@@ -939,7 +1444,7 @@ class AEPDowngraderGUI(QMainWindow):
                 output_path = current_output_dir / output_filename
 
                 # Create worker for this conversion
-                worker = DowngradeWorker(str(input_file), str(output_path), target_version)
+                worker = DowngradeWorker(str(input_file), str(output_path), target_version, self.debug_enabled)
                 worker.progress_signal.connect(self.update_log)
                 worker.finished_signal.connect(self.single_conversion_finished)
                 self.active_workers.append(worker)
@@ -1004,6 +1509,11 @@ class AEPDowngraderGUI(QMainWindow):
     def update_log(self, message):
         """Update the log text area"""
         self.log_text_edit.append(message)
+        
+        # Also log to debug logger if enabled
+        if DEBUG_MODULE_AVAILABLE and self.debug_enabled:
+            debug_logger.info(f"GUI: {message}")
+        
         # Scroll to bottom
         scrollbar = self.log_text_edit.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
