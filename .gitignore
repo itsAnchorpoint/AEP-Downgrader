@@ -148,6 +148,13 @@ dist/
 # PyInstaller spec file
 *.spec
 
+# SSH keys - never commit keys!
+*.pub
+github.pub
+id_rsa*
+ed25519*
+*.pem
+
 # Scripts that shouldn't be committed
 create_*.sh
 
