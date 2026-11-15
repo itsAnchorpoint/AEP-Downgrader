@@ -12,7 +12,8 @@ body,
 html {
   color-scheme: light;
 }
-html[data-theme="dark"] {
+html[data-theme="dark"],
+html[data-theme="ae"] {
   color-scheme: dark;
 }
 

@@ -18,7 +18,7 @@ function useTheme() {
     const query = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () => {
       const dark = theme === "dark" || (theme === "system" && query.matches);
-      document.documentElement.dataset.theme = dark ? "dark" : "light";
+      document.documentElement.dataset.theme = theme === "ae" ? "ae" : dark ? "dark" : "light";
     };
     apply();
     query.addEventListener("change", apply);

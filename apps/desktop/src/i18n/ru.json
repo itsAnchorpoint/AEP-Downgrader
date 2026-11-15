@@ -161,7 +161,9 @@
       "pink": "Розовый",
       "aqua": "Аква",
       "cobalt": "Кобальт"
-    }
+    },
+    "ae": "After Effects",
+    "accentLocked": "Тема After Effects использует собственные цвета"
   },
   "privacy": {
     "title": "Конфиденциальность",

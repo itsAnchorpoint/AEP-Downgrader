@@ -1,29 +1,33 @@
 /*
  * Accent options. Lime is the default and lives in tokens.css. Each block below only
  * retunes the three accent tokens; selectors also match descendants so a swatch inside
- * Settings can preview its own color.
+ * Settings can preview its own color (also under the fixed-accent "ae" theme, using the dark values).
  */
 [data-theme="light"] [data-accent="ember"], [data-theme="light"][data-accent="ember"] {
   --color-accent: #ff7a2f; --color-accent-fg: #0b0b0c; --color-accent-text: #a63a00;
 }
-[data-theme="dark"] [data-accent="ember"], [data-theme="dark"][data-accent="ember"] {
+[data-theme="dark"] [data-accent="ember"], [data-theme="dark"][data-accent="ember"],
+[data-theme="ae"] [data-accent="ember"] {
   --color-accent: #ff7a2f; --color-accent-fg: #0b0b0c;
 }
 [data-theme="light"] [data-accent="pink"], [data-theme="light"][data-accent="pink"] {
   --color-accent: #ff5fa8; --color-accent-fg: #0b0b0c; --color-accent-text: #b0155f;
 }
-[data-theme="dark"] [data-accent="pink"], [data-theme="dark"][data-accent="pink"] {
+[data-theme="dark"] [data-accent="pink"], [data-theme="dark"][data-accent="pink"],
+[data-theme="ae"] [data-accent="pink"] {
   --color-accent: #ff5fa8; --color-accent-fg: #0b0b0c;
 }
 [data-theme="light"] [data-accent="aqua"], [data-theme="light"][data-accent="aqua"] {
   --color-accent: #22d3ee; --color-accent-fg: #0b0b0c; --color-accent-text: #00667a;
 }
-[data-theme="dark"] [data-accent="aqua"], [data-theme="dark"][data-accent="aqua"] {
+[data-theme="dark"] [data-accent="aqua"], [data-theme="dark"][data-accent="aqua"],
+[data-theme="ae"] [data-accent="aqua"] {
   --color-accent: #2de2ff; --color-accent-fg: #0b0b0c;
 }
 [data-theme="light"] [data-accent="cobalt"], [data-theme="light"][data-accent="cobalt"] {
   --color-accent: #5b7dff; --color-accent-fg: #0b0b0c; --color-accent-text: #2641c4;
 }
-[data-theme="dark"] [data-accent="cobalt"], [data-theme="dark"][data-accent="cobalt"] {
+[data-theme="dark"] [data-accent="cobalt"], [data-theme="dark"][data-accent="cobalt"],
+[data-theme="ae"] [data-accent="cobalt"] {
   --color-accent: #6b8cff; --color-accent-fg: #0b0b0c;
 }

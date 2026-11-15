@@ -6,7 +6,7 @@ import { version } from "../../package.json";
 import { ipc } from "../lib/ipc";
 import { REPO_URL } from "../lib/links";
 import { outputName } from "../lib/pattern";
-import { ACCENTS } from "../lib/settings";
+import { ACCENTS, usesOwnAccent } from "../lib/settings";
 import { useAppStore } from "../store";
 import { Button, Segmented } from "./ui";
 
@@ -31,6 +31,7 @@ export function Settings() {
   const { t } = useTranslation();
   const { settings, targets, target } = useAppStore();
   const { updateSettings, chooseFolder, setView } = useAppStore();
+  const locked = usesOwnAccent(settings.theme);
   const year = targets.find((x) => x.major === target)?.name ?? "2024";
 
   return (
@@ -62,15 +63,17 @@ export function Settings() {
               value={settings.theme}
               onChange={(theme) => updateSettings({ theme })}
               options={[
-                { value: "dark", label: t("settings.dark") },
-                { value: "light", label: t("settings.light") },
                 { value: "system", label: t("settings.system") },
+                { value: "light", label: t("settings.light") },
+                { value: "dark", label: t("settings.dark") },
+                { value: "ae", label: t("settings.ae") },
               ]}
             />
           </Row>
-          <Row title={t("settings.accent")}>
+          <Row title={t("settings.accent")} hint={locked ? t("settings.accentLocked") : undefined}>
             <Segmented
               label={t("settings.accent")}
+              disabled={locked}
               value={settings.accent}
               onChange={(accent) => updateSettings({ accent })}
               options={ACCENTS.map((accent) => ({

@@ -65,11 +65,13 @@ export function Segmented<T extends string>({
   onChange,
   options,
   label,
+  disabled = false,
 }: {
   value: T;
   onChange: (value: T) => void;
   options: { value: T; label: string; leading?: ReactNode }[];
   label: string;
+  disabled?: boolean;
 }) {
   return (
     <div role="group" aria-label={label} className="flex flex-wrap justify-end gap-1.5">
@@ -80,9 +82,10 @@ export function Segmented<T extends string>({
             key={o.value}
             type="button"
             aria-pressed={on}
+            disabled={disabled}
             onClick={() => onChange(o.value)}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold transition-[translate,scale,background-color] duration-200 active:scale-95 ${
-              on ? "bg-strong text-on-strong" : "shadow-outline hover:bg-hover"
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold transition-[translate,scale,background-color] duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100 ${
+              on ? "bg-strong text-on-strong" : "shadow-outline enabled:hover:bg-hover"
             }`}
           >
             {o.leading}

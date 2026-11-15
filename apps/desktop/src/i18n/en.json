@@ -151,7 +151,9 @@
       "pink": "Pink",
       "aqua": "Aqua",
       "cobalt": "Cobalt"
-    }
+    },
+    "ae": "After Effects",
+    "accentLocked": "The After Effects theme uses its own colors"
   },
   "privacy": {
     "title": "Privacy",

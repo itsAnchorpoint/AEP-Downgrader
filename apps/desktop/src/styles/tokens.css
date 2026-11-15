@@ -80,3 +80,31 @@
   --color-strong: var(--color-accent);
   --color-on-strong: var(--color-accent-fg);
 }
+
+/*
+ * "After Effects" theme: the neutral grey panels, light-grey text levels and blue highlight of the
+ * After Effects interface. Only colors differ from the other themes. The accent is fixed here.
+ */
+[data-theme="ae"] {
+  --color-bg: #1d1d1d;
+  --color-surface: #232323;
+  --color-raised: #2e2e2e;
+  --color-line: #3a3a3a;
+  --color-line-strong: #6e6e6e;
+  --color-fg: #e0e0e0;
+  --color-muted: #a0a0a0;
+  --color-ink: #e0e0e0;
+  --color-hover: rgb(255 255 255 / 0.07);
+  --color-press: rgb(255 255 255 / 0.13);
+  --color-ok: #5fd3a0;
+  --color-warn: #f0b04a;
+  --color-danger: #ff7b7b;
+  --color-focus: #5aa9fa;
+  --color-scrim: rgb(0 0 0 / 0.7);
+  --color-toggle-off: #767676;
+  --color-accent: #1473e6;
+  --color-accent-fg: #ffffff;
+  --color-accent-text: #5aa9fa;
+  --color-strong: var(--color-accent);
+  --color-on-strong: var(--color-accent-fg);
+}
