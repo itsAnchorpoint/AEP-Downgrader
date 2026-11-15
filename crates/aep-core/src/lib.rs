@@ -8,3 +8,4 @@
 //! - no panics on malformed input: return an error instead.
 
 pub mod riff;
+pub mod version;
