@@ -40,7 +40,12 @@ function VersionLine({ file }: { file: FileInfo }) {
   const { t } = useTranslation();
   const v = file.version;
   if (file.problem) return <span className="font-bold text-danger">{t(`problem.${file.problem}`)}</span>;
-  if (!v) return null;
+  if (!v) {
+    // Presets carry only a format number until more is known.
+    return file.format ? (
+      <span className="font-mono text-xs">{t("file.format", { major: file.format.major, minor: file.format.minor })}</span>
+    ) : null;
+  }
   return (
     <>
       <span className="text-fg">{v.name ? t("file.version", { name: v.name }) : t("file.versionPlain")}</span>

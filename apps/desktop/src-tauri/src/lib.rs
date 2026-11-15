@@ -1,4 +1,5 @@
 mod commands;
+mod inspect;
 mod mock;
 mod models;
 

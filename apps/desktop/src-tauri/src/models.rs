@@ -29,6 +29,7 @@ pub enum Problem {
     NotAeFile,
     Sidecar,
     XmlProject,
+    #[allow(dead_code)] // part of the contract; aep-core reports damaged files as `Damaged`
     Truncated,
     Damaged,
     TooNew,

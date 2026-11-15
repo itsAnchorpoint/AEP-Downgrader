@@ -1,3 +1,4 @@
+use crate::inspect;
 use crate::mock;
 use crate::models::*;
 use std::path::Path;
@@ -8,8 +9,11 @@ use tauri_plugin_opener::OpenerExt;
 const PROGRESS_EVENT: &str = "convert://progress";
 
 #[tauri::command]
-pub fn inspect_paths(paths: Vec<String>) -> Vec<FileInfo> {
-    mock::inspect_paths(&paths)
+pub async fn inspect_paths(paths: Vec<String>) -> Result<Vec<FileInfo>, String> {
+    // File reads can be slow on network or spinning disks: keep them off the main thread.
+    tauri::async_runtime::spawn_blocking(move || inspect::inspect_paths(&paths))
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -18,7 +22,7 @@ pub fn list_targets() -> Vec<TargetInfo> {
 }
 
 #[tauri::command]
-pub fn preflight(path: String, target: u32) -> Preflight {
+pub fn preflight(path: String, target: u32) -> Result<Preflight, String> {
     mock::preflight(&path, target)
 }
 
@@ -40,6 +44,10 @@ pub fn convert(app: AppHandle, jobs: Vec<Job>, options: OutputOptions) {
     }
     tauri::async_runtime::spawn(async move {
         for job in jobs {
+            if inspect::describe_path(&job.path).problem.is_some() {
+                emit(&app, &job.id, ProgressState::Failed, None, Some("unreadable"));
+                continue;
+            }
             emit(&app, &job.id, ProgressState::Running, None, None);
             tokio::time::sleep(Duration::from_millis(mock::conversion_millis(&job.path))).await;
             if mock::should_fail(&job.path) {

@@ -35,6 +35,7 @@
   },
   "file": {
     "version": "After Effects {{name}}",
+    "format": "Формат пресета {{major}}.{{minor}}",
     "versionPlain": "After Effects",
     "beta": "бета",
     "build": "сборка {{build}}"
@@ -93,6 +94,7 @@
   },
   "error": {
     "write-failed": "Не удалось записать копию",
+    "unreadable": "Не удалось прочитать файл",
     "unknown": "Не удалось сконвертировать"
   },
   "done": {

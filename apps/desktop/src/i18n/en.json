@@ -33,6 +33,7 @@
   },
   "file": {
     "version": "After Effects {{name}}",
+    "format": "Preset format {{major}}.{{minor}}",
     "versionPlain": "After Effects",
     "beta": "beta",
     "build": "build {{build}}"
@@ -89,6 +90,7 @@
   },
   "error": {
     "write-failed": "Could not write the copy",
+    "unreadable": "Could not read the file",
     "unknown": "Conversion failed"
   },
   "done": {
