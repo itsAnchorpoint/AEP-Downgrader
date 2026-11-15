@@ -1,0 +1,14 @@
+[workspace]
+resolver = "3"
+members = ["crates/aep-core", "crates/aep-cli"]
+
+[workspace.package]
+version = "2.0.0-alpha.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/itsAnchorpoint/AEP-Downgrader"
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true

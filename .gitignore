@@ -165,3 +165,10 @@ venv/
 #AI referencing and testing
 plans/
 examples/
+
+# Rust
+target/
+
+# Test fixtures: synthetic projects are tracked, real-world ones stay local
+!tests/fixtures/*.aep
+tests/fixtures-local/

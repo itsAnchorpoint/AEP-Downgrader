@@ -1,0 +1,9 @@
+[package]
+name = "aep-core"
+description = "Read, inspect and downgrade Adobe After Effects project files. No file I/O, no dependencies."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
