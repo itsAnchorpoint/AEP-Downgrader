@@ -1,0 +1,100 @@
+@import "tailwindcss";
+@import "./fonts.css";
+@import "./tokens.css";
+@import "./accents.css";
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html {
+  color-scheme: light;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Indeterminate progress: a bar sliding by transform only. Runs only while a file converts. */
+@keyframes slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+.indeterminate {
+  animation: slide 1.2s var(--ease-out-quint) infinite;
+}
+
+/* Empty state only: rings pulse outward, the icon bobs. Both are transform/opacity. */
+@keyframes pulse {
+  from {
+    transform: scale(0.62);
+    opacity: 0.75;
+  }
+  to {
+    transform: scale(1.18);
+    opacity: 0;
+  }
+}
+@keyframes bob {
+  50% {
+    transform: translateY(5px);
+  }
+}
+.ring {
+  animation: pulse 3s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+}
+.bob {
+  animation: bob 1.8s ease-in-out infinite;
+}
+.drop-zone:hover .ring {
+  animation-duration: 1.6s;
+}
+
+/* Changelog markdown: the newest version is the big headline. */
+.changelog h2 {
+  margin-top: 1.5rem;
+  font-size: var(--text-xl);
+  font-weight: 900;
+  letter-spacing: var(--tracking-display);
+}
+.changelog h2:first-of-type {
+  margin-top: 0.25rem;
+  font-size: 3rem;
+  line-height: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.001ms !important;
+  }
+  .ring,
+  .bob {
+    animation: none;
+  }
+  .indeterminate {
+    animation: none;
+    transform: translateX(80%);
+  }
+}

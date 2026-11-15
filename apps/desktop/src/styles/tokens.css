@@ -1,0 +1,82 @@
+/*
+ * Design tokens: direction C, "Bold & kinetic". Every color, radius, font and shadow the UI
+ * uses is defined here (light = warm paper + ink) and under [data-theme="dark"] (black).
+ * The five accent options live in accents.css and only override the --color-accent* tokens.
+ */
+@theme static {
+  --font-sans: "Onest", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Mono", "DejaVu Sans Mono", monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.75rem;
+  --text-title: clamp(1.625rem, 3.6vw, 2.375rem);
+  --text-hero: clamp(2rem, 5.6vw, 3.75rem);
+  --tracking-display: -0.035em;
+  --tracking-tight: -0.015em;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.375rem;
+  --radius-xl: 1.625rem;
+
+  --shadow-outline: inset 0 0 0 2px var(--color-line-strong);
+  --shadow-outline-accent: inset 0 0 0 4px var(--color-accent);
+  --shadow-pop: 0 0 0 2px var(--color-line-strong), 0 30px 90px rgb(0 0 0 / 0.5);
+
+  --ease-pop: cubic-bezier(0.3, 1.6, 0.5, 1);
+  --ease-out-quint: cubic-bezier(0.2, 0.9, 0.2, 1);
+
+  /* Base palette: light, warm paper and ink. */
+  --color-bg: #f3efe6;
+  --color-surface: #fffdf8;
+  --color-raised: #e9e4d8;
+  --color-line: #d2cbba;
+  --color-line-strong: #0b0b0c;
+  --color-fg: #0b0b0c;
+  --color-muted: #57544b;
+  --color-ink: #0b0b0c;
+  --color-hover: rgb(0 0 0 / 0.06);
+  --color-press: rgb(0 0 0 / 0.12);
+  --color-ok: #1a6a2e;
+  --color-warn: #8a4b00;
+  --color-warn-fill: #ffb347;
+  --color-ink-black: #0b0b0c; /* text on warn-fill, which stays amber in both themes */
+  --color-danger: #b0301a;
+  --color-focus: #0b0b0c;
+  --color-toggle-off: #6c695f;
+  --color-scrim: rgb(11 11 12 / 0.6);
+
+  /* Accent (default: lime). accent = fills, accent-fg = text on a fill, accent-text = accent used as text. */
+  --color-accent: #d6ff3d;
+  --color-accent-fg: #0b0b0c;
+  --color-accent-text: #3b5200;
+  /* The loudest fill: ink in light, accent in dark. */
+  --color-strong: var(--color-ink);
+  --color-on-strong: var(--color-accent);
+}
+
+[data-theme="dark"] {
+  --color-bg: #0b0b0c;
+  --color-surface: #151517;
+  --color-raised: #1f1f22;
+  --color-line: #2c2c30;
+  --color-line-strong: #6a6a72;
+  --color-fg: #f6f4ee;
+  --color-muted: #aeaba2;
+  --color-ink: #f6f4ee;
+  --color-hover: rgb(255 255 255 / 0.07);
+  --color-press: rgb(255 255 255 / 0.13);
+  --color-ok: #8ff0a4;
+  --color-warn: #ffb347;
+  --color-danger: #ff7a5c;
+  --color-focus: #ffffff;
+  --color-toggle-off: #66666d;
+  --color-scrim: rgb(0 0 0 / 0.72);
+  --color-accent-text: var(--color-accent);
+  --color-strong: var(--color-accent);
+  --color-on-strong: var(--color-accent-fg);
+}

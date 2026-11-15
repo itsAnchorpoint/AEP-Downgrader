@@ -1,0 +1,169 @@
+{
+  "app": {
+    "name": "AEP Downgrader"
+  },
+  "header": {
+    "whatsNew": "Что нового",
+    "settings": "Настройки",
+    "back": "Назад"
+  },
+  "drop": {
+    "title": "Перетащите сюда .aep, .aet или .ffx",
+    "sub": "или нажмите, чтобы выбрать файлы",
+    "over": "Отпустите, чтобы добавить",
+    "privacy": "Всё остаётся на этом компьютере",
+    "privacySub": "Без аккаунта, без загрузки, без телеметрии.",
+    "heroBefore": "Откройте в",
+    "heroMark": "любой",
+    "heroAfter": "старой версии."
+  },
+  "queue": {
+    "files": "Файлы",
+    "addMore": "Добавить ещё",
+    "clear": "Очистить",
+    "remove": "Убрать",
+    "convertTo": "Сохранить для",
+    "saveNext": "Копии появятся рядом с оригиналами",
+    "saveFolder": "Копии появятся в папке {{folder}}",
+    "convert": "Конвертировать",
+    "convert_one": "Конвертировать {{count}} файл",
+    "convert_few": "Конвертировать {{count}} файла",
+    "convert_many": "Конвертировать {{count}} файлов",
+    "convert_other": "Конвертировать {{count}} файла",
+    "showReport": "Показать отчёт",
+    "hideReport": "Скрыть отчёт"
+  },
+  "file": {
+    "version": "After Effects {{name}}",
+    "versionPlain": "After Effects",
+    "beta": "бета",
+    "build": "сборка {{build}}"
+  },
+  "platform": {
+    "windows": "Windows",
+    "mac-intel": "macOS (Intel)",
+    "mac-arm": "macOS (Apple silicon)"
+  },
+  "problem": {
+    "not-ae-file": "это не файл After Effects",
+    "sidecar": "это не проект (служебный файл macOS)",
+    "xml-project": "XML-проекты (.aepx) не поддерживаются",
+    "truncated": "файл неполный",
+    "damaged": "файл повреждён",
+    "too-new": "создан более новой версией, чем известна приложению",
+    "unreadable": "файл не читается"
+  },
+  "target": {
+    "verified": "Проверено",
+    "experimental": "Экспериментально",
+    "ae": "After Effects {{name}}"
+  },
+  "report": {
+    "title": "Перед конвертацией",
+    "for": "Что изменится в",
+    "safe": "Оригиналы не изменяются. Копия сохраняется рядом с каждым файлом.",
+    "loading": "Проверяем файл…"
+  },
+  "note": {
+    "shadow-color-removed": "Shadow Color будет удалён (появился в 2024)",
+    "effects-removed_one": "{{count}} эффект не существует в After Effects {{year}}: {{names}}",
+    "effects-removed_few": "{{count}} эффекта не существуют в After Effects {{year}}: {{names}}",
+    "effects-removed_many": "{{count}} эффектов не существует в After Effects {{year}}: {{names}}",
+    "effects-removed_other": "{{count}} эффекта не существуют в After Effects {{year}}: {{names}}",
+    "text-animator-ranges": "Диапазоны текстовых аниматоров могут отображаться чуть иначе",
+    "plugins-kept": "Сторонние плагины в проекте: {{names}}",
+    "experimental-target": "Экспериментальная версия: проверена не полностью. Сохраните оригиналы.",
+    "no-changes": "Ничего не потеряется: проект использует только то, что есть в After Effects {{year}}.",
+    "preset-no-changes": "В пресетах нет эффектов, которые пришлось бы удалять.",
+    "target-not-older": "Файл сохранён в After Effects {{from}}. Выберите версию старше {{year}}, чтобы его конвертировать.",
+    "file-unreadable": "Файл не читается, поэтому его нельзя конвертировать.",
+    "unknown": "Неизвестное замечание ({{code}})",
+    "plugins-kept-hint": "Плагины остаются в файле, но для его открытия они должны быть установлены."
+  },
+  "converting": {
+    "title": "Конвертация",
+    "progress": "Файл {{current}} из {{total}}"
+  },
+  "state": {
+    "queued": "В очереди",
+    "running": "Конвертируется",
+    "done": "Готово",
+    "failed": "Ошибка",
+    "skipped": "Пропущен"
+  },
+  "error": {
+    "write-failed": "Не удалось записать копию",
+    "unknown": "Не удалось сконвертировать"
+  },
+  "done": {
+    "title_one": "Готово: {{count}} файл",
+    "title_few": "Готово: {{count}} файла",
+    "title_many": "Готово: {{count}} файлов",
+    "title_other": "Готово: {{count}} файла",
+    "sub": "Оригиналы не тронуты.",
+    "failed_one": "{{count}} файл не удалось сконвертировать.",
+    "failed_few": "{{count}} файла не удалось сконвертировать.",
+    "failed_many": "{{count}} файлов не удалось сконвертировать.",
+    "failed_other": "{{count}} файла не удалось сконвертировать.",
+    "skipped_one": "{{count}} файл пропущен: копия уже существует.",
+    "skipped_few": "{{count}} файла пропущено: копии уже существуют.",
+    "skipped_many": "{{count}} файлов пропущено: копии уже существуют.",
+    "skipped_other": "{{count}} файла пропущено: копии уже существуют.",
+    "warning": "Сохранено с предупреждением",
+    "showFolder": "Показать в папке",
+    "convertMore": "Ещё файлы",
+    "supportLine": "AEP Downgrader бесплатный и с открытым кодом.",
+    "support": "Поддержать проект",
+    "dismiss": "Скрыть"
+  },
+  "update": {
+    "title": "Вышла версия {{version}}",
+    "whatsNew": "Что нового",
+    "action": "Обновить",
+    "installing": "Устанавливаем обновление…",
+    "installed": "Обновление установлено. Перезапустите приложение.",
+    "dismiss": "Скрыть уведомление"
+  },
+  "whatsNew": {
+    "title": "Что нового",
+    "foot": "Бесплатно, с открытым кодом, без рекламы.",
+    "close": "Закрыть",
+    "updateTo": "Обновить до {{version}}"
+  },
+  "settings": {
+    "title": "Настройки",
+    "language": "Язык",
+    "theme": "Тема",
+    "dark": "Тёмная",
+    "light": "Светлая",
+    "system": "Как в системе",
+    "save": "Куда сохранять",
+    "saveNext": "Рядом с оригиналом",
+    "saveFolder": "В выбранную папку",
+    "choose": "Выбрать…",
+    "noFolder": "Папка не выбрана",
+    "pattern": "Шаблон имени файла",
+    "patternHint": "{name} — исходное имя, {year} — целевая версия.",
+    "preview": "Пример",
+    "exists": "Если файл с таким именем уже есть",
+    "rename": "Добавить номер",
+    "overwrite": "Перезаписать",
+    "skip": "Пропустить",
+    "updates": "Проверять обновления автоматически",
+    "updatesSub": "Раз в день, в фоне.",
+    "version": "Версия {{version}}",
+    "accent": "Цвет акцента",
+    "accents": {
+      "lime": "Лайм",
+      "ember": "Янтарь",
+      "pink": "Розовый",
+      "aqua": "Аква",
+      "cobalt": "Кобальт"
+    }
+  },
+  "privacy": {
+    "title": "Конфиденциальность",
+    "body": "AEP Downgrader работает только на этом компьютере. Файлы никуда не загружаются, аккаунта и телеметрии нет. Единственный сетевой запрос приложения — проверка обновлений: оно спрашивает у GitHub номер последнего релиза.",
+    "source": "Исходный код на GitHub"
+  }
+}

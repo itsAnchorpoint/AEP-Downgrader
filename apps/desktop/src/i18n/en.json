@@ -1,0 +1,159 @@
+{
+  "app": {
+    "name": "AEP Downgrader"
+  },
+  "header": {
+    "whatsNew": "What’s new",
+    "settings": "Settings",
+    "back": "Back"
+  },
+  "drop": {
+    "title": "Drop .aep, .aet or .ffx files here",
+    "sub": "or click to browse",
+    "over": "Release to add",
+    "privacy": "Everything stays on this computer",
+    "privacySub": "No account. No upload. No telemetry.",
+    "heroBefore": "Open it in",
+    "heroMark": "any",
+    "heroAfter": "older version."
+  },
+  "queue": {
+    "files": "Files",
+    "addMore": "Add more",
+    "clear": "Clear",
+    "remove": "Remove",
+    "convertTo": "Convert to",
+    "saveNext": "Copies are saved next to the originals",
+    "saveFolder": "Copies are saved to {{folder}}",
+    "convert": "Convert",
+    "convert_one": "Convert {{count}} file",
+    "convert_other": "Convert {{count}} files",
+    "showReport": "Show report",
+    "hideReport": "Hide report"
+  },
+  "file": {
+    "version": "After Effects {{name}}",
+    "versionPlain": "After Effects",
+    "beta": "beta",
+    "build": "build {{build}}"
+  },
+  "platform": {
+    "windows": "Windows",
+    "mac-intel": "macOS (Intel)",
+    "mac-arm": "macOS (Apple silicon)"
+  },
+  "problem": {
+    "not-ae-file": "not an After Effects file",
+    "sidecar": "not a project file (macOS sidecar)",
+    "xml-project": "XML project (.aepx) is not supported",
+    "truncated": "file is incomplete",
+    "damaged": "file is damaged",
+    "too-new": "saved by a newer version than this app knows",
+    "unreadable": "file can’t be read"
+  },
+  "target": {
+    "verified": "Verified",
+    "experimental": "Experimental",
+    "ae": "After Effects {{name}}"
+  },
+  "report": {
+    "title": "Before you convert",
+    "for": "What will change in",
+    "safe": "Originals are never modified. A copy is saved next to each file.",
+    "loading": "Checking the file…"
+  },
+  "note": {
+    "shadow-color-removed": "Shadow Color will be removed (added in 2024)",
+    "effects-removed_one": "{{count}} effect doesn’t exist in After Effects {{year}}: {{names}}",
+    "effects-removed_other": "{{count}} effects don’t exist in After Effects {{year}}: {{names}}",
+    "text-animator-ranges": "Text animator ranges may render slightly differently",
+    "plugins-kept": "Third-party plugins used: {{names}}",
+    "experimental-target": "Experimental target: not fully tested yet. Keep your originals.",
+    "no-changes": "Nothing will be lost. This project only uses features available in After Effects {{year}}.",
+    "preset-no-changes": "Presets carry no effects that need to be removed.",
+    "target-not-older": "Saved in After Effects {{from}}. Pick an older target than {{year}} to convert this file.",
+    "file-unreadable": "This file can’t be read, so it can’t be converted.",
+    "unknown": "Unknown note ({{code}})",
+    "plugins-kept-hint": "Plugins are kept in the file but must be installed to open it."
+  },
+  "converting": {
+    "title": "Converting",
+    "progress": "File {{current}} of {{total}}"
+  },
+  "state": {
+    "queued": "Waiting",
+    "running": "Converting",
+    "done": "Done",
+    "failed": "Failed",
+    "skipped": "Skipped"
+  },
+  "error": {
+    "write-failed": "Could not write the copy",
+    "unknown": "Conversion failed"
+  },
+  "done": {
+    "title_one": "{{count}} file converted",
+    "title_other": "{{count}} files converted",
+    "sub": "Originals were not touched.",
+    "failed_one": "{{count}} file failed.",
+    "failed_other": "{{count}} files failed.",
+    "skipped_one": "{{count}} file skipped because a copy already exists.",
+    "skipped_other": "{{count}} files skipped because a copy already exists.",
+    "warning": "Saved with a warning",
+    "showFolder": "Show in folder",
+    "convertMore": "Convert more files",
+    "supportLine": "AEP Downgrader is free and open source.",
+    "support": "Support the project",
+    "dismiss": "Dismiss"
+  },
+  "update": {
+    "title": "Version {{version}} is available",
+    "whatsNew": "What’s new",
+    "action": "Update",
+    "installing": "Installing the update…",
+    "installed": "Update installed. Restart the app to finish.",
+    "dismiss": "Dismiss update notice"
+  },
+  "whatsNew": {
+    "title": "What’s new",
+    "foot": "Free, open source, no ads.",
+    "close": "Close",
+    "updateTo": "Update to {{version}}"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "dark": "Dark",
+    "light": "Light",
+    "system": "System",
+    "save": "Where to save",
+    "saveNext": "Next to the original",
+    "saveFolder": "Chosen folder",
+    "choose": "Choose…",
+    "noFolder": "No folder chosen",
+    "pattern": "File name pattern",
+    "patternHint": "{name} is the original name, {year} is the target version.",
+    "preview": "Preview",
+    "exists": "If the file name already exists",
+    "rename": "Add a number",
+    "overwrite": "Overwrite",
+    "skip": "Skip",
+    "updates": "Check for updates automatically",
+    "updatesSub": "Once a day, in the background.",
+    "version": "Version {{version}}",
+    "accent": "Accent color",
+    "accents": {
+      "lime": "Lime",
+      "ember": "Ember",
+      "pink": "Pink",
+      "aqua": "Aqua",
+      "cobalt": "Cobalt"
+    }
+  },
+  "privacy": {
+    "title": "Privacy",
+    "body": "AEP Downgrader works entirely on this computer. Your files are never uploaded, and there is no account and no telemetry. The only network request the app makes is the update check, which asks GitHub for the latest release number.",
+    "source": "View source on GitHub"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Permissions of the main window. File access stays in Rust.",
+  "windows": ["main"],
+  "permissions": [
+    "core:event:default",
+    "core:window:default",
+    "dialog:allow-open",
+    "store:allow-load",
+    "store:allow-get",
+    "store:allow-set",
+    "store:allow-save",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        { "url": "https://github.com/itsAnchorpoint/AEP-Downgrader" },
+        { "url": "https://github.com/itsAnchorpoint/AEP-Downgrader/*" }
+      ]
+    }
+  ]
+}
