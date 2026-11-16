@@ -269,3 +269,89 @@ fn test_e_local_245_23_to_22_blocked() {
         other => panic!("expected Err(Blocked), got: {:?}", other),
     }
 }
+
+const LOCAL_SHIIRU27: &str = concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../tests/fixtures-local/shiiru27"
+);
+
+/// Read a file from the local `tests/fixtures-local/shiiru27` folder.
+fn local27(name: &str) -> Vec<u8> {
+    let path = Path::new(LOCAL_SHIIRU27).join(name);
+    std::fs::read(&path).unwrap_or_else(|e| panic!("cannot read {}: {e}", path.display()))
+}
+
+#[test]
+fn test_f_local_270_to_26() {
+    if !Path::new(LOCAL_SHIIRU27).is_dir() {
+        eprintln!("fixtures-local/shiiru27 not present; skipping");
+        return;
+    }
+    let input = local27("AEPD_test_27.0_mac.aep");
+    let reference = local27("AEPD_test_27.0_as_26.x.aep");
+    let out = convert(&input, 26).expect("convert succeeds");
+    let ours = parse_bytes(&out.bytes);
+    let theirs = parse_bytes(&reference);
+    let changes = diff_filtered(&ours, &theirs);
+
+    for c in &changes {
+        if let Change::Removed(l) = c {
+            assert!(
+                l.key != "ofl2" && l.key != "mtsf",
+                "remaining Removed {}; remaining:\n{}",
+                l.key,
+                report(&changes)
+            );
+            assert!(
+                !l.preview.starts_with("ADBE3D Mat Rand Offset"),
+                "remaining Removed Mat Rand Offset; remaining:\n{}",
+                report(&changes)
+            );
+        }
+        assert!(
+            ["Utf8", "apid", "dcui", "tdmn", "fdta"].contains(&key_of(c)),
+            "unexpected remaining change with key {}; remaining:\n{}",
+            key_of(c),
+            report(&changes)
+        );
+    }
+    assert_eq!(
+        head_first8(&ours)[..4],
+        head_first8(&theirs)[..4],
+        "output head bytes 0..4 must equal the reference's"
+    );
+}
+
+#[test]
+fn test_g_local_26_to_25() {
+    if !Path::new(LOCAL_SHIIRU27).is_dir() {
+        eprintln!("fixtures-local/shiiru27 not present; skipping");
+        return;
+    }
+    let input = local27("AEPD_test_27.0_as_26.x.aep");
+    let reference = local27("AEPD_test_27.0_as_25.x.aep");
+    let changes = remaining(&input, 25, &reference);
+
+    for c in &changes {
+        if let Change::Removed(l) = c {
+            assert!(
+                l.key != "elab" && l.key != "LIST:GdV2" && l.key != "cety",
+                "remaining Removed {}; remaining:\n{}",
+                l.key,
+                report(&changes)
+            );
+            assert_ne!(
+                l.preview,
+                "ADBE3D Material Parade",
+                "remaining Removed Material Parade; remaining:\n{}",
+                report(&changes)
+            );
+        }
+    }
+    assert!(
+        changes.len() <= 25,
+        "expected at most 25 remaining changes, got {}:\n{}",
+        changes.len(),
+        report(&changes)
+    );
+}

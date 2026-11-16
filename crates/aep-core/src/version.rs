@@ -206,11 +206,20 @@ pub struct Stamp {
 ///
 /// | ae_major | format | word         |
 /// |----------|--------|--------------|
+/// | 26       | 97.11  | `0x0F128650` |
 /// | 25       | 96.9   | `0x0F0B0661` |
 /// | 24       | 95.6   | `0x0F030641` |
 /// | 23       | 94.9   | `0x0B3B0637` |
 /// | 22       | 93.43  | `0x0B33063B` |
-pub const STAMPS: [Stamp; 4] = [
+pub const STAMPS: [Stamp; 5] = [
+    Stamp {
+        ae_major: 26,
+        format: FormatVersion {
+            major: 97,
+            minor: 11,
+        },
+        word: AppVersion(0x0F12_8650),
+    },
     Stamp {
         ae_major: 25,
         format: FormatVersion {
@@ -369,7 +378,16 @@ mod tests {
         for stamp in STAMPS {
             assert_eq!(stamp.word.major(), stamp.ae_major);
         }
-        assert_eq!(stamp_for(26), None);
+        let s26 = stamp_for(26).expect("26 should be known");
+        assert_eq!(
+            s26.format,
+            FormatVersion {
+                major: 97,
+                minor: 11
+            }
+        );
+        assert_eq!(s26.word, AppVersion(0x0F12_8650));
+        assert_eq!(stamp_for(27), None);
     }
 
     #[test]

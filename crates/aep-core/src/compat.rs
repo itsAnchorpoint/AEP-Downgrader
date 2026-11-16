@@ -39,15 +39,21 @@ pub struct Target {
 ///
 /// | ae_major | status | evidence |
 /// |----------|--------|----------|
-/// | 25 | Experimental | `Header change only. Not yet opened in After Effects 2025.` |
+/// | 26 | Experimental | `Matches the file After Effects 27.0 saves for 26.x except colour settings of sources. Not yet opened in After Effects 2026.` |
+/// | 25 | Experimental | `Matches the file After Effects 27.0 saves for 25.x except one migrated effect. Not yet opened in After Effects 2025.` |
 /// | 24 | Verified | `Projects from 25.6 and 26.0 opened in After Effects 24.5.` |
 /// | 23 | Experimental | `Matches the file After Effects 24.5 saves for 23.x except panel state. Not yet opened in After Effects 2023.` |
 /// | 22 | Experimental | `Matches the file After Effects 24.5 saves for 22.x. Not yet opened in After Effects 2022.` |
-pub const TARGETS: [Target; 4] = [
+pub const TARGETS: [Target; 5] = [
+    Target {
+        ae_major: 26,
+        status: Status::Experimental,
+        evidence: "Matches the file After Effects 27.0 saves for 26.x except colour settings of sources. Not yet opened in After Effects 2026.",
+    },
     Target {
         ae_major: 25,
         status: Status::Experimental,
-        evidence: "Header change only. Not yet opened in After Effects 2025.",
+        evidence: "Matches the file After Effects 27.0 saves for 25.x except one migrated effect. Not yet opened in After Effects 2025.",
     },
     Target {
         ae_major: 24,
@@ -128,7 +134,8 @@ mod tests {
     fn target_lookup() {
         let t24 = target(24).expect("24 is known");
         assert_eq!(t24.status, Status::Verified);
-        assert_eq!(target(26), None);
+        assert!(target(26).is_some());
+        assert_eq!(target(27), None);
         assert_eq!(target(21), None);
         assert_eq!(
             TARGETS
@@ -147,6 +154,7 @@ mod tests {
             app: AppVersion(0x0F0B_0665),
         };
         let majors = |ts: Vec<Target>| -> Vec<u8> { ts.into_iter().map(|t| t.ae_major).collect() };
+        assert_eq!(majors(targets_for(&head(98))), vec![26, 25, 24, 23, 22]);
         assert_eq!(majors(targets_for(&head(97))), vec![25, 24, 23, 22]);
         assert_eq!(majors(targets_for(&head(95))), vec![23, 22]);
         assert!(
@@ -159,11 +167,11 @@ mod tests {
     fn markdown_table_shape() {
         let table = markdown_table();
         let lines: Vec<&str> = table.lines().collect();
-        assert_eq!(lines.len(), 6, "table has 6 lines");
+        assert_eq!(lines.len(), 7, "table has 7 lines");
         assert_eq!(lines[0], "| Target | Status | Basis |");
         assert_eq!(lines[1], "|---|---|---|");
         assert_eq!(
-            lines[3],
+            lines[4],
             "| After Effects 2024 (24.x) | Verified | Projects from 25.6 and 26.0 opened in After Effects 24.5. |"
         );
         assert!(table.ends_with('\n'), "ends with a newline");

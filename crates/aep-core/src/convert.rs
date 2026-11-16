@@ -2,7 +2,8 @@
 //!
 //! The rules below reproduce what After Effects itself does in
 //! "Save a Copy As <older version>". They were derived by comparing files
-//! that After Effects 24.5 saved from one project as 24.x, 23.x and 22.x.
+//! that After Effects 24.5 saved from one project as 24.x, 23.x and 22.x, and files that
+//! After Effects 27.0 saved from one project as 27.0, 26.x and 25.x.
 //!
 //! # Pipeline of [`convert`]
 //!
@@ -26,7 +27,9 @@
 //!
 //! | from | to | rule |
 //! |------|----|------|
-//! | 98, 97, 96 | one lower | nothing besides the stamp |
+//! | 98 (AE 27) | 97 | O1, R1, F1 |
+//! | 97 (AE 26) | 96 | A1, G1, P1, C1 |
+//! | 96 | 95 | nothing besides the stamp |
 //! | 95 (AE 24) | 94 | S1 |
 //! | 94 (AE 23) | 93 (AE 22) | M1 (may block), L1, E1, B1 |
 //!
@@ -34,6 +37,22 @@
 //! (and in the top-level children). A match name is the bytes of a `tdmn` chunk's data up
 //! to the first NUL byte.
 //!
+//! - **O1** Everywhere: remove every chunk with id `ofl2`.
+//!   Counted for [`NoteCode::NewerDataRemoved`].
+//! - **R1** Everywhere: a `tdmn` chunk whose match name is `ADBE3D Mat Rand Offset` or
+//!   `ADBE3D Mat Rand Offset Seed`, immediately followed by any list (either list variant)
+//!   → remove both nodes. Counted for [`NoteCode::Material3dRemoved`], count = pairs removed.
+//! - **F1** Everywhere: remove every chunk with id `mtsf`.
+//!   Counted for [`NoteCode::NewerDataRemoved`].
+//! - **A1** Everywhere: remove every chunk with id `elab`.
+//!   Counted for [`NoteCode::NewerDataRemoved`].
+//! - **G1** Everywhere: remove every list (either list variant) of kind `GdV2`.
+//!   Counted for [`NoteCode::NewerDataRemoved`].
+//! - **P1** Everywhere: a `tdmn` chunk with match name `ADBE3D Material Parade`, immediately
+//!   followed by any list (either list variant) → remove both nodes.
+//!   Counted for [`NoteCode::Material3dRemoved`], count = pairs removed.
+//! - **C1** Everywhere: remove every chunk with id `cety`.
+//!   Counted for [`NoteCode::NewerDataRemoved`].
 //! - **S1** Everywhere: a `tdmn` chunk with match name `ADBE Shadow Color` that is
 //!   immediately followed by a list of kind `tdbs` → remove both nodes.
 //!   Note [`NoteCode::ShadowColorRemoved`], count = pairs removed.
@@ -52,11 +71,18 @@
 //! - **B1** Everywhere: a list of kind `tdbs` whose previous sibling is a `blsi` chunk →
 //!   remove that list. Note [`NoteCode::LayerStyleOptionRemoved`], count = lists removed.
 //!
-//! A note is only emitted when its count is greater than zero. Notes are returned in the
-//! order the rules are listed here.
+//! [`NoteCode::Material3dRemoved`] counts the pairs removed by R1 and P1 together;
+//! [`NoteCode::NewerDataRemoved`] counts the nodes removed by O1, F1, A1, G1 and C1 together.
+//! Neither is a blocker.
+//!
+//! A note is only emitted when its count is greater than zero. Notes are returned in this
+//! order: `Material3dRemoved`, `NewerDataRemoved`, then the notes of S1, M1, L1, E1, B1 as
+//! listed here.
 //!
 //! Known gap: After Effects also shortens the `otln` chunk (panel outline state) when it
-//! removes properties. That is not reproduced yet.
+//! removes properties. That is not reproduced yet. After Effects 27 also rewrites colour
+//! settings of sources (`dcui`, `apid`, an ICC profile in `Utf8`) and migrates the Compound
+//! Blur effect; neither is reproduced.
 
 use crate::inspect::FileKind;
 use crate::riff::{FourCc, Node, RiffError, parse};
@@ -69,6 +95,11 @@ const TDMN: FourCc = *b"tdmn";
 const TDBS: FourCc = *b"tdbs";
 const LDTA: FourCc = *b"ldta";
 const BLSI: FourCc = *b"blsi";
+const OFL2: FourCc = *b"ofl2";
+const MTSF: FourCc = *b"mtsf";
+const ELAB: FourCc = *b"elab";
+const CETY: FourCc = *b"cety";
+const GDV2: FourCc = *b"GdV2";
 
 const SHADOW_COLOR: &str = "ADBE Shadow Color";
 const LIGHT_NAMES: [&str; 4] = [
@@ -77,10 +108,14 @@ const LIGHT_NAMES: [&str; 4] = [
     "ADBE Light Backgd Opacity",
     "ADBE Light Backgd Blur",
 ];
+const MAT_RAND_NAMES: [&str; 2] = ["ADBE3D Mat Rand Offset", "ADBE3D Mat Rand Offset Seed"];
+const MATERIAL_PARADE_NAMES: [&str; 1] = ["ADBE3D Material Parade"];
 
 /// What a conversion did or why it cannot be done.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NoteCode {
+    Material3dRemoved,
+    NewerDataRemoved,
     ShadowColorRemoved,
     LightEnvironmentRemoved,
     LayerStyleOptionRemoved,
@@ -92,10 +127,12 @@ pub enum NoteCode {
 
 impl NoteCode {
     /// Stable identifier for user interfaces and logs:
-    /// `shadow-color-removed`, `light-environment-removed`, `layer-style-option-removed`,
+    /// `3d-material-removed`, `newer-data-removed`, `shadow-color-removed`, `light-environment-removed`, `layer-style-option-removed`,
     /// `layer-records-shortened`, `matte-not-adjacent`.
     pub fn as_str(self) -> &'static str {
         match self {
+            NoteCode::Material3dRemoved => "3d-material-removed",
+            NoteCode::NewerDataRemoved => "newer-data-removed",
             NoteCode::ShadowColorRemoved => "shadow-color-removed",
             NoteCode::LightEnvironmentRemoved => "light-environment-removed",
             NoteCode::LayerStyleOptionRemoved => "layer-style-option-removed",
@@ -145,7 +182,7 @@ pub struct Converted {
     pub to: Head,
 }
 
-/// Convert `input` for After Effects `target_ae_major` (22, 23, 24 or 25).
+/// Convert `input` for After Effects `target_ae_major` (22, 23, 24, 25 or 26).
 /// See the module docs for the exact pipeline. Never panics on any input.
 pub fn convert(input: &[u8], target_ae_major: u8) -> Result<Converted, ConvertError> {
     // 1. Parse.
@@ -189,6 +226,32 @@ pub fn convert(input: &[u8], target_ae_major: u8) -> Result<Converted, ConvertEr
     let from = stamp.format.major + 1;
     let to = head.format.major;
     let mut counts = [0u32; 5]; // S1, M1, L1, E1, B1
+    let mut newer = [0u32; 7]; // O1, R1, F1, A1, G1, P1, C1
+    if from <= 98 && 98 <= to {
+        for_each_children_mut(&mut file.children, &mut |children| {
+            remove_chunks(children, OFL2, &mut newer[0])
+        });
+        for_each_children_mut(&mut file.children, &mut |children| {
+            remove_tdmn_pairs(children, &MAT_RAND_NAMES, &mut newer[1])
+        });
+        for_each_children_mut(&mut file.children, &mut |children| {
+            remove_chunks(children, MTSF, &mut newer[2])
+        });
+    }
+    if from <= 97 && 97 <= to {
+        for_each_children_mut(&mut file.children, &mut |children| {
+            remove_chunks(children, ELAB, &mut newer[3])
+        });
+        for_each_children_mut(&mut file.children, &mut |children| {
+            remove_lists_of_kind(children, GDV2, &mut newer[4])
+        });
+        for_each_children_mut(&mut file.children, &mut |children| {
+            remove_tdmn_pairs(children, &MATERIAL_PARADE_NAMES, &mut newer[5])
+        });
+        for_each_children_mut(&mut file.children, &mut |children| {
+            remove_chunks(children, CETY, &mut newer[6])
+        });
+    }
     if from <= 95 && 95 <= to {
         for_each_children_mut(&mut file.children, &mut |children| {
             rule_s1(children, &mut counts[0])
@@ -211,6 +274,11 @@ pub fn convert(input: &[u8], target_ae_major: u8) -> Result<Converted, ConvertEr
 
     // 6. Assemble notes in the documented order, dropping zero counts.
     let notes = [
+        (NoteCode::Material3dRemoved, newer[1] + newer[5]),
+        (
+            NoteCode::NewerDataRemoved,
+            newer[0] + newer[2] + newer[3] + newer[4] + newer[6],
+        ),
         (NoteCode::ShadowColorRemoved, counts[0]),
         (NoteCode::MatteNotAdjacent, counts[1]),
         (NoteCode::LayerRecordsShortened, counts[2]),
@@ -288,6 +356,42 @@ fn match_name_is(data: &[u8], name: &str) -> bool {
 /// `true` when the node is a list (either variant) of `kind`.
 fn is_list_kind(node: &Node, kind: FourCc) -> bool {
     node.kind() == Some(kind)
+}
+
+/// Remove every chunk with this id from `children`; add the number removed to `count`.
+fn remove_chunks(children: &mut Vec<Node>, chunk_id: FourCc, count: &mut u32) {
+    let before = children.len();
+    children.retain(|n| !matches!(n, Node::Chunk { id, .. } if *id == chunk_id));
+    *count += (before - children.len()) as u32;
+}
+
+/// Remove every list (either variant) of this kind; add the number removed to `count`.
+fn remove_lists_of_kind(children: &mut Vec<Node>, kind: FourCc, count: &mut u32) {
+    let before = children.len();
+    children.retain(|n| !is_list_kind(n, kind));
+    *count += (before - children.len()) as u32;
+}
+
+/// Remove every `tdmn` chunk whose match name is one of `names` together with the list
+/// (either variant) that immediately follows it; add the number of pairs to `count`.
+fn remove_tdmn_pairs(children: &mut Vec<Node>, names: &[&str], count: &mut u32) {
+    let len = children.len();
+    let mut out: Vec<Node> = Vec::with_capacity(len);
+    let mut i = 0;
+    while i < len {
+        let named = matches!(
+            &children[i],
+            Node::Chunk { id, data } if *id == TDMN && names.iter().any(|n| match_name_is(data, n))
+        );
+        if named && i + 1 < len && children[i + 1].kind().is_some() {
+            *count += 1;
+            i += 2;
+        } else {
+            out.push(children[i].clone());
+            i += 1;
+        }
+    }
+    *children = out;
 }
 
 /// A `tdmn` chunk whose match name is `ADBE Shadow Color`.
@@ -871,6 +975,212 @@ mod tests {
         assert_eq!(&head[2..4], &6u16.to_be_bytes());
     }
 
+    // f2) rules of formats 98 and 97 -------------------------------------
+
+    const WORD_27: u32 = 0x0F18_0000; // AE 27, Windows (only the major matters here)
+
+    fn fmt(major: u16) -> FormatVersion {
+        FormatVersion { major, minor: 0 }
+    }
+
+    fn any_list() -> Node {
+        Node::List {
+            kind: *b"tdgp",
+            children: Vec::new(),
+        }
+    }
+
+    /// Children of the first top-level list of kind `Item` in the converted bytes.
+    fn item_children(bytes: &[u8]) -> Vec<Node> {
+        let parsed = parse(bytes).expect("reparse");
+        parsed
+            .children
+            .into_iter()
+            .find_map(|n| match n {
+                Node::List { kind, children } if kind == *b"Item" => Some(children),
+                _ => None,
+            })
+            .expect("Item list present")
+    }
+
+    fn item(children: Vec<Node>) -> Node {
+        Node::List {
+            kind: *b"Item",
+            children,
+        }
+    }
+
+    fn note(code: NoteCode, count: u32) -> Note {
+        Note { code, count }
+    }
+
+    #[test]
+    fn o1_removes_ofl2_everywhere() {
+        let inner = Node::List {
+            kind: *b"tdgp",
+            children: vec![empty_chunk(OFL2, 4), empty_chunk(*b"keep", 4)],
+        };
+        let list = item(vec![empty_chunk(OFL2, 8), inner, empty_chunk(*b"keep", 4)]);
+        let bytes = project_bytes(fmt(98), WORD_27, vec![list, empty_chunk(OFL2, 2)]);
+        let result = convert(&bytes, 26).expect("converts");
+        assert_eq!(result.notes, vec![note(NoteCode::NewerDataRemoved, 3)]);
+        let parsed = parse(&result.bytes).expect("reparse");
+        assert!(parsed.children.iter().all(|n| n.id() != OFL2));
+        let children = item_children(&result.bytes);
+        assert_eq!(children.len(), 2);
+        match &children[0] {
+            Node::List { children, .. } => assert_eq!(children.len(), 1),
+            other => panic!("expected list, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn r1_removes_pairs_and_keeps_unpaired() {
+        let list = item(vec![
+            tdmn("ADBE3D Mat Rand Offset"),
+            any_list(),
+            tdmn("ADBE3D Mat Rand Offset Seed"),
+            Node::OpaqueList {
+                kind: *b"tdgp",
+                data: vec![0; 8],
+            },
+            tdmn("ADBE3D Mat Rand Offset"), // no following list: stays
+            tdmn("ADBE3D Mat Rand Offset X"), // other name: stays
+            any_list(),
+        ]);
+        let bytes = project_bytes(fmt(98), WORD_27, vec![list]);
+        let result = convert(&bytes, 26).expect("converts");
+        assert_eq!(result.notes, vec![note(NoteCode::Material3dRemoved, 2)]);
+        assert_eq!(item_children(&result.bytes).len(), 3);
+    }
+
+    #[test]
+    fn f1_removes_mtsf() {
+        let list = item(vec![
+            empty_chunk(MTSF, 4),
+            empty_chunk(*b"keep", 4),
+            empty_chunk(MTSF, 4),
+        ]);
+        let bytes = project_bytes(fmt(98), WORD_27, vec![list]);
+        let result = convert(&bytes, 26).expect("converts");
+        assert_eq!(result.notes, vec![note(NoteCode::NewerDataRemoved, 2)]);
+        assert_eq!(item_children(&result.bytes).len(), 1);
+    }
+
+    #[test]
+    fn a1_removes_elab() {
+        let list = item(vec![empty_chunk(ELAB, 4), empty_chunk(*b"keep", 4)]);
+        let bytes = project_bytes(fmt(97), 0x0F10_0643, vec![list]);
+        let result = convert(&bytes, 25).expect("converts");
+        assert_eq!(result.notes, vec![note(NoteCode::NewerDataRemoved, 1)]);
+        assert_eq!(item_children(&result.bytes).len(), 1);
+    }
+
+    #[test]
+    fn g1_removes_gdv2_lists_of_both_variants() {
+        let list = item(vec![
+            Node::List {
+                kind: GDV2,
+                children: vec![empty_chunk(*b"keep", 4)],
+            },
+            Node::OpaqueList {
+                kind: GDV2,
+                data: vec![0; 8],
+            },
+            any_list(),
+        ]);
+        let bytes = project_bytes(fmt(97), 0x0F10_0643, vec![list]);
+        let result = convert(&bytes, 25).expect("converts");
+        assert_eq!(result.notes, vec![note(NoteCode::NewerDataRemoved, 2)]);
+        assert_eq!(item_children(&result.bytes).len(), 1);
+    }
+
+    #[test]
+    fn p1_removes_parade_pairs_and_keeps_unpaired() {
+        let list = item(vec![
+            tdmn("ADBE3D Material Parade"),
+            any_list(),
+            tdmn("ADBE3D Material Parade"), // no following list: stays
+            empty_chunk(*b"keep", 4),
+            tdmn("ADBE3D Material Parade"), // followed by a chunk: stays
+            empty_chunk(*b"keep", 4),
+        ]);
+        let bytes = project_bytes(fmt(97), 0x0F10_0643, vec![list]);
+        let result = convert(&bytes, 25).expect("converts");
+        assert_eq!(result.notes, vec![note(NoteCode::Material3dRemoved, 1)]);
+        assert_eq!(item_children(&result.bytes).len(), 4);
+    }
+
+    #[test]
+    fn c1_removes_cety() {
+        let list = item(vec![empty_chunk(CETY, 4), empty_chunk(*b"keep", 4)]);
+        let bytes = project_bytes(fmt(97), 0x0F10_0643, vec![list]);
+        let result = convert(&bytes, 25).expect("converts");
+        assert_eq!(result.notes, vec![note(NoteCode::NewerDataRemoved, 1)]);
+        assert_eq!(item_children(&result.bytes).len(), 1);
+    }
+
+    #[test]
+    fn pipeline_98_to_26_leaves_97_rules_alone() {
+        // Format 98 → 26 leaves format 97 (and its rules) untouched.
+        let list = item(vec![empty_chunk(ELAB, 4), empty_chunk(CETY, 4)]);
+        let bytes = project_bytes(fmt(98), WORD_27, vec![list]);
+        let result = convert(&bytes, 26).expect("converts");
+        assert!(result.notes.is_empty());
+        assert_eq!(item_children(&result.bytes).len(), 2);
+    }
+
+    #[test]
+    fn pipeline_98_to_25_applies_both_steps() {
+        let list = item(vec![
+            empty_chunk(OFL2, 4),
+            tdmn("ADBE3D Mat Rand Offset"),
+            any_list(),
+            empty_chunk(MTSF, 4),
+            empty_chunk(ELAB, 4),
+            Node::List {
+                kind: GDV2,
+                children: Vec::new(),
+            },
+            tdmn("ADBE3D Material Parade"),
+            any_list(),
+            empty_chunk(CETY, 4),
+            empty_chunk(*b"keep", 4),
+        ]);
+        let bytes = project_bytes(fmt(98), WORD_27, vec![list]);
+        let result = convert(&bytes, 25).expect("converts");
+        assert_eq!(
+            result.notes,
+            vec![
+                note(NoteCode::Material3dRemoved, 2),
+                note(NoteCode::NewerDataRemoved, 5),
+            ]
+        );
+        assert_eq!(item_children(&result.bytes).len(), 1);
+        assert_eq!(
+            result.to.format,
+            FormatVersion {
+                major: 96,
+                minor: 9
+            }
+        );
+    }
+
+    #[test]
+    fn pipeline_98_to_26_stamps_97_11() {
+        let bytes = project_bytes(fmt(98), WORD_27, vec![]);
+        let result = convert(&bytes, 26).expect("converts");
+        assert!(result.notes.is_empty());
+        assert_eq!(
+            result.to.format,
+            FormatVersion {
+                major: 97,
+                minor: 11
+            }
+        );
+        assert_eq!(result.to.app.0, 0x0F12_8650);
+    }
+
     // g) errors ---------------------------------------------------------
 
     #[test]
@@ -978,7 +1288,7 @@ mod tests {
             WIN_WORD_24,
             vec![],
         );
-        for target in [26u8, 21] {
+        for target in [27u8, 21] {
             match convert(&bytes, target) {
                 Err(ConvertError::UnsupportedTarget { ae_major }) => {
                     assert_eq!(ae_major, target);
@@ -1063,7 +1373,8 @@ mod tests {
     #[test]
     fn targets_for_each_source() {
         let cases = [
-            (97u16, vec![25u8, 24, 23, 22]),
+            (98u16, vec![26u8, 25, 24, 23, 22]),
+            (97, vec![25, 24, 23, 22]),
             (95, vec![23, 22]),
             (94, vec![22]),
             (93, Vec::<u8>::new()),
