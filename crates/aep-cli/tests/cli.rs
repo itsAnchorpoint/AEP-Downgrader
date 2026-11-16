@@ -132,10 +132,25 @@ fn convert_downgrades_and_roundtrips() {
 }
 
 #[test]
-fn targets_lists_ae_majors() {
+fn targets_lists_ae_majors_with_status() {
     let (code, stdout) = aep(&["targets", FIXTURE_26]);
     assert_eq!(code, 0, "targets should succeed");
-    assert_eq!(stdout, "25\n24\n23\n22\n");
+    assert_eq!(
+        stdout,
+        "25 experimental\n24 verified\n23 experimental\n22 experimental\n"
+    );
+}
+
+#[test]
+fn compat_prints_markdown_table() {
+    let (code, stdout) = aep(&["compat"]);
+    assert_eq!(code, 0, "compat should succeed");
+    let lines: Vec<&str> = stdout.lines().collect();
+    assert_eq!(
+        lines.get(1).copied(),
+        Some("|---|---|---|"),
+        "second line should be the separator row"
+    );
 }
 
 #[test]

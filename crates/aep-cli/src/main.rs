@@ -8,19 +8,22 @@
 //! aep diff [--full] [--no-noise] <a> <b>   structural diff of two files
 //! aep targets <file>                 print the AE majors this file can be downgraded to
 //! aep convert <in> <out> --to <major>   convert a project to an older AE major
+//! aep compat                         print the compatibility table as Markdown
 //! ```
 
+use aep_core::compat;
 use aep_core::diff::{self, Change};
 use aep_core::riff::{Node, parse};
 use std::io::Write;
 use std::process::ExitCode;
 
-const USAGE: &str = "usage: aep <tree|roundtrip|diff|targets|convert> ...\n\
+const USAGE: &str = "usage: aep <tree|roundtrip|diff|targets|convert|compat> ...\n\
                      aep tree <file>\n\
                      aep roundtrip <file>\n\
                      aep diff [--full] [--no-noise] <a> <b>\n\
                       aep targets <file>\n\
-                      aep convert <in> <out> --to <major>";
+                      aep convert <in> <out> --to <major>\n\
+                      aep compat";
 
 /// Write to stdout without panicking on I/O errors (e.g. broken pipe).
 fn emit(text: &str) {
@@ -271,10 +274,16 @@ fn targets(path: &str) -> ExitCode {
         }
     };
     let mut out = String::new();
-    for major in aep_core::convert::targets_for(&head) {
-        out.push_str(&format!("{major}\n"));
+    for target in compat::targets_for(&head) {
+        out.push_str(&format!("{} {}\n", target.ae_major, target.status.as_str()));
     }
     emit(&out);
+    ExitCode::from(0)
+}
+
+/// Print the compatibility table as Markdown to stdout.
+fn compat_cmd() -> ExitCode {
+    emit(&compat::markdown_table());
     ExitCode::from(0)
 }
 
@@ -404,6 +413,13 @@ fn main() -> ExitCode {
                 return ExitCode::from(2);
             }
             targets(&args[1])
+        }
+        "compat" => {
+            if args.len() != 1 {
+                eprintln!("{USAGE}");
+                return ExitCode::from(2);
+            }
+            compat_cmd()
         }
         "convert" => {
             let rest: Vec<&str> = args[1..].iter().map(|s| s.as_str()).collect();

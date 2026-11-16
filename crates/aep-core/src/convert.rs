@@ -10,9 +10,10 @@
 //! 2. Safety net: `parsed.to_bytes()` must equal the input, else [`ConvertError::NotRoundTrip`].
 //! 3. The form must be `Egg!` (else [`ConvertError::NotAProject`]) and there must be a
 //!    top-level `head` chunk that [`Head::parse`] accepts (else [`ConvertError::NoHead`]).
-//! 4. The source format major must be one of 94..=98 (else [`ConvertError::UnknownSource`]).
-//!    [`stamp_for`]`(target_ae_major)` must exist (else [`ConvertError::UnsupportedTarget`])
-//!    and its format major must be lower than the source's (else [`ConvertError::NotADowngrade`]).
+//! 4. [`stamp_for`]`(target_ae_major)` must exist (else [`ConvertError::UnsupportedTarget`]).
+//!    The source format major must be at most 98 (else [`ConvertError::UnknownSource`]), and the
+//!    stamp's format major must be lower than the source's (else [`ConvertError::NotADowngrade`],
+//!    which also covers sources already below 94).
 //! 5. Apply the steps for every format major from the source down to the target's + 1,
 //!    highest first (table below). Collect notes.
 //! 6. If any note is a blocker, return [`ConvertError::Blocked`] with all notes. Nothing is written.
@@ -167,15 +168,15 @@ pub fn convert(input: &[u8], target_ae_major: u8) -> Result<Converted, ConvertEr
     let head_bytes = file.chunk(HEAD).ok_or(ConvertError::NoHead)?;
     let head = Head::parse(head_bytes).ok_or(ConvertError::NoHead)?;
 
-    // 4. Source format and target stamp.
-    if !(94..=98).contains(&head.format.major) {
+    // 4. Target stamp, then source format, then the downgrade check.
+    let stamp = stamp_for(target_ae_major).ok_or(ConvertError::UnsupportedTarget {
+        ae_major: target_ae_major,
+    })?;
+    if head.format.major > 98 {
         return Err(ConvertError::UnknownSource {
             format: head.format,
         });
     }
-    let stamp = stamp_for(target_ae_major).ok_or(ConvertError::UnsupportedTarget {
-        ae_major: target_ae_major,
-    })?;
     if !(stamp.format.major < head.format.major) {
         return Err(ConvertError::NotADowngrade {
             source_format: head.format,
@@ -911,7 +912,9 @@ mod tests {
     }
 
     #[test]
-    fn error_unknown_source_93() {
+    fn error_unknown_source_and_not_downgrade() {
+        // A format-93 source is not unknown; it is simply already old, so the
+        // lowest target (22, format 93) is not a downgrade.
         let bytes = project_bytes(
             FormatVersion {
                 major: 93,
@@ -921,12 +924,43 @@ mod tests {
             vec![],
         );
         match convert(&bytes, 22) {
+            Err(ConvertError::NotADowngrade {
+                source_format,
+                target_format,
+            }) => {
+                assert_eq!(
+                    source_format,
+                    FormatVersion {
+                        major: 93,
+                        minor: 43
+                    }
+                );
+                assert_eq!(
+                    target_format,
+                    FormatVersion {
+                        major: 93,
+                        minor: 43
+                    }
+                );
+            }
+            other => panic!("expected NotADowngrade, got {other:?}"),
+        }
+        // A format-99 source is unknown.
+        let bytes = project_bytes(
+            FormatVersion {
+                major: 99,
+                minor: 0,
+            },
+            0x0F10_0643,
+            vec![],
+        );
+        match convert(&bytes, 24) {
             Err(ConvertError::UnknownSource { format }) => {
                 assert_eq!(
                     format,
                     FormatVersion {
-                        major: 93,
-                        minor: 43
+                        major: 99,
+                        minor: 0
                     }
                 );
             }
