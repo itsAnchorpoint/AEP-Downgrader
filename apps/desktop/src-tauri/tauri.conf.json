@@ -29,7 +29,13 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": [
+      "nsis",
+      "appimage",
+      "deb",
+      "app",
+      "dmg"
+    ],
     "category": "Utility",
     "shortDescription": "Open After Effects files in older versions",
     "icon": [
