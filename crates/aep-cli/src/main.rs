@@ -6,6 +6,8 @@
 //! aep tree <file>                    print the chunk tree, one node per line
 //! aep roundtrip <file>               parse, serialize, compare with the input
 //! aep diff [--full] [--no-noise] <a> <b>   structural diff of two files
+//! aep targets <file>                 print the AE majors this file can be downgraded to
+//! aep convert <in> <out> --to <major>   convert a project to an older AE major
 //! ```
 
 use aep_core::diff::{self, Change};
@@ -13,10 +15,12 @@ use aep_core::riff::{Node, parse};
 use std::io::Write;
 use std::process::ExitCode;
 
-const USAGE: &str = "usage: aep <tree|roundtrip|diff> ...\n\
+const USAGE: &str = "usage: aep <tree|roundtrip|diff|targets|convert> ...\n\
                      aep tree <file>\n\
                      aep roundtrip <file>\n\
-                     aep diff [--full] [--no-noise] <a> <b>";
+                     aep diff [--full] [--no-noise] <a> <b>\n\
+                      aep targets <file>\n\
+                      aep convert <in> <out> --to <major>";
 
 /// Write to stdout without panicking on I/O errors (e.g. broken pipe).
 fn emit(text: &str) {
@@ -251,6 +255,108 @@ fn diff_cmd(full: bool, no_noise: bool, path_a: &str, path_b: &str) -> ExitCode 
     }
 }
 
+fn targets(path: &str) -> ExitCode {
+    let bytes = match std::fs::read(path) {
+        Ok(b) => b,
+        Err(e) => {
+            eprintln!("cannot read {path}: {e}");
+            return ExitCode::from(1);
+        }
+    };
+    let head = match aep_core::inspect::inspect(&bytes).head {
+        Some(head) => head,
+        None => {
+            eprintln!("no head chunk in {path}");
+            return ExitCode::from(1);
+        }
+    };
+    let mut out = String::new();
+    for major in aep_core::convert::targets_for(&head) {
+        out.push_str(&format!("{major}\n"));
+    }
+    emit(&out);
+    ExitCode::from(0)
+}
+
+/// A one-line stderr message for a [`aep_core::convert::ConvertError`].
+/// `Blocked` notes are printed by the caller, in addition to this line.
+fn convert_error_message(err: &aep_core::convert::ConvertError, path_in: &str) -> String {
+    use aep_core::convert::ConvertError;
+    use aep_core::inspect::FileKind;
+    match err {
+        ConvertError::Unreadable(e) => format!("parse error in {path_in}: {e:?}"),
+        ConvertError::NotRoundTrip => format!("parse of {path_in} did not round-trip"),
+        ConvertError::NotAProject(kind) => match kind {
+            FileKind::Preset => format!("{path_in} is a preset, not a project"),
+            FileKind::XmlProject => format!("{path_in} is an XML project, not a RIFX project"),
+            _ => format!("{path_in} is not an After Effects project"),
+        },
+        ConvertError::NoHead => format!("no head chunk in {path_in}"),
+        ConvertError::UnknownSource { format } => {
+            format!("unsupported source format {format} in {path_in}")
+        }
+        ConvertError::UnsupportedTarget { ae_major } => {
+            format!("unsupported target AE major {ae_major} (supported: 22, 23, 24, 25)")
+        }
+        ConvertError::NotADowngrade {
+            source_format,
+            target_format,
+        } => {
+            format!("not a downgrade: {source_format} -> {target_format}")
+        }
+        ConvertError::Blocked(_) => format!("conversion of {path_in} is blocked"),
+    }
+}
+
+fn convert_cmd(path_in: &str, path_out: &str, major: u8) -> ExitCode {
+    if std::path::Path::new(path_out).exists() {
+        eprintln!("{path_out} already exists");
+        return ExitCode::from(1);
+    }
+    let bytes = match std::fs::read(path_in) {
+        Ok(b) => b,
+        Err(e) => {
+            eprintln!("cannot read {path_in}: {e}");
+            return ExitCode::from(1);
+        }
+    };
+    let converted = match aep_core::convert::convert(&bytes, major) {
+        Ok(converted) => converted,
+        Err(aep_core::convert::ConvertError::Blocked(notes)) => {
+            eprintln!("conversion of {path_in} is blocked:");
+            for note in &notes {
+                eprintln!("  {} x{}", note.code.as_str(), note.count);
+            }
+            return ExitCode::from(1);
+        }
+        Err(err) => {
+            eprintln!("{}", convert_error_message(&err, path_in));
+            return ExitCode::from(1);
+        }
+    };
+    // Write to a temporary name first so a failure never leaves a partial
+    // `<out>` behind, then move it into place.
+    let tmp = format!("{path_out}.tmp");
+    if let Err(e) = std::fs::write(&tmp, &converted.bytes) {
+        eprintln!("cannot write {tmp}: {e}");
+        return ExitCode::from(1);
+    }
+    if let Err(e) = std::fs::rename(&tmp, path_out) {
+        eprintln!("cannot rename {tmp} to {path_out}: {e}");
+        return ExitCode::from(1);
+    }
+    let mut out = String::new();
+    for note in &converted.notes {
+        out.push_str(&format!("{} x{}\n", note.code.as_str(), note.count));
+    }
+    out.push_str(&format!(
+        "OK {} -> {}\n",
+        converted.from.format, converted.to.format
+    ));
+    emit(&out);
+    ExitCode::from(0)
+}
+
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.is_empty() {
@@ -291,6 +397,45 @@ fn main() -> ExitCode {
                 return ExitCode::from(2);
             }
             diff_cmd(full, no_noise, files[0], files[1])
+        }
+        "targets" => {
+            if args.len() != 2 {
+                eprintln!("{USAGE}");
+                return ExitCode::from(2);
+            }
+            targets(&args[1])
+        }
+        "convert" => {
+            let rest: Vec<&str> = args[1..].iter().map(|s| s.as_str()).collect();
+            let mut files: Vec<&str> = Vec::new();
+            let mut to: Option<&str> = None;
+            let mut i = 0;
+            while i < rest.len() {
+                if rest[i] == "--to" {
+                    i += 1;
+                    if i >= rest.len() {
+                        eprintln!("{USAGE}");
+                        return ExitCode::from(2);
+                    }
+                    to = Some(rest[i]);
+                } else {
+                    files.push(rest[i]);
+                }
+                i += 1;
+            }
+            if files.len() != 2 || to.is_none() {
+                eprintln!("{USAGE}");
+                return ExitCode::from(2);
+            }
+            let to_arg = to.expect("checked above");
+            let major: u8 = match to_arg.parse() {
+                Ok(m) => m,
+                Err(_) => {
+                    eprintln!("invalid AE major \"{to_arg}\"; expected a number");
+                    return ExitCode::from(2);
+                }
+            };
+            convert_cmd(files[0], files[1], major)
         }
         _ => {
             eprintln!("{USAGE}");

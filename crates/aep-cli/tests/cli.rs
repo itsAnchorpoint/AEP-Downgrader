@@ -17,6 +17,18 @@ const FIXTURE_23: &str = concat!(
     "/../../tests/fixtures/TEST23-x.aep"
 );
 
+const FIXTURE_26: &str = concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../tests/fixtures/TEST26-x.aep"
+);
+
+/// A fresh output path in the system temp directory.
+fn temp_out(name: &str) -> String {
+    let mut path = std::env::temp_dir();
+    path.push(format!("aep-cli-test-{}-{name}", std::process::id()));
+    path.to_string_lossy().into_owned()
+}
+
 /// Run `aep` and return its exit code and stdout.
 fn aep(args: &[&str]) -> (i32, String) {
     let out = Command::new(env!("CARGO_BIN_EXE_aep"))
@@ -92,6 +104,38 @@ fn diff_full_shows_details() {
         stdout.contains("\"ADBE Shadow Color\""),
         "expected ADBE Shadow Color preview in --full output"
     );
+}
+
+#[test]
+fn convert_downgrades_and_roundtrips() {
+    let out = temp_out("out23.aep");
+    let _ = std::fs::remove_file(&out);
+    let (code, stdout) = aep(&["convert", FIXTURE, out.as_str(), "--to", "23"]);
+    assert_eq!(code, 0, "convert should succeed; stdout: {stdout}");
+    assert!(
+        stdout.contains("shadow-color-removed x2"),
+        "expected shadow-color-removed x2 in stdout, got:\n{stdout}"
+    );
+    assert!(
+        stdout.lines().any(|l| l.starts_with("OK 95.5 -> 94.9")),
+        "expected a line starting with 'OK 95.5 -> 94.9', got:\n{stdout}"
+    );
+    // The converted file must round-trip.
+    let (code, stdout) = aep(&["roundtrip", out.as_str()]);
+    assert_eq!(
+        code, 0,
+        "roundtrip of converted file should succeed: {stdout}"
+    );
+    // Converting again to the same output is refused.
+    assert_eq!(aep(&["convert", FIXTURE, out.as_str(), "--to", "23"]).0, 1);
+    let _ = std::fs::remove_file(&out);
+}
+
+#[test]
+fn targets_lists_ae_majors() {
+    let (code, stdout) = aep(&["targets", FIXTURE_26]);
+    assert_eq!(code, 0, "targets should succeed");
+    assert_eq!(stdout, "25\n24\n23\n22\n");
 }
 
 #[test]
