@@ -3,9 +3,9 @@
 //! Commands (argument parsing is done by hand; no dependencies):
 //!
 //! ```text
-//! aep tree <file>                print the chunk tree, one node per line
-//! aep roundtrip <file>           parse, serialize, compare with the input
-//! aep diff [--full] <a> <b>     structural diff of two files
+//! aep tree <file>                    print the chunk tree, one node per line
+//! aep roundtrip <file>               parse, serialize, compare with the input
+//! aep diff [--full] [--no-noise] <a> <b>   structural diff of two files
 //! ```
 
 use aep_core::diff::{self, Change};
@@ -16,7 +16,7 @@ use std::process::ExitCode;
 const USAGE: &str = "usage: aep <tree|roundtrip|diff> ...\n\
                      aep tree <file>\n\
                      aep roundtrip <file>\n\
-                     aep diff [--full] <a> <b>";
+                     aep diff [--full] [--no-noise] <a> <b>";
 
 /// Write to stdout without panicking on I/O errors (e.g. broken pipe).
 fn emit(text: &str) {
@@ -135,7 +135,7 @@ fn fmt_samples(samples: &[(u64, u8, u8)]) -> String {
         .join(" ")
 }
 
-fn diff_cmd(full: bool, path_a: &str, path_b: &str) -> ExitCode {
+fn diff_cmd(full: bool, no_noise: bool, path_a: &str, path_b: &str) -> ExitCode {
     let (_, file_a) = match read_and_parse(path_a) {
         Ok(r) => r,
         Err(msg) => {
@@ -154,27 +154,50 @@ fn diff_cmd(full: bool, path_a: &str, path_b: &str) -> ExitCode {
     let changes = diff::diff(&file_a, &file_b);
     let mut out = String::new();
 
+    let display_changes: Vec<Change> = if no_noise {
+        changes
+            .iter()
+            .filter(|c| !diff::is_save_noise(c))
+            .cloned()
+            .collect()
+    } else {
+        changes.clone()
+    };
+    let noise_hidden = changes.len() - display_changes.len();
+
     if full {
-        for change in &changes {
+        for change in &display_changes {
             match change {
                 Change::Removed(l) => {
+                    let prev_suffix = if l.prev.is_empty() {
+                        String::new()
+                    } else {
+                        format!(" after \"{}\"", l.prev)
+                    };
                     out.push_str(&format!(
-                        "removed  {}  {} {} {} \"{}\"\n",
+                        "removed  {}  {} {} {} \"{}\"{}\n",
                         fmt_path(&l.path),
                         l.key,
                         fmt_index_path(&l.index_path),
                         l.len,
-                        l.preview
+                        l.preview,
+                        prev_suffix
                     ));
                 }
                 Change::Added(l) => {
+                    let prev_suffix = if l.prev.is_empty() {
+                        String::new()
+                    } else {
+                        format!(" after \"{}\"", l.prev)
+                    };
                     out.push_str(&format!(
-                        "added    {}  {} {} {} \"{}\"\n",
+                        "added    {}  {} {} {} \"{}\"{}\n",
                         fmt_path(&l.path),
                         l.key,
                         fmt_index_path(&l.index_path),
                         l.len,
-                        l.preview
+                        l.preview,
+                        prev_suffix
                     ));
                 }
                 Change::Changed(p) => {
@@ -207,17 +230,21 @@ fn diff_cmd(full: bool, path_a: &str, path_b: &str) -> ExitCode {
             }
         }
     } else {
-        for line in diff::summarize(&changes) {
+        for line in diff::summarize(&display_changes) {
             out.push_str(&line);
             out.push('\n');
         }
     }
 
-    let n = changes.len();
-    out.push_str(&format!("{n} changes\n"));
+    let n = display_changes.len();
+    if no_noise && noise_hidden > 0 {
+        out.push_str(&format!("{n} changes ({noise_hidden} noise hidden)\n"));
+    } else {
+        out.push_str(&format!("{n} changes\n"));
+    }
     emit(&out);
 
-    if n == 0 {
+    if n == 0 && noise_hidden == 0 {
         ExitCode::from(0)
     } else {
         ExitCode::from(1)
@@ -248,10 +275,13 @@ fn main() -> ExitCode {
         "diff" => {
             let rest: Vec<&str> = args[1..].iter().map(|s| s.as_str()).collect();
             let mut full = false;
+            let mut no_noise = false;
             let mut files: Vec<&str> = Vec::new();
             for arg in rest {
                 if arg == "--full" {
                     full = true;
+                } else if arg == "--no-noise" {
+                    no_noise = true;
                 } else {
                     files.push(arg);
                 }
@@ -260,7 +290,7 @@ fn main() -> ExitCode {
                 eprintln!("{USAGE}");
                 return ExitCode::from(2);
             }
-            diff_cmd(full, files[0], files[1])
+            diff_cmd(full, no_noise, files[0], files[1])
         }
         _ => {
             eprintln!("{USAGE}");

@@ -7,16 +7,22 @@
 //!
 //! 1. Every node has a key: its 4-byte id for an ordinary chunk, or
 //!    `LIST:<kind>` for both list variants.
-//! 2. The two child lists are aligned by the longest common subsequence of
-//!    their keys (standard dynamic-programming LCS; on ties prefer matching
-//!    earlier nodes).
-//! 3. A node of the first file with no partner is [`Change::Removed`].
+//! 2. Each node is also fingerprinted with a FNV-1a hash of its serialized
+//!    content. The two lists are first aligned by the longest common
+//!    subsequence of these hashes. Candidate pairs whose full content is not
+//!    actually equal (hash collision) are discarded. The remaining pairs are
+//!    *anchors*: identical nodes that are frozen in place (no change emitted,
+//!    no recursion).
+//! 3. Each gap between anchors (including the head and tail) is aligned by
+//!    the longest common subsequence of the node keys (standard
+//!    dynamic-programming LCS; on ties prefer matching earlier nodes).
+//! 4. A node of the first file with no partner is [`Change::Removed`].
 //!    A node of the second file with no partner is [`Change::Added`].
 //!    Removed/added lists are reported once, not once per descendant.
-//! 4. Aligned pair, two ordinary chunks: equal data → nothing; otherwise
+//! 5. Aligned pair, two ordinary chunks: equal data → nothing; otherwise
 //!    [`Change::Changed`].
-//! 5. Aligned pair, two [`Node::List`]: compare their children recursively.
-//! 6. Aligned pair, any other combination of list variants: compare the
+//! 6. Aligned pair, two [`Node::List`]: compare their children recursively.
+//! 7. Aligned pair, any other combination of list variants: compare the
 //!    serialized data (kind excluded); if different → [`Change::Changed`].
 //!
 //! File-level differences are reported as `Changed` with an empty `path` and
@@ -53,6 +59,10 @@ pub struct Lone {
     /// 0x20..=0x7e shown as `.`, and trailing `.` characters trimmed.
     /// List: `(<n> nodes)`, counting all descendants.
     pub preview: String,
+    /// The `node_preview` of the immediately preceding sibling in the same
+    /// list, when that sibling is an ordinary [`Node::Chunk`]. Empty string
+    /// otherwise (no preceding sibling, or preceding sibling is a list).
+    pub prev: String,
 }
 
 /// Two aligned nodes whose content differs.
@@ -137,21 +147,23 @@ pub fn diff(a: &RiffFile, b: &RiffFile) -> Vec<Change> {
 
 /// Group changes for a compact report. Two changes fall in the same group
 /// when they have the same variant, `path` and `key`, and additionally:
-/// `Removed`/`Added` — the same `len` and `preview`; `Changed` — the same
-/// `len_a` and `len_b`. Groups keep the order of first appearance.
+/// `Removed`/`Added` — the same `len`, `preview` and `prev`; `Changed` — the
+/// same `len_a` and `len_b`. Groups keep the order of first appearance.
 /// Each returned line has one of these forms (count is the group size):
 ///
 /// ```text
 /// removed  <path>  <key> <len> "<preview>"  x<count>
+/// removed  <path>  <key> <len> "<preview>" after "<prev>"  x<count>
 /// added    <path>  <key> <len> "<preview>"  x<count>
+/// added    <path>  <key> <len> "<preview>" after "<prev>"  x<count>
 /// changed  <path>  <key> <len_a>-><len_b>  x<count>
 /// ```
 ///
 /// An empty path is printed as `/`.
 pub fn summarize(changes: &[Change]) -> Vec<String> {
     // A group is identified by (tag, path, key, rest). `rest` is the variant-
-    // specific middle field: `<len> "<preview>"` for Removed/Added and
-    // `<len_a>-><len_b>` for Changed.
+    // specific middle field: `<len> "<preview>"[ after "<prev>"]` for
+    // Removed/Added and `<len_a>-><len_b>` for Changed.
     struct Group {
         tag: &'static str,
         path: String,
@@ -165,18 +177,32 @@ pub fn summarize(changes: &[Change]) -> Vec<String> {
 
     for change in changes {
         let (tag, path, key, rest) = match change {
-            Change::Removed(l) => (
-                "removed",
-                l.path.clone(),
-                l.key.clone(),
-                format!("{} \"{}\"", l.len, l.preview),
-            ),
-            Change::Added(l) => (
-                "added",
-                l.path.clone(),
-                l.key.clone(),
-                format!("{} \"{}\"", l.len, l.preview),
-            ),
+            Change::Removed(l) => {
+                let prev = if l.prev.is_empty() {
+                    String::new()
+                } else {
+                    format!(" after \"{}\"", l.prev)
+                };
+                (
+                    "removed",
+                    l.path.clone(),
+                    l.key.clone(),
+                    format!("{} \"{}\"{}", l.len, l.preview, prev),
+                )
+            }
+            Change::Added(l) => {
+                let prev = if l.prev.is_empty() {
+                    String::new()
+                } else {
+                    format!(" after \"{}\"", l.prev)
+                };
+                (
+                    "added",
+                    l.path.clone(),
+                    l.key.clone(),
+                    format!("{} \"{}\"{}", l.len, l.preview, prev),
+                )
+            }
             Change::Changed(p) => (
                 "changed",
                 p.path.clone(),
@@ -213,6 +239,48 @@ pub fn summarize(changes: &[Change]) -> Vec<String> {
         .into_iter()
         .map(|g| format!("{}  x{}", g.line, g.count))
         .collect()
+}
+
+/// True when a change is "save noise": a difference that After Effects
+/// introduces on every save regardless of the actual edit, and that users
+/// typically want to hide.
+///
+/// Rules (only [`Change::Changed`] can be noise; `Removed`/`Added` never are):
+///
+/// * key is `"(trailer)"`, or
+/// * key is `"head"` and `first_diff >= 8`, or
+/// * `len_a == len_b` and the key is one of
+///   `sdat`, `aRbp`, `ftts`, `pard`, `mkif`, `ewin`, `fips`, `Rhed`, `nhed`,
+///   `nnhd`.
+pub fn is_save_noise(change: &Change) -> bool {
+    match change {
+        Change::Changed(p) => {
+            if p.key == "(trailer)" {
+                return true;
+            }
+            if p.key == "head" && p.first_diff >= 8 {
+                return true;
+            }
+            if p.len_a == p.len_b {
+                matches!(
+                    p.key.as_str(),
+                    "sdat"
+                        | "aRbp"
+                        | "ftts"
+                        | "pard"
+                        | "mkif"
+                        | "ewin"
+                        | "fips"
+                        | "Rhed"
+                        | "nhed"
+                        | "nnhd"
+                )
+            } else {
+                false
+            }
+        }
+        Change::Removed(_) | Change::Added(_) => false,
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -295,8 +363,36 @@ fn descendant_count(node: &Node) -> u64 {
     }
 }
 
+/// FNV-1a 64-bit hash of a node's serialized content.
+///
+/// Two nodes with the same hash *may* still differ (collision); the caller
+/// must confirm with a full `==` comparison before treating them as anchors.
+fn node_hash(node: &Node) -> u64 {
+    const FNV_OFFSET: u64 = 0xcbf2_9ce4_8422_2325;
+    const FNV_PRIME: u64 = 0x0000_0100_0000_01b3;
+
+    let mut buf: Vec<u8> = Vec::new();
+    encode_child(node, &mut buf);
+
+    let mut hash = FNV_OFFSET;
+    for &byte in &buf {
+        hash ^= byte as u64;
+        hash = hash.wrapping_mul(FNV_PRIME);
+    }
+    hash
+}
+
 /// Build a [`Lone`] for a node that has no partner.
-fn make_lone(path: &str, index_prefix: &[usize], own_index: usize, node: &Node) -> Lone {
+///
+/// `prev` is the [`node_preview`] of the immediately preceding sibling when
+/// that sibling is an ordinary [`Node::Chunk`], otherwise the empty string.
+fn make_lone(
+    path: &str,
+    index_prefix: &[usize],
+    own_index: usize,
+    node: &Node,
+    prev: &str,
+) -> Lone {
     let mut index_path: Vec<usize> = index_prefix.to_vec();
     index_path.push(own_index);
     Lone {
@@ -305,6 +401,18 @@ fn make_lone(path: &str, index_prefix: &[usize], own_index: usize, node: &Node) 
         key: node_key(node),
         len: node.data_len(),
         preview: node_preview(node),
+        prev: prev.to_string(),
+    }
+}
+
+/// Compute the `prev` field for a node at index `idx` in list `list`.
+fn prev_sibling_preview(list: &[Node], idx: usize) -> String {
+    if idx == 0 {
+        return String::new();
+    }
+    match &list[idx - 1] {
+        Node::Chunk { .. } => node_preview(&list[idx - 1]),
+        _ => String::new(),
     }
 }
 
@@ -393,15 +501,147 @@ fn pair_data(a: &Node, b: &Node) -> (Vec<u8>, Vec<u8>) {
 /// `path` holds the kinds of the enclosing lists, outermost first (empty at
 /// the top level). `index_prefix` holds the index of each enclosing list in
 /// its parent's children, outermost first.
+///
+/// Alignment strategy: first find *anchors* (identical nodes) via a longest
+/// common subsequence on FNV-1a content hashes, confirming each candidate
+/// pair with full `Node` equality. Anchors are frozen (no change emitted, no
+/// recursion). Each gap between anchors is aligned by key-LCS.
 fn diff_lists(path: &str, index_prefix: &[usize], a: &[Node], b: &[Node], out: &mut Vec<Change>) {
     let n = a.len();
     let m = b.len();
 
-    let keys_a: Vec<String> = a.iter().map(node_key).collect();
-    let keys_b: Vec<String> = b.iter().map(node_key).collect();
+    if n == 0 && m == 0 {
+        return;
+    }
 
-    // LCS table, allocated once for this pair of lists: (n+1) x (m+1) flat.
-    // lcs[i][j] = length of the LCS of keys_a[..i] and keys_b[..j].
+    // Step 1: compute a content hash for every node in both lists.
+    let hashes_a: Vec<u64> = a.iter().map(node_hash).collect();
+    let hashes_b: Vec<u64> = b.iter().map(node_hash).collect();
+
+    // Early exit: if both lists contain the same multiset of node contents
+    // (only order differs), there is nothing to report.
+    if n == m {
+        let mut sorted_a = hashes_a.clone();
+        let mut sorted_b = hashes_b.clone();
+        sorted_a.sort_unstable();
+        sorted_b.sort_unstable();
+        if sorted_a == sorted_b {
+            return;
+        }
+    }
+
+    // Step 2: LCS on the hash arrays to find candidate anchor pairs.
+    // lcs[i][j] = length of the LCS of hashes_a[..i] and hashes_b[..j].
+    let width = m + 1;
+    let mut table = vec![0u32; (n + 1) * width];
+    for i in 1..=n {
+        let row = i * width;
+        let prev_row = (i - 1) * width;
+        for j in 1..=m {
+            if hashes_a[i - 1] == hashes_b[j - 1] {
+                table[row + j] = table[prev_row + j - 1] + 1;
+            } else {
+                table[row + j] = table[prev_row + j].max(table[row + j - 1]);
+            }
+        }
+    }
+
+    // Step 3: backtrack to recover candidate (i, j) pairs.
+    let mut candidates: Vec<(usize, usize)> = Vec::new();
+    let mut i = n;
+    let mut j = m;
+    while i > 0 && j > 0 {
+        if hashes_a[i - 1] == hashes_b[j - 1] {
+            candidates.push((i - 1, j - 1));
+            i -= 1;
+            j -= 1;
+        } else if table[(i - 1) * width + j] >= table[i * width + (j - 1)] {
+            i -= 1;
+        } else {
+            j -= 1;
+        }
+    }
+    candidates.reverse();
+
+    // Step 4: confirm real equality for each candidate (hash collision check).
+    let anchors: Vec<(usize, usize)> = candidates
+        .into_iter()
+        .filter(|&(ai, bi)| a[ai] == b[bi])
+        .collect();
+
+    // Step 5: walk the anchors left-to-right, processing each gap.
+    let mut ai = 0usize;
+    let mut bi = 0usize;
+    for &(anchor_a, anchor_b) in &anchors {
+        if ai < anchor_a || bi < anchor_b {
+            let mut gap = Gap {
+                path,
+                index_prefix,
+                a_full: a,
+                b_full: b,
+                a_start: ai,
+                a_end: anchor_a,
+                b_start: bi,
+                b_end: anchor_b,
+                out,
+            };
+            diff_gap(&mut gap);
+        }
+        ai = anchor_a + 1;
+        bi = anchor_b + 1;
+    }
+    // Tail gap after the last anchor.
+    if ai < n || bi < m {
+        let mut gap = Gap {
+            path,
+            index_prefix,
+            a_full: a,
+            b_full: b,
+            a_start: ai,
+            a_end: n,
+            b_start: bi,
+            b_end: m,
+            out,
+        };
+        diff_gap(&mut gap);
+    }
+}
+
+/// A slice of each list between two anchors, plus the context needed to
+/// report changes: the enclosing path, the enclosing index path, the complete
+/// lists and the gap ranges within them, and the output being built.
+struct Gap<'a> {
+    path: &'a str,
+    index_prefix: &'a [usize],
+    a_full: &'a [Node],
+    b_full: &'a [Node],
+    a_start: usize,
+    a_end: usize,
+    b_start: usize,
+    b_end: usize,
+    out: &'a mut Vec<Change>,
+}
+
+/// Align a gap (a slice of each list between two anchors) by key-LCS and emit
+/// changes. `g.a_full`/`g.b_full` are the complete lists;
+/// `[g.a_start..g.a_end)` and `[g.b_start..g.b_end)` are the gap ranges
+/// within them.
+fn diff_gap(g: &mut Gap<'_>) {
+    let n = g.a_end - g.a_start;
+    let m = g.b_end - g.b_start;
+
+    if n == 0 && m == 0 {
+        return;
+    }
+
+    let keys_a: Vec<String> = (g.a_start..g.a_end)
+        .map(|i| node_key(&g.a_full[i]))
+        .collect();
+    let keys_b: Vec<String> = (g.b_start..g.b_end)
+        .map(|j| node_key(&g.b_full[j]))
+        .collect();
+
+    // Key-LCS table.
     let width = m + 1;
     let mut table = vec![0u32; (n + 1) * width];
     for i in 1..=n {
@@ -416,11 +656,7 @@ fn diff_lists(path: &str, index_prefix: &[usize], a: &[Node], b: &[Node], out: &
         }
     }
 
-    // Backtrack from the bottom-right to recover the aligned (i, j) pairs,
-    // 0-based, then reverse them into increasing order. On a key match the
-    // pair belongs to the LCS. On a mismatch, prefer moving up (drop the
-    // later `a` node) when that is no worse, so earlier `a` nodes stay
-    // available to match — "on ties prefer matching earlier nodes".
+    // Backtrack to get aligned pairs within the gap.
     let mut matches: Vec<(usize, usize)> = Vec::new();
     let mut i = n;
     let mut j = m;
@@ -442,45 +678,62 @@ fn diff_lists(path: &str, index_prefix: &[usize], a: &[Node], b: &[Node], out: &
     let mut bi = 0usize;
     for (mi, mj) in matches {
         while ai < mi {
-            out.push(Change::Removed(make_lone(path, index_prefix, ai, &a[ai])));
+            let idx = ai + g.a_start;
+            let prev = prev_sibling_preview(g.a_full, idx);
+            g.out.push(Change::Removed(make_lone(
+                g.path,
+                g.index_prefix,
+                idx,
+                &g.a_full[idx],
+                &prev,
+            )));
             ai += 1;
         }
         while bi < mj {
-            out.push(Change::Added(make_lone(path, index_prefix, bi, &b[bi])));
+            let idx = bi + g.b_start;
+            let prev = prev_sibling_preview(g.b_full, idx);
+            g.out.push(Change::Added(make_lone(
+                g.path,
+                g.index_prefix,
+                idx,
+                &g.b_full[idx],
+                &prev,
+            )));
             bi += 1;
         }
         ai = mi + 1;
         bi = mj + 1;
 
-        let anode = &a[mi];
-        let bnode = &b[mj];
+        let a_idx = mi + g.a_start;
+        let b_idx = mj + g.b_start;
+        let anode = &g.a_full[a_idx];
+        let bnode = &g.b_full[b_idx];
         if is_list(anode) && is_list(bnode) {
             // Rule 5: recurse into both lists.
             if let (Node::List { kind, children: ac }, Node::List { children: bc, .. }) =
                 (anode, bnode)
             {
-                let child_path = if path.is_empty() {
+                let child_path = if g.path.is_empty() {
                     fourcc_text(*kind)
                 } else {
-                    format!("{path}/{}", fourcc_text(*kind))
+                    format!("{}/{}", g.path, fourcc_text(*kind))
                 };
-                let mut child_prefix: Vec<usize> = index_prefix.to_vec();
-                child_prefix.push(mi);
-                diff_lists(&child_path, &child_prefix, ac, bc, out);
+                let mut child_prefix: Vec<usize> = g.index_prefix.to_vec();
+                child_prefix.push(a_idx);
+                diff_lists(&child_path, &child_prefix, ac, bc, g.out);
             }
         } else {
-            // Rule 4 (two ordinary chunks) or Rule 6 (a mix of list variants):
-            // compare the content directly from the node fields.
+            // Rule 4 (two ordinary chunks) or Rule 6 (a mix of list variants).
             let (da, db) = pair_data(anode, bnode);
             if da != db {
                 let (first_diff, diff_count, samples) = compare_data(&da, &db);
                 emit_changed(
                     &mut DiffCtx {
-                        path,
-                        index_prefix,
-                        out,
+                        path: g.path,
+                        index_prefix: g.index_prefix,
+                        out: g.out,
                     },
-                    mi,
+                    a_idx,
                     anode,
                     bnode,
                     first_diff,
@@ -491,12 +744,29 @@ fn diff_lists(path: &str, index_prefix: &[usize], a: &[Node], b: &[Node], out: &
         }
     }
 
+    // Remaining nodes after the last aligned pair.
     while ai < n {
-        out.push(Change::Removed(make_lone(path, index_prefix, ai, &a[ai])));
+        let idx = ai + g.a_start;
+        let prev = prev_sibling_preview(g.a_full, idx);
+        g.out.push(Change::Removed(make_lone(
+            g.path,
+            g.index_prefix,
+            idx,
+            &g.a_full[idx],
+            &prev,
+        )));
         ai += 1;
     }
     while bi < m {
-        out.push(Change::Added(make_lone(path, index_prefix, bi, &b[bi])));
+        let idx = bi + g.b_start;
+        let prev = prev_sibling_preview(g.b_full, idx);
+        g.out.push(Change::Added(make_lone(
+            g.path,
+            g.index_prefix,
+            idx,
+            &g.b_full[idx],
+            &prev,
+        )));
         bi += 1;
     }
 }
@@ -782,6 +1052,7 @@ mod tests {
             key: "zzzz".to_string(),
             len: 8,
             preview: "hello".to_string(),
+            prev: String::new(),
         }));
         let lines = summarize(&changes);
         assert_eq!(lines[0], "changed  Fold/Item/Layr  ldta 164->160  x12");
@@ -793,5 +1064,214 @@ mod tests {
     fn preview_chunk_text() {
         let node = chunk("name", b"ADBE Shadow Color\0\0\0");
         assert_eq!(node_preview(&node), "ADBE Shadow Color");
+    }
+
+    // l) anchored alignment: identical nodes are frozen, no spurious changes.
+    #[test]
+    fn anchored_identical_nodes_no_change() {
+        // Two files with the same nodes but in different order.
+        // Anchors should prevent spurious Removed/Added pairs.
+        let a = file(vec![
+            chunk("aaaa", &[1, 2, 3]),
+            chunk("bbbb", &[4, 5, 6]),
+            chunk("cccc", &[7, 8, 9]),
+        ]);
+        let b = file(vec![
+            chunk("aaaa", &[1, 2, 3]),
+            chunk("cccc", &[7, 8, 9]),
+            chunk("bbbb", &[4, 5, 6]),
+        ]);
+        // aaaa and cccc are anchors (identical content).
+        // bbbb is in a different position but is also identical, so it should
+        // also be an anchor. With all three as anchors, no changes expected.
+        let changes = diff(&a, &b);
+        assert!(changes.is_empty(), "expected no changes, got {changes:?}");
+    }
+
+    // m) anchored alignment: one node differs, others are anchors.
+    #[test]
+    fn anchored_one_differs_others_frozen() {
+        let a = file(vec![
+            chunk("aaaa", &[1, 2, 3]),
+            chunk("bbbb", &[4, 5, 6]),
+            chunk("cccc", &[7, 8, 9]),
+        ]);
+        let b = file(vec![
+            chunk("aaaa", &[1, 2, 3]),
+            chunk("bbbb", &[4, 5, 7]), // different
+            chunk("cccc", &[7, 8, 9]),
+        ]);
+        let changes = diff(&a, &b);
+        assert_eq!(changes.len(), 1, "expected 1 change, got {changes:?}");
+        match &changes[0] {
+            Change::Changed(p) => {
+                assert_eq!(p.key, "bbbb");
+                assert_eq!(p.first_diff, 2);
+            }
+            other => panic!("expected Changed, got {other:?}"),
+        }
+    }
+
+    // n) prev field: removed node has prev set to the preceding chunk preview.
+    #[test]
+    fn prev_field_set_for_removed() {
+        let a = file(vec![
+            chunk("aaaa", b"hello world"),
+            chunk("bbbb", &[2]),
+            chunk("cccc", &[3]),
+        ]);
+        let b = file(vec![chunk("aaaa", b"hello world"), chunk("cccc", &[3])]);
+        let changes = diff(&a, &b);
+        assert_eq!(changes.len(), 1);
+        match &changes[0] {
+            Change::Removed(l) => {
+                assert_eq!(l.key, "bbbb");
+                assert_eq!(l.prev, "hello world");
+            }
+            other => panic!("expected Removed, got {other:?}"),
+        }
+    }
+
+    // o) prev field: first node in list has empty prev.
+    #[test]
+    fn prev_field_empty_for_first_node() {
+        let a = file(vec![chunk("aaaa", &[1]), chunk("cccc", &[3])]);
+        let b = file(vec![chunk("cccc", &[3])]);
+        let changes = diff(&a, &b);
+        assert_eq!(changes.len(), 1);
+        match &changes[0] {
+            Change::Removed(l) => {
+                assert_eq!(l.key, "aaaa");
+                assert_eq!(l.prev, "");
+            }
+            other => panic!("expected Removed, got {other:?}"),
+        }
+    }
+
+    // p) prev field: preceding sibling is a list, so prev is empty.
+    #[test]
+    fn prev_field_empty_when_prev_sibling_is_list() {
+        let a = file(vec![
+            list("Fold", vec![chunk("bbbb", &[9])]),
+            chunk("cccc", &[3]),
+        ]);
+        let b = file(vec![chunk("cccc", &[3])]);
+        let changes = diff(&a, &b);
+        assert_eq!(changes.len(), 1);
+        match &changes[0] {
+            Change::Removed(l) => {
+                assert_eq!(l.key, "LIST:Fold");
+                assert_eq!(l.prev, "");
+            }
+            other => panic!("expected Removed, got {other:?}"),
+        }
+    }
+
+    // q) is_save_noise: (trailer) is always noise.
+    #[test]
+    fn noise_trailer() {
+        let change = Change::Changed(Pair {
+            path: String::new(),
+            index_path: Vec::new(),
+            key: "(trailer)".to_string(),
+            len_a: 3,
+            len_b: 5,
+            first_diff: 0,
+            diff_count: 0,
+            samples: Vec::new(),
+        });
+        assert!(is_save_noise(&change));
+    }
+
+    // r) is_save_noise: head with first_diff >= 8 is noise.
+    #[test]
+    fn noise_head_first_diff_ge_8() {
+        let change = Change::Changed(Pair {
+            path: String::new(),
+            index_path: Vec::new(),
+            key: "head".to_string(),
+            len_a: 20,
+            len_b: 20,
+            first_diff: 8,
+            diff_count: 2,
+            samples: Vec::new(),
+        });
+        assert!(is_save_noise(&change));
+    }
+
+    // s) is_save_noise: head with first_diff < 8 is NOT noise.
+    #[test]
+    fn not_noise_head_first_diff_lt_8() {
+        let change = Change::Changed(Pair {
+            path: String::new(),
+            index_path: Vec::new(),
+            key: "head".to_string(),
+            len_a: 20,
+            len_b: 20,
+            first_diff: 1,
+            diff_count: 2,
+            samples: Vec::new(),
+        });
+        assert!(!is_save_noise(&change));
+    }
+
+    // t) is_save_noise: same-length known key is noise.
+    #[test]
+    fn noise_same_length_known_key() {
+        for key in [
+            "sdat", "aRbp", "ftts", "pard", "mkif", "ewin", "fips", "Rhed", "nhed", "nnhd",
+        ] {
+            let change = Change::Changed(Pair {
+                path: String::new(),
+                index_path: Vec::new(),
+                key: key.to_string(),
+                len_a: 100,
+                len_b: 100,
+                first_diff: 0,
+                diff_count: 1,
+                samples: Vec::new(),
+            });
+            assert!(is_save_noise(&change), "expected noise for key {key}");
+        }
+    }
+
+    // u) is_save_noise: different-length known key is NOT noise.
+    #[test]
+    fn not_noise_diff_length_known_key() {
+        let change = Change::Changed(Pair {
+            path: String::new(),
+            index_path: Vec::new(),
+            key: "sdat".to_string(),
+            len_a: 100,
+            len_b: 200,
+            first_diff: 0,
+            diff_count: 0,
+            samples: Vec::new(),
+        });
+        assert!(!is_save_noise(&change));
+    }
+
+    // v) is_save_noise: Removed/Added are never noise.
+    #[test]
+    fn not_noise_removed_or_added() {
+        let removed = Change::Removed(Lone {
+            path: String::new(),
+            index_path: vec![0],
+            key: "sdat".to_string(),
+            len: 10,
+            preview: "x".to_string(),
+            prev: String::new(),
+        });
+        assert!(!is_save_noise(&removed));
+
+        let added = Change::Added(Lone {
+            path: String::new(),
+            index_path: vec![0],
+            key: "sdat".to_string(),
+            len: 10,
+            preview: "x".to_string(),
+            prev: String::new(),
+        });
+        assert!(!is_save_noise(&added));
     }
 }

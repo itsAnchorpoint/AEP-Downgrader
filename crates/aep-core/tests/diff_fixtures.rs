@@ -95,6 +95,33 @@ fn test24_vs_test23() {
 }
 
 #[test]
+fn test24_vs_test23_removed_tdbs_prev() {
+    let a = read_and_parse("TEST24-x.aep");
+    let b = read_and_parse("TEST23-x.aep");
+    let changes = diff::diff(&a, &b);
+
+    // Every Removed with key "LIST:tdbs" has prev == "ADBE Shadow Color".
+    for c in &changes {
+        let Change::Removed(l) = c else { continue };
+        if l.key != "LIST:tdbs" {
+            continue;
+        }
+        assert_eq!(
+            l.prev, "ADBE Shadow Color",
+            "expected prev \"ADBE Shadow Color\" for LIST:tdbs, got {:?}",
+            l.prev
+        );
+    }
+
+    // No Changed entries with key "tdmn".
+    for c in &changes {
+        if let Change::Changed(p) = c {
+            assert_ne!(p.key, "tdmn", "unexpected Changed with key tdmn");
+        }
+    }
+}
+
+#[test]
 fn self_diff_is_empty() {
     let f = read_and_parse("TEST24-x.aep");
     let changes = diff::diff(&f, &f);

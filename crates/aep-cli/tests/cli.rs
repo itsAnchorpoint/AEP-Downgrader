@@ -93,3 +93,18 @@ fn diff_full_shows_details() {
         "expected ADBE Shadow Color preview in --full output"
     );
 }
+
+#[test]
+fn diff_no_noise_hides_noise() {
+    let (code, stdout) = aep(&["diff", "--no-noise", FIXTURE_23, FIXTURE_22]);
+    assert!(
+        code == 0 || code == 1,
+        "exit code should be 0 or 1, got {code}"
+    );
+    let lines: Vec<&str> = stdout.lines().collect();
+    let last = lines.last().expect("has at least one line");
+    assert!(
+        last.contains("noise hidden"),
+        "last line should contain 'noise hidden', got: {last}"
+    );
+}
