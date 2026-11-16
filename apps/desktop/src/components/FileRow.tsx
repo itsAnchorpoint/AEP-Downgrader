@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { formatBytes, versionNumber } from "../lib/format";
 import type { FileInfo, Preflight } from "../lib/ipc-types";
+import { DetailsButton } from "./LogPanel";
 import { Report } from "./Report";
 
 /** Square tile with the file extension; presets are amber, problems are outlined in red. */
@@ -122,7 +123,11 @@ export function FileRow({
       )}
     </>
   );
-  const layout = "grid min-h-[62px] w-full grid-cols-[3rem_minmax(0,1fr)_auto_1.25rem] items-center gap-x-4 py-2 pr-11 pl-1";
+  // Failed or blocked rows get a "Details" button between the row and the remove button.
+  const showDetails = Boolean(file.problem || report?.blocked);
+  const layout = `grid min-h-[62px] w-full grid-cols-[3rem_minmax(0,1fr)_auto_1.25rem] items-center gap-x-4 py-2 pl-1 ${
+    showDetails ? "pr-28" : "pr-11"
+  }`;
 
   return (
     <motion.li
@@ -134,7 +139,7 @@ export function FileRow({
     >
       <div className="group relative">
         {file.problem ? (
-          <div className={`${layout} pr-3`}>{body}</div>
+          <div className={`${layout} ${showDetails ? "" : "pr-3"}`}>{body}</div>
         ) : (
           <button
             type="button"
@@ -147,6 +152,9 @@ export function FileRow({
           >
             {body}
           </button>
+        )}
+        {showDetails && (
+          <DetailsButton fileId={file.id} name={file.name} className="absolute inset-y-0 right-11 my-auto h-fit" />
         )}
         <button
           type="button"

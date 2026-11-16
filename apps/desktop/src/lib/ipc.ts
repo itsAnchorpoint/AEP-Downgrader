@@ -1,4 +1,4 @@
-import type { FileInfo, Job, OutputOptions, Preflight, ProgressEvent, TargetInfo } from "./ipc-types";
+import type { FileInfo, Job, OutputOptions, Preflight, ProgressEvent, SystemInfo, TargetInfo } from "./ipc-types";
 import { createMockIpc } from "./ipc-mock";
 import { createTauriIpc, isTauri } from "./ipc-tauri";
 
@@ -15,6 +15,7 @@ export interface Ipc {
   pickFolder(): Promise<string | null>;
   onFileDrop(handlers: { hover: (over: boolean) => void; drop: (paths: string[]) => void }): Promise<Unlisten>;
   openUrl(url: string): Promise<void>;
+  systemInfo(): Promise<SystemInfo>;
 }
 
 // The real backend inside Tauri, an in-browser mock everywhere else (pnpm dev, tests).

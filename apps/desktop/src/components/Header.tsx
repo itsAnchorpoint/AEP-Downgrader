@@ -1,7 +1,8 @@
-import { ScrollText, SlidersHorizontal } from "lucide-react";
+import { Activity, ScrollText, SlidersHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { version } from "../../package.json";
 import { useAppStore } from "../store";
+import { LOG_PANEL_ID, LOG_TOGGLE_ID } from "./LogPanel";
 import { IconButton } from "./ui";
 
 /** The Trail logo's small drawing; the arrow follows the accent colour. */
@@ -27,6 +28,9 @@ export function Header() {
   const setWhatsNewOpen = useAppStore((s) => s.setWhatsNewOpen);
   const update = useAppStore((s) => s.update);
   const inSettings = view === "settings";
+  const logOpen = useAppStore((s) => s.logOpen);
+  const setLogOpen = useAppStore((s) => s.setLogOpen);
+  const errors = useAppStore((s) => s.log.filter((e) => e.level === "error").length);
 
   return (
     <header className="flex h-12 shrink-0 items-center justify-between gap-3 px-5">
@@ -36,6 +40,19 @@ export function Header() {
         <span className="rounded-[5px] bg-accent px-1.5 font-mono text-xs font-bold text-accent-fg">{version}</span>
       </div>
       <div className="flex items-center gap-0.5">
+        <IconButton
+          id={LOG_TOGGLE_ID}
+          label={errors > 0 ? t("header.logErrors", { count: errors }) : t("header.log")}
+          aria-expanded={logOpen}
+          aria-controls={LOG_PANEL_ID}
+          onClick={() => setLogOpen(!logOpen)}
+          className={`relative ${logOpen ? "bg-press text-fg" : ""}`}
+        >
+          <Activity className="size-4.5" aria-hidden />
+          {errors > 0 && (
+            <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-danger" aria-hidden />
+          )}
+        </IconButton>
         <IconButton label={t("header.whatsNew")} onClick={() => setWhatsNewOpen(true)} className="relative">
           <ScrollText className="size-4.5" aria-hidden />
           {update.status === "available" && (

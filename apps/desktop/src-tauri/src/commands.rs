@@ -48,3 +48,20 @@ pub fn reveal_in_folder(app: AppHandle, path: String) -> Result<(), String> {
     }
     app.opener().reveal_item_in_dir(target).map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub fn system_info() -> SystemInfo {
+    SystemInfo { os: std::env::consts::OS, arch: std::env::consts::ARCH }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn system_info_names_the_build_target() {
+        let info = system_info();
+        assert_eq!(info.os, std::env::consts::OS);
+        assert!(!info.arch.is_empty());
+    }
+}

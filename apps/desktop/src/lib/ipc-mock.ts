@@ -9,6 +9,7 @@ import type {
   Preflight,
   ProgressEvent,
   Problem,
+  SystemInfo,
   TargetInfo,
 } from "./ipc-types";
 import { outputName } from "./pattern";
@@ -179,6 +180,11 @@ export function createMockIpc(stepMs = 700): Ipc {
     },
     openUrl: async (url) => {
       window.open(url, "_blank", "noopener,noreferrer");
+    },
+    systemInfo: async (): Promise<SystemInfo> => {
+      const ua = typeof navigator === "undefined" ? "" : navigator.userAgent;
+      const os = /Windows/.test(ua) ? "windows" : /Mac/.test(ua) ? "macos" : /Linux/.test(ua) ? "linux" : "unknown";
+      return { os, arch: /arm64|aarch64/i.test(ua) ? "aarch64" : /x86_64|x64|Win64|amd64/i.test(ua) ? "x86_64" : "unknown" };
     },
   };
 }

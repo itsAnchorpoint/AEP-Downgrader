@@ -3,6 +3,7 @@
 
 use crate::models::*;
 use crate::pattern::output_name;
+use aep_core::compat;
 use aep_core::convert::{convert, ConvertError, Converted, Note as CoreNote};
 use aep_core::inspect::FileKind as CoreKind;
 use aep_core::version::release_name;
@@ -15,25 +16,15 @@ use std::thread;
 
 const MAX_PARALLEL: usize = 4;
 
-/// Supported targets, newest first, with how far each one has been checked.
-/// - 24: verified. Files converted from 25.6 and 26.0 were opened in a real After Effects 24.5.
-/// - 25: experimental. Not opened in a real After Effects 25 yet.
-/// - 23, 22: experimental. The output matches what After Effects itself writes
-///   ("Save a Copy As"), but it has not been opened in a real 23 or 22 yet.
-const TARGETS: [(u8, TargetStatus); 4] = [
-    (25, TargetStatus::Experimental),
-    (24, TargetStatus::Verified),
-    (23, TargetStatus::Experimental),
-    (22, TargetStatus::Experimental),
-];
-
+/// The targets the app offers, newest first, straight from the core crate's table
+/// so the app, the command line and the documentation cannot disagree.
 pub fn list_targets() -> Vec<TargetInfo> {
-    TARGETS
-        .into_iter()
-        .map(|(major, status)| TargetInfo {
-            major: u32::from(major),
-            name: release_name(major).map_or_else(|| (2000 + u32::from(major)).to_string(), str::to_string),
-            status,
+    compat::TARGETS
+        .iter()
+        .map(|t| TargetInfo {
+            major: u32::from(t.ae_major),
+            name: release_name(t.ae_major).map_or_else(|| (2000 + u32::from(t.ae_major)).to_string(), str::to_string),
+            status: t.status.as_str(),
         })
         .collect()
 }
@@ -224,14 +215,27 @@ mod tests {
     }
 
     #[test]
-    fn targets_are_the_four_supported_ones() {
+    fn targets_follow_the_core_table() {
         let targets = list_targets();
         let majors: Vec<_> = targets.iter().map(|t| t.major).collect();
-        assert_eq!(majors, [25, 24, 23, 22]);
-        assert_eq!(targets[0].name, "2025");
-        let verified: Vec<_> = targets.iter().filter(|t| matches!(t.status, TargetStatus::Verified)).collect();
+        let table: Vec<_> = compat::TARGETS.iter().map(|t| u32::from(t.ae_major)).collect();
+        assert_eq!(majors, table);
+        assert!(targets.windows(2).all(|w| w[0].major > w[1].major), "newest first");
+        assert!(targets.iter().all(|t| t.status == "verified" || t.status == "experimental"));
+        let verified: Vec<_> = targets.iter().filter(|t| t.status == "verified").collect();
         assert_eq!(verified.len(), 1);
         assert_eq!(verified[0].major, 24);
+        assert_eq!(targets.iter().find(|t| t.major == 25).map(|t| t.name.as_str()), Some("2025"));
+    }
+
+    #[test]
+    fn targets_for_a_file_are_a_subset_of_the_offered_ones() {
+        let bytes = fs::read(fixture("TEST24-x.aep")).unwrap();
+        let head = inspect(&bytes[..bytes.len().min(4096)]).head.expect("a project has a head");
+        let offered: Vec<_> = list_targets().iter().map(|t| t.major).collect();
+        let for_file = compat::targets_for(&head);
+        assert!(!for_file.is_empty());
+        assert!(for_file.iter().all(|t| offered.contains(&u32::from(t.ae_major))));
     }
 
     #[test]

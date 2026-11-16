@@ -6,6 +6,7 @@ import type { FileInfo, Preflight, ProgressEvent } from "../lib/ipc-types";
 import { ipc } from "../lib/ipc";
 import { Button } from "./ui";
 import { FileTypeIcon } from "./FileRow";
+import { DetailsButton } from "./LogPanel";
 
 function ProgressTrack({ state }: { state: ProgressEvent["state"] }) {
   const { t } = useTranslation();
@@ -48,13 +49,15 @@ function Status({ state }: { state: ProgressEvent["state"] }) {
 }
 
 /** One line under a finished file: why it needs attention. Clean results say nothing. */
-function Outcome({ event, warned }: { event: ProgressEvent; warned: boolean }) {
+function Outcome({ event, warned, file }: { event: ProgressEvent; warned: boolean; file: FileInfo }) {
   const { t } = useTranslation();
+  const details = <DetailsButton fileId={file.id} name={file.name} />;
   if (event.state === "failed") {
     return (
       <p className="flex items-center gap-2 pb-3 pl-16 text-sm font-bold text-danger max-[820px]:pl-0">
         <CircleX className="size-4.5 shrink-0" aria-hidden />
         {t(`error.${event.errorCode ?? "unknown"}`, { defaultValue: t("error.unknown") })}
+        {details}
       </p>
     );
   }
@@ -63,6 +66,7 @@ function Outcome({ event, warned }: { event: ProgressEvent; warned: boolean }) {
       <p className="flex items-center gap-2 pb-3 pl-16 text-sm font-bold text-muted max-[820px]:pl-0">
         <MinusCircle className="size-4.5 shrink-0" aria-hidden />
         {t("state.skipped")}
+        {details}
       </p>
     );
   }
@@ -71,6 +75,7 @@ function Outcome({ event, warned }: { event: ProgressEvent; warned: boolean }) {
       <p className="flex items-center gap-2 pb-3 pl-16 text-sm font-bold text-warn max-[820px]:pl-0">
         <CircleAlert className="size-4.5 shrink-0" aria-hidden />
         {t("done.warning")}
+        {details}
       </p>
     );
   }
@@ -132,7 +137,7 @@ export function JobList({
                 <Status state={event.state} />
               )}
             </div>
-            {finished ? <Outcome event={event} warned={warned} /> : <ProgressTrack state={event.state} />}
+            {finished ? <Outcome event={event} warned={warned} file={file} /> : <ProgressTrack state={event.state} />}
           </motion.li>
         );
       })}

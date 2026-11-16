@@ -111,3 +111,83 @@ describe("helpers", () => {
     expect(detectLanguage("de")).toBe("en");
   });
 });
+
+describe("activity log", () => {
+  const keys = () => store().log.map((e) => e.key);
+
+  it("starts empty with full paths off", () => {
+    expect(store().log).toEqual([]);
+    expect(store().includePaths).toBe(false);
+  });
+
+  it("records added files, the chosen target and each report", async () => {
+    await store().addPaths(["/demo/Intro_v05.aep", "/a/._Lower.aep", "/a/Damaged.aep"]);
+    expect(keys()).toEqual(expect.arrayContaining(["fileAdded", "fileRejected", "targetChosen"]));
+    expect(keys().some((k) => k.startsWith("report"))).toBe(true);
+    const sidecar = store().log.find((e) => e.params.file === "/a/._Lower.aep");
+    expect(sidecar?.level).toBe("warning");
+    expect(store().log.find((e) => e.params.file === "/a/Damaged.aep")?.level).toBe("error");
+    const report = store().log.find((e) => e.key.startsWith("report"));
+    expect(report?.detail).toMatch(/notes=/);
+    expect(store().log.every((e) => e.time > 0 && e.id > 0)).toBe(true);
+  });
+
+  it("records a user's target change and settings that affect output", async () => {
+    await store().addPaths(["/a/Intro.aep"]);
+    await store().setTarget(22);
+    store().updateSettings({ onExists: "skip" });
+    store().updateSettings({ pattern: "{name}_a" });
+    store().updateSettings({ pattern: "{name}_ab" });
+    store().updateSettings({ theme: "dark" });
+    expect(store().log.filter((e) => e.key === "targetChosen").at(-1)?.detail).toContain("source=user");
+    expect(keys()).toContain("settingOnExists");
+    // Typing in the pattern field keeps one entry; theme is not an output setting.
+    expect(store().log.filter((e) => e.key === "settingPattern")).toHaveLength(1);
+    expect(store().log.find((e) => e.key === "settingPattern")?.params.pattern).toBe("{name}_ab");
+    expect(keys().some((k) => k.toLowerCase().includes("theme"))).toBe(false);
+  });
+
+  it("records every conversion outcome and a summary", async () => {
+    await store().addPaths(["/demo/Intro_v05.aep", "/demo/Lower_thirds.aep"]);
+    await store().setTarget(22);
+    const ready = store().files.filter((f) => isConvertible(f, store().reports));
+    expect(ready.length).toBeGreaterThan(1);
+    await store().convert();
+    ready.forEach((f, i) =>
+      store().handleProgress(
+        i === 0
+          ? { id: f.id, state: "failed", errorCode: "write-failed" }
+          : { id: f.id, state: "done", outputPath: "/demo/out.aep" },
+      ),
+    );
+    expect(keys()).toEqual(expect.arrayContaining(["convertStarted", "jobDone", "jobFailed", "batchFinished"]));
+    const failed = store().log.find((e) => e.key === "jobFailed");
+    expect(failed?.level).toBe("error");
+    expect(failed?.ref).toBe(ready[0].id);
+    expect(failed?.detail).toBe("code=write-failed");
+  });
+
+  it("is kept when the user starts another batch", async () => {
+    await store().addPaths(["/a/Intro.aep"]);
+    store().setIncludePaths(true);
+    const before = store().log.length;
+    store().reset();
+    expect(store().log).toHaveLength(before);
+    expect(store().files).toEqual([]);
+  });
+
+  it("records update checks", async () => {
+    await store().checkUpdate();
+    expect(keys().some((k) => k.startsWith("update"))).toBe(true);
+  });
+
+  it("opens the log at the right entry for a file", async () => {
+    await store().addPaths(["/a/Damaged.aep"]);
+    const [file] = store().files;
+    store().showLogFor(file.id);
+    expect(store().logOpen).toBe(true);
+    expect(store().log.find((e) => e.id === store().logFocusId)?.ref).toBe(file.id);
+    store().setLogOpen(false);
+    expect(store().logFocusId).toBeNull();
+  });
+});

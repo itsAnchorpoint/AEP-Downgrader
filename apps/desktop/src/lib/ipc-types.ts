@@ -46,6 +46,12 @@ export interface Preflight {
   notes: Note[];
 }
 
+/** Operating system and CPU architecture, for the diagnostic report. */
+export interface SystemInfo {
+  os: string;
+  arch: string;
+}
+
 export interface Job {
   id: string;
   path: string;

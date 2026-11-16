@@ -36,5 +36,6 @@ export function createTauriIpc(): Ipc {
         }
       }),
     openUrl: (url) => openUrl(url),
+    systemInfo: () => invoke("system_info"),
   };
 }

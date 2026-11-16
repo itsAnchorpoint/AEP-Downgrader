@@ -5,7 +5,12 @@
   "header": {
     "whatsNew": "Что нового",
     "settings": "Настройки",
-    "back": "Назад"
+    "back": "Назад",
+    "log": "Журнал действий",
+    "logErrors_one": "Журнал действий, {{count}} ошибка",
+    "logErrors_few": "Журнал действий, {{count}} ошибки",
+    "logErrors_many": "Журнал действий, {{count}} ошибок",
+    "logErrors_other": "Журнал действий, {{count}} ошибки"
   },
   "drop": {
     "title": "Перетащите сюда .aep, .aet или .ffx",
@@ -78,6 +83,8 @@
     "layer-style-option-removed_few": "Будут удалены {{count}} опции стиля слоя, которых нет в старых версиях",
     "layer-style-option-removed_many": "Будут удалены {{count}} опций стиля слоя, которых нет в старых версиях",
     "layer-style-option-removed_other": "Будут удалены {{count}} опции стиля слоя, которых нет в старых версиях",
+    "3d-material-removed": "Настройки 3D-материала будут удалены ({{count}})",
+    "newer-data-removed": "Данные, которые понимают только новые версии, будут удалены ({{count}})",
     "layer-records-shortened_one": "{{count}} запись слоя будет сохранена в старом, более коротком формате. На вид ничего не изменится.",
     "layer-records-shortened_few": "{{count}} записи слоёв будут сохранены в старом, более коротком формате. На вид ничего не изменится.",
     "layer-records-shortened_many": "{{count}} записей слоёв будут сохранены в старом, более коротком формате. На вид ничего не изменится.",
@@ -205,5 +212,67 @@
     "title": "Конфиденциальность",
     "body": "AEP Downgrader работает только на этом компьютере. Файлы никуда не загружаются, аккаунта и телеметрии нет. Единственный сетевой запрос приложения — проверка обновлений: оно спрашивает у GitHub номер последнего релиза.",
     "source": "Исходный код на GitHub"
+  },
+  "log": {
+    "title": "Журнал действий",
+    "empty": "Пока ничего не произошло. Добавьте файл, и здесь появятся его шаги.",
+    "close": "Закрыть журнал",
+    "details": "Подробнее",
+    "detailsFor": "Показать {{file}} в журнале действий",
+    "level": {
+      "info": "Инфо",
+      "warning": "Внимание",
+      "error": "Ошибка"
+    },
+    "copy": "Скопировать отчёт",
+    "copied": "Отчёт скопирован",
+    "copyFailed": "Не удалось скопировать",
+    "fullPaths": "Добавить полные пути",
+    "contains": "В отчёт попадут версия, система и эти шаги. Имена файлов скрыты. Ничего не отправляется.",
+    "containsFull": "С полными путями: имя пользователя и названия папок. Ничего не отправляется.",
+    "msg": {
+      "fileAdded": "Добавлен {{file}}",
+      "fileRejected": "Не подходит {{file}}: {{problem}}",
+      "targetChosen": "Целевая версия: After Effects {{year}}",
+      "reportClean": "Проверка {{file}} для {{year}}: ничего не потеряется",
+      "reportNotes_one": "Проверка {{file}} для {{year}}: {{count}} замечание",
+      "reportNotes_few": "Проверка {{file}} для {{year}}: {{count}} замечания",
+      "reportNotes_many": "Проверка {{file}} для {{year}}: {{count}} замечаний",
+      "reportNotes_other": "Проверка {{file}} для {{year}}: {{count}} замечания",
+      "reportBlocked": "Проверка {{file}} для {{year}}: конвертировать нельзя",
+      "reportNothingToDo": "Проверка {{file}} для {{year}}: делать нечего",
+      "reportFailed": "Не удалось проверить {{file}} для {{year}}",
+      "inspectFailed_one": "Не удалось прочитать {{count}} файл",
+      "inspectFailed_few": "Не удалось прочитать {{count}} файла",
+      "inspectFailed_many": "Не удалось прочитать {{count}} файлов",
+      "inspectFailed_other": "Не удалось прочитать {{count}} файла",
+      "convertStarted_one": "Конвертируем {{count}} файл в After Effects {{year}}",
+      "convertStarted_few": "Конвертируем {{count}} файла в After Effects {{year}}",
+      "convertStarted_many": "Конвертируем {{count}} файлов в After Effects {{year}}",
+      "convertStarted_other": "Конвертируем {{count}} файла в After Effects {{year}}",
+      "jobNothingToDo": "{{file}}: делать нечего",
+      "jobNotConverted": "{{file}} не вошёл в конвертацию",
+      "jobDone": "{{file}} готов, копия: {{output}}",
+      "jobFailed": "Ошибка в {{file}}: {{error}}",
+      "jobSkipped": "{{file}} пропущен: копия уже есть",
+      "convertRefused": "Конвертацию не удалось запустить",
+      "batchFinished": "Итог: готово {{done}}, с ошибкой {{failed}}, пропущено {{skipped}}",
+      "settingFolder": "Папка для копий: {{folder}}",
+      "settingLocation": "Куда сохранять: {{mode}}",
+      "settingPattern": "Шаблон имени файла: {{pattern}}",
+      "settingOnExists": "Если имя занято: {{mode}}",
+      "updateAvailable": "Проверка обновлений: доступна версия {{version}}",
+      "updateUpToDate": "Проверка обновлений: установлена последняя версия",
+      "updateCheckFailed": "Не удалось проверить обновления",
+      "updateInstalled": "Обновление {{version}} установлено",
+      "updateInstallFailed": "Не удалось установить обновление {{version}}"
+    },
+    "value": {
+      "next-to-source": "рядом с оригиналом",
+      "folder": "выбранная папка",
+      "rename": "добавить номер",
+      "overwrite": "перезаписать",
+      "skip": "пропустить"
+    }
   }
 }

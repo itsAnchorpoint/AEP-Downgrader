@@ -71,17 +71,11 @@ pub struct FileInfo {
 }
 
 #[derive(Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum TargetStatus {
-    Verified,
-    Experimental,
-}
-
-#[derive(Serialize)]
 pub struct TargetInfo {
     pub major: u32,
     pub name: String,
-    pub status: TargetStatus,
+    /// `verified` or `experimental`, as written by the core table.
+    pub status: &'static str,
 }
 
 #[derive(Serialize)]
@@ -160,4 +154,11 @@ pub struct ProgressEvent {
     pub output_path: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error_code: Option<String>,
+}
+
+/// Operating system and CPU architecture the app was built for, for the diagnostic report.
+#[derive(Serialize)]
+pub struct SystemInfo {
+    pub os: &'static str,
+    pub arch: &'static str,
 }

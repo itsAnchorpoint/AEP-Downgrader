@@ -4,6 +4,7 @@ import { Converting } from "./components/Converting";
 import { Done } from "./components/Done";
 import { DropZone } from "./components/DropZone";
 import { Header } from "./components/Header";
+import { LogPanel } from "./components/LogPanel";
 import { Queue } from "./components/Queue";
 import { Settings } from "./components/Settings";
 import { UpdateBanner } from "./components/UpdateBanner";
@@ -75,7 +76,7 @@ export default function App() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="flex h-full flex-col">
+      <div className="relative flex h-full flex-col">
         <Header />
         <UpdateBanner />
         <main className="min-h-0 flex-1 px-6 pt-2 pb-5 max-[820px]:px-4">
@@ -89,6 +90,7 @@ export default function App() {
             <Screen />
           </motion.div>
         </main>
+        <LogPanel />
       </div>
       <WhatsNew />
     </MotionConfig>

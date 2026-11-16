@@ -16,6 +16,8 @@ const BY_SEVERITY: Record<Note["severity"], Look> = {
 const BY_CODE: Record<string, Look> = {
   "shadow-color-removed": { icon: MinusCircle, color: "text-danger" },
   "effects-removed": { icon: Waves, color: "text-danger" },
+  "3d-material-removed": { icon: MinusCircle, color: "text-danger" },
+  "newer-data-removed": { icon: MinusCircle, color: "text-danger" },
   "plugins-kept": { icon: Box, color: "text-warn" },
   "no-changes": { icon: CircleCheck, color: "text-ok" },
   "preset-no-changes": { icon: CircleCheck, color: "text-ok" },

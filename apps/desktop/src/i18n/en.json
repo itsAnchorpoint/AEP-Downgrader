@@ -5,7 +5,10 @@
   "header": {
     "whatsNew": "What’s new",
     "settings": "Settings",
-    "back": "Back"
+    "back": "Back",
+    "log": "Activity log",
+    "logErrors_one": "Activity log, {{count}} error",
+    "logErrors_other": "Activity log, {{count}} errors"
   },
   "drop": {
     "title": "Drop .aep, .aet or .ffx files here",
@@ -70,6 +73,8 @@
     "light-environment-removed_other": "Light environment settings will be removed from {{count}} lights",
     "layer-style-option-removed_one": "{{count}} layer style option that older versions don’t have will be removed",
     "layer-style-option-removed_other": "{{count}} layer style options that older versions don’t have will be removed",
+    "3d-material-removed": "3D material settings will be removed ({{count}})",
+    "newer-data-removed": "Data that only newer versions understand will be removed ({{count}})",
     "layer-records-shortened_one": "{{count}} layer record will be stored in the older, shorter format. No visible change.",
     "layer-records-shortened_other": "{{count}} layer records will be stored in the older, shorter format. No visible change.",
     "matte-not-adjacent_one": "{{count}} layer uses a track matte that is not the layer directly above it",
@@ -185,5 +190,61 @@
     "title": "Privacy",
     "body": "AEP Downgrader works entirely on this computer. Your files are never uploaded, and there is no account and no telemetry. The only network request the app makes is the update check, which asks GitHub for the latest release number.",
     "source": "View source on GitHub"
+  },
+  "log": {
+    "title": "Activity log",
+    "empty": "Nothing has happened yet. Add a file and its steps will appear here.",
+    "close": "Close the log",
+    "details": "Details",
+    "detailsFor": "Show {{file}} in the activity log",
+    "level": {
+      "info": "Info",
+      "warning": "Warning",
+      "error": "Error"
+    },
+    "copy": "Copy report",
+    "copied": "Report copied",
+    "copyFailed": "Could not copy",
+    "fullPaths": "Include full paths",
+    "contains": "Copies the version, your system and these steps. File names are hidden. Nothing is sent anywhere.",
+    "containsFull": "Includes full paths, with your user name and folder names. Nothing is sent anywhere.",
+    "msg": {
+      "fileAdded": "Added {{file}}",
+      "fileRejected": "Can’t use {{file}}: {{problem}}",
+      "targetChosen": "Target set to After Effects {{year}}",
+      "reportClean": "Checked {{file}} for {{year}}: nothing will be lost",
+      "reportNotes_one": "Checked {{file}} for {{year}}: {{count}} note",
+      "reportNotes_other": "Checked {{file}} for {{year}}: {{count}} notes",
+      "reportBlocked": "Checked {{file}} for {{year}}: can’t be converted",
+      "reportNothingToDo": "Checked {{file}} for {{year}}: nothing to do",
+      "reportFailed": "Could not check {{file}} for {{year}}",
+      "inspectFailed_one": "Could not inspect {{count}} file",
+      "inspectFailed_other": "Could not inspect {{count}} files",
+      "convertStarted_one": "Converting {{count}} file to After Effects {{year}}",
+      "convertStarted_other": "Converting {{count}} files to After Effects {{year}}",
+      "jobNothingToDo": "{{file}}: nothing to do",
+      "jobNotConverted": "{{file}} was left out of the conversion",
+      "jobDone": "{{file}} converted, saved as {{output}}",
+      "jobFailed": "{{file}} failed: {{error}}",
+      "jobSkipped": "{{file}} skipped: a copy already exists",
+      "convertRefused": "The conversion could not start",
+      "batchFinished": "Finished: {{done}} done, {{failed}} failed, {{skipped}} skipped",
+      "settingFolder": "Save folder: {{folder}}",
+      "settingLocation": "Save location: {{mode}}",
+      "settingPattern": "File name pattern: {{pattern}}",
+      "settingOnExists": "If the name already exists: {{mode}}",
+      "updateAvailable": "Update check: version {{version}} is available",
+      "updateUpToDate": "Update check: this is the latest version",
+      "updateCheckFailed": "Update check failed",
+      "updateInstalled": "Update {{version}} installed",
+      "updateInstallFailed": "Update {{version}} could not be installed"
+    },
+    "value": {
+      "next-to-source": "next to the original",
+      "folder": "chosen folder",
+      "rename": "add a number",
+      "overwrite": "overwrite",
+      "skip": "skip"
+    }
   }
 }

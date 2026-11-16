@@ -16,6 +16,7 @@ pub fn run() {
             commands::preflight,
             commands::convert,
             commands::reveal_in_folder,
+            commands::system_info,
         ])
         .run(tauri::generate_context!())
         .expect("error while running AEP Downgrader");
