@@ -251,7 +251,11 @@ pub fn summarize(changes: &[Change]) -> Vec<String> {
 /// * key is `"head"` and `first_diff >= 8`, or
 /// * `len_a == len_b` and the key is one of
 ///   `sdat`, `aRbp`, `ftts`, `pard`, `mkif`, `ewin`, `fips`, `Rhed`, `nhed`,
-///   `nnhd`.
+///   `nnhd`, or
+/// * `len_a == len_b`, key is `"tdb4"`, `diff_count == 1` and
+///   `first_diff == 119` (byte 119 of a property record is session state:
+///   After Effects sets it while a project is open and clears it after
+///   reopening; it is not tied to the file version).
 pub fn is_save_noise(change: &Change) -> bool {
     match change {
         Change::Changed(p) => {
@@ -259,6 +263,9 @@ pub fn is_save_noise(change: &Change) -> bool {
                 return true;
             }
             if p.key == "head" && p.first_diff >= 8 {
+                return true;
+            }
+            if p.key == "tdb4" && p.len_a == p.len_b && p.diff_count == 1 && p.first_diff == 119 {
                 return true;
             }
             if p.len_a == p.len_b {
@@ -1273,5 +1280,30 @@ mod tests {
             prev: String::new(),
         });
         assert!(!is_save_noise(&added));
+    }
+
+    // w) is_save_noise: a tdb4 differing only in its session-state byte
+    // (byte 119) is noise; any other difference is not.
+    #[test]
+    fn noise_tdb4_session_state_byte() {
+        let make = |diff_count: u64, first_diff: u64| {
+            Change::Changed(Pair {
+                path: String::new(),
+                index_path: Vec::new(),
+                key: "tdb4".to_string(),
+                len_a: 500,
+                len_b: 500,
+                first_diff,
+                diff_count,
+                samples: Vec::new(),
+            })
+        };
+
+        assert!(
+            is_save_noise(&make(1, 119)),
+            "single difference at byte 119 must be noise"
+        );
+        assert!(!is_save_noise(&make(2, 119)));
+        assert!(!is_save_noise(&make(1, 118)));
     }
 }
