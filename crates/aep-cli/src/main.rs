@@ -305,7 +305,7 @@ fn convert_error_message(err: &aep_core::convert::ConvertError, path_in: &str) -
             format!("unsupported source format {format} in {path_in}")
         }
         ConvertError::UnsupportedTarget { ae_major } => {
-            format!("unsupported target AE major {ae_major} (supported: 22, 23, 24, 25)")
+            format!("unsupported target AE major {ae_major} (supported: 22, 23, 24, 25, 26)")
         }
         ConvertError::NotADowngrade {
             source_format,

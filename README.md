@@ -1,113 +1,118 @@
 <div align="center">
+  <img src="assets/icon.png" alt="AEP Downgrader logo" width="160" height="160">
   <h1>AEP Downgrader</h1>
-  <p><strong>Convert Adobe After Effects projects from newer to older versions</strong></p>
-
-  [![License](https://img.shields.io/github/license/itsAnchorpoint/AEP-Downgrader)](LICENSE)
-  [![Release](https://img.shields.io/github/v/release/itsAnchorpoint/AEP-Downgrader)](https://github.com/itsAnchorpoint/AEP-Downgrader/releases)
-  [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)](https://github.com/itsAnchorpoint/AEP-Downgrader/releases)
-
-  <img src="assets/icon.png" alt="AEP Downgrader Logo" width="200" height="200">
+  <p><strong>Open After Effects projects in an older version of After Effects.</strong></p>
 </div>
 
 ---
 
-## About
+AEP Downgrader makes a copy of an After Effects project (`.aep`) that an older After Effects can open. It does what After Effects does in **File > Save As > Save a Copy As > (older version)**, but without needing the newer version installed.
 
-AEP Downgrader converts Adobe After Effects project files (.aep) from newer versions to older ones. Useful for team workflows where members use different AE versions.
+Free, open source ([GPLv3](LICENSE)), for Windows, macOS and Linux.
 
-Features a modern dark-themed UI built with PyQt5.
+## Your projects stay on your computer
 
-## Supported Conversions
-
-- Source version detection range: **AE 20.x to AE 33.x**
-- Target selection in UI: **any lower version down to AE 20.x**
-- Stability labels in UI:
-  - **Stable**: AE 23.x, AE 24.x, AE 25.x
-  - **Experimental**: AE 21.x, AE 20.x
-
-Important:
-- The app only allows downgrading to versions lower than the detected source version.
-- Unknown source versions are blocked from conversion until removed from selection.
+- Files are read and written on your machine only. There is no upload.
+- There is no account and no telemetry.
+- The only network request the app makes is the update check, which asks GitHub for the latest release number. You can turn it off in Settings.
+- The source code is open, so you can check all of this. Details: [docs/PRIVACY.md](docs/PRIVACY.md).
 
 ## Download
 
-Pre-built binaries available on the [Releases page](https://github.com/itsAnchorpoint/AEP-Downgrader/releases):
+> **Status.** Version 2.0 is not released yet. It is in development on the [`v2` branch](https://github.com/itsAnchorpoint/AEP-Downgrader/tree/v2). The current release is **1.2.0** (the older Python app). Get it from the [Releases page](https://github.com/itsAnchorpoint/AEP-Downgrader/releases). Version 1.x changes one byte in the file header and nothing else; 2.0 replaces that approach. See the [changelog](CHANGELOG.md).
 
-- **Windows**: `AEP-Downgrader-Windows.zip` → extract and run `AEP-Downgrader.exe`
-- **macOS**: `AEP-Downgrader-macOS.dmg` → open and drag app to Applications
-- **Linux**: `AEP-Downgrader-Linux.tar.gz` → extract and run `./AEP-Downgrader`
+When 2.0 is released, the Releases page will carry:
 
-## Usage
+- Windows: an installer (`.exe`)
+- macOS: a disk image (`.dmg`)
+- Linux: an AppImage and a `.deb` package
 
-1. Launch the application
-2. Select one or more .aep files
-3. The app automatically detects the source version
-4. Select target version from the dropdown (stable/experimental labels are shown)
-5. Click "Convert"
-6. Converted files are saved next to each source file with version suffix (e.g., `project_AE24x.aep`)
+## How to use it
 
-## Debug Mode
+1. Open the app and drop your `.aep` files (or a folder of them) onto the window. You can also click to browse.
+2. The app shows which After Effects version saved each file.
+3. Pick the version you want to open the file in. Only versions older than the file are offered.
+4. Read the **Before you convert** panel. It lists what will change, and what will be lost.
+5. Click **Convert**. A copy is saved next to the original, named like `project_AE2024.aep`. Originals are never modified.
 
-Built-in debug logging for troubleshooting:
+You can change where copies go, the file name pattern, and what happens when the name already exists, in Settings.
 
-1. Menu: **Debug** → **Enable Debug Mode** (or press `Ctrl+D`)
-2. View logs: **Debug** → **View Debug Logs**
-3. Export report: **Debug** → **Export Debug Report**
+## Compatibility
 
-Debug mode is included in all builds - no additional installation required.
+A target is **Verified** only if converted files were opened in a real After Effects of that version. Otherwise it is **Experimental**, even when the output matches what After Effects itself writes.
 
-## Building from Source
+| Target | Status | Basis |
+|---|---|---|
+| After Effects 2026 (26.x) | Experimental | Matches the file After Effects 27.0 saves for 26.x except colour settings of sources. Not yet opened in After Effects 2026. |
+| After Effects 2025 (25.x) | Experimental | Matches the file After Effects 27.0 saves for 25.x except one migrated effect. Not yet opened in After Effects 2025. |
+| After Effects 2024 (24.x) | Verified | Projects from 25.6 and 26.0 opened in After Effects 24.5. |
+| After Effects 2023 (23.x) | Experimental | Matches the file After Effects 24.5 saves for 23.x except panel state. Not yet opened in After Effects 2023. |
+| After Effects 2022 (22.x) | Experimental | Matches the file After Effects 24.5 saves for 22.x. Not yet opened in After Effects 2022. |
 
-### Prerequisites
-- Python 3.9+
-- pip
+Full explanation, and what blocks a conversion: [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
 
-### Build
+## What changes, and what can be lost
+
+- A conversion cannot add anything. Effects and features that exist only in the newer version do not appear in the older one. The app lists what it will remove before you convert.
+- Third-party plugins stay in the file, but must be installed in the older After Effects to open the project.
+- After Effects 2022 cannot express a track matte that is not the layer directly above the layer that uses it. Such a file is not converted to 2022. Choose 2023 or newer, or move each matte layer directly above its target.
+- Presets (`.ffx`) are not converted yet.
+- Keep your originals. Experimental targets in particular may not open.
+
+## First launch
+
+The apps are not code-signed, so each system warns you the first time.
+
+- **Windows:** SmartScreen says "Windows protected your PC". Click **More info**, then **Run anyway**.
+- **macOS:** the system refuses to open the app. Open **System Settings > Privacy & Security**, scroll down to the message about AEP Downgrader and click **Open Anyway**.
+- **Linux:** an AppImage must be executable. In a terminal: `chmod +x AEP-Downgrader*.AppImage`, then run it. Or right-click the file, open Properties, and allow executing it.
+
+## Command line
+
+The `aep` tool does the same work from a terminal. Build it with `cargo build --release -p aep-cli`, or run it through `cargo run -p aep-cli --`.
+
+```text
+aep targets <file>                      which versions this file can be downgraded to
+aep convert <in> <out> --to <major>     convert (24 means After Effects 2024); refuses to overwrite <out>
+aep compat                              print the compatibility table
+aep tree <file>                         print the chunk tree of a project
+aep roundtrip <file>                    check that the file parses and writes back byte for byte
+aep diff [--full] [--no-noise] <a> <b>  structural difference between two projects
+```
+
+## How to help
+
+- **Run the tester kit.** Only After Effects 2024 is available to the maintainer, so the other targets are Experimental until someone opens converted files in the real version. The kit is a few scripts that build a small test project with nothing personal in it: [tools/ae/README.md](tools/ae/README.md).
+- **Report a file that is not recognised** ("Unknown version", or a conversion that fails) by [opening an issue](https://github.com/itsAnchorpoint/AEP-Downgrader/issues). Say which After Effects version and system saved it. Do **not** attach a confidential project. The issue only needs to say that you have such a file, and a private way to send it can be arranged. Project files contain the paths of your footage, so treat them as private.
+- **Contribute code.** See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Thank you to the volunteers who tested. Special thanks to Shiiru, who supplied files from After Effects 27.0 on macOS.
+
+## Build from source
+
+You need Rust (stable), Node.js 22 and pnpm. On Linux you also need the WebKitGTK development packages (see `.github/workflows/ci.yml` for the list).
 
 ```bash
-# Clone and enter directory
 git clone https://github.com/itsAnchorpoint/AEP-Downgrader.git
 cd AEP-Downgrader
+git checkout v2
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/macOS
-# venv\Scripts\activate  # Windows
+# core and command line
+cargo test
 
-# Install dependencies
-pip install pyinstaller PyQt5 psutil
-
-# Build
-pyinstaller src/AEPdowngrader.py --onefile --windowed --name AEP-Downgrader --add-data "assets:assets" --hidden-import=psutil --hidden-import=debug_logger --collect-all=PyQt5
+# desktop app
+cd apps/desktop
+pnpm install
+pnpm tauri dev      # run
+pnpm tauri build    # installers for your system
 ```
 
-For detailed platform-specific instructions, see:
-- [BUILD_WINDOWS.md](BUILD_WINDOWS.md)
-- [BUILD_MACOS.md](BUILD_MACOS.md)
+## For developers
 
-## Development
+How the file format works and how the conversion rules were found: [docs/FORMAT.md](docs/FORMAT.md).
 
-### Running tests
-```bash
-# Activate venv first
-source venv/bin/activate
-python src/AEPdowngrader.py
-```
+## Licence and trademarks
 
-### Creating a release
+GNU General Public License v3.0. See [LICENSE](LICENSE).
 
-```bash
-# Update version in src/AEPdowngrader.py (app metadata in `show_about()` and `main()`)
-# Update version in setup.py
-
-git commit -m "Release v1.2.0"
-git tag v1.2.0
-git push origin main
-git push origin v1.2.0
-```
-
-GitHub Actions automatically builds all platforms and creates the release.
-
-## License
-
-GNU General Public License v3.0 - see [LICENSE](LICENSE) for details.
+Adobe and After Effects are trademarks of Adobe. This project is not affiliated with, endorsed by or sponsored by Adobe.
