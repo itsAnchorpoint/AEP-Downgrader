@@ -7,6 +7,7 @@
 //! - no dependencies outside `std`;
 //! - no panics on malformed input: return an error instead.
 
+pub mod diff;
 pub mod inspect;
 pub mod riff;
 pub mod version;

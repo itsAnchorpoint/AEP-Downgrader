@@ -3,15 +3,20 @@
 //! Commands (argument parsing is done by hand; no dependencies):
 //!
 //! ```text
-//! aep tree <file>        print the chunk tree, one node per line
-//! aep roundtrip <file>   parse, serialize, compare with the input
+//! aep tree <file>                print the chunk tree, one node per line
+//! aep roundtrip <file>           parse, serialize, compare with the input
+//! aep diff [--full] <a> <b>     structural diff of two files
 //! ```
 
+use aep_core::diff::{self, Change};
 use aep_core::riff::{Node, parse};
 use std::io::Write;
 use std::process::ExitCode;
 
-const USAGE: &str = "usage: aep <tree|roundtrip> <file>";
+const USAGE: &str = "usage: aep <tree|roundtrip|diff> ...\n\
+                     aep tree <file>\n\
+                     aep roundtrip <file>\n\
+                     aep diff [--full] <a> <b>";
 
 /// Write to stdout without panicking on I/O errors (e.g. broken pipe).
 fn emit(text: &str) {
@@ -103,15 +108,160 @@ fn roundtrip(path: &str) -> ExitCode {
     ExitCode::from(0)
 }
 
+/// Format an index path for display: indices joined by `.`, or `/` if empty.
+fn fmt_index_path(index_path: &[usize]) -> String {
+    if index_path.is_empty() {
+        "/".to_string()
+    } else {
+        index_path
+            .iter()
+            .map(|i| i.to_string())
+            .collect::<Vec<_>>()
+            .join(".")
+    }
+}
+
+/// Format a path for display: `/` if empty, otherwise the path itself.
+fn fmt_path(path: &str) -> &str {
+    if path.is_empty() { "/" } else { path }
+}
+
+/// Format samples as `off:aa>bb` triples in lowercase hex, space-separated.
+fn fmt_samples(samples: &[(u64, u8, u8)]) -> String {
+    samples
+        .iter()
+        .map(|&(off, a, b)| format!("{off:x}:{a:02x}>{b:02x}"))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn diff_cmd(full: bool, path_a: &str, path_b: &str) -> ExitCode {
+    let (_, file_a) = match read_and_parse(path_a) {
+        Ok(r) => r,
+        Err(msg) => {
+            eprintln!("{msg}");
+            return ExitCode::from(1);
+        }
+    };
+    let (_, file_b) = match read_and_parse(path_b) {
+        Ok(r) => r,
+        Err(msg) => {
+            eprintln!("{msg}");
+            return ExitCode::from(1);
+        }
+    };
+
+    let changes = diff::diff(&file_a, &file_b);
+    let mut out = String::new();
+
+    if full {
+        for change in &changes {
+            match change {
+                Change::Removed(l) => {
+                    out.push_str(&format!(
+                        "removed  {}  {} {} {} \"{}\"\n",
+                        fmt_path(&l.path),
+                        l.key,
+                        fmt_index_path(&l.index_path),
+                        l.len,
+                        l.preview
+                    ));
+                }
+                Change::Added(l) => {
+                    out.push_str(&format!(
+                        "added    {}  {} {} {} \"{}\"\n",
+                        fmt_path(&l.path),
+                        l.key,
+                        fmt_index_path(&l.index_path),
+                        l.len,
+                        l.preview
+                    ));
+                }
+                Change::Changed(p) => {
+                    let samples = fmt_samples(&p.samples);
+                    if samples.is_empty() {
+                        out.push_str(&format!(
+                            "changed  {}  {} {} {}->{} first={} count={}\n",
+                            fmt_path(&p.path),
+                            p.key,
+                            fmt_index_path(&p.index_path),
+                            p.len_a,
+                            p.len_b,
+                            p.first_diff,
+                            p.diff_count
+                        ));
+                    } else {
+                        out.push_str(&format!(
+                            "changed  {}  {} {} {}->{} first={} count={} samples={}\n",
+                            fmt_path(&p.path),
+                            p.key,
+                            fmt_index_path(&p.index_path),
+                            p.len_a,
+                            p.len_b,
+                            p.first_diff,
+                            p.diff_count,
+                            samples
+                        ));
+                    }
+                }
+            }
+        }
+    } else {
+        for line in diff::summarize(&changes) {
+            out.push_str(&line);
+            out.push('\n');
+        }
+    }
+
+    let n = changes.len();
+    out.push_str(&format!("{n} changes\n"));
+    emit(&out);
+
+    if n == 0 {
+        ExitCode::from(0)
+    } else {
+        ExitCode::from(1)
+    }
+}
+
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    if args.len() != 2 {
+    if args.is_empty() {
         eprintln!("{USAGE}");
         return ExitCode::from(2);
     }
     match args[0].as_str() {
-        "tree" => tree(&args[1]),
-        "roundtrip" => roundtrip(&args[1]),
+        "tree" => {
+            if args.len() != 2 {
+                eprintln!("{USAGE}");
+                return ExitCode::from(2);
+            }
+            tree(&args[1])
+        }
+        "roundtrip" => {
+            if args.len() != 2 {
+                eprintln!("{USAGE}");
+                return ExitCode::from(2);
+            }
+            roundtrip(&args[1])
+        }
+        "diff" => {
+            let rest: Vec<&str> = args[1..].iter().map(|s| s.as_str()).collect();
+            let mut full = false;
+            let mut files: Vec<&str> = Vec::new();
+            for arg in rest {
+                if arg == "--full" {
+                    full = true;
+                } else {
+                    files.push(arg);
+                }
+            }
+            if files.len() != 2 {
+                eprintln!("{USAGE}");
+                return ExitCode::from(2);
+            }
+            diff_cmd(full, files[0], files[1])
+        }
         _ => {
             eprintln!("{USAGE}");
             ExitCode::from(2)
