@@ -86,6 +86,7 @@ export function FileRow({
 }) {
   const { t } = useTranslation();
   const reportId = `report-${file.id}`;
+  const nothingToDo = report?.notes.some((n) => n.code === "not-a-downgrade" || n.code === "target-not-older");
   const body = (
     <>
       <FileTypeIcon file={file} />
@@ -98,7 +99,12 @@ export function FileRow({
         </span>
         <span className="flex items-center gap-2 overflow-hidden text-sm whitespace-nowrap text-muted">
           <VersionLine file={file} />
-          {report?.blocked && <span className="font-bold text-danger">{t("state.skipped")}</span>}
+          {report?.blocked &&
+            (nothingToDo ? (
+              <span className="font-bold text-muted">{t("state.nothingToDo")}</span>
+            ) : (
+              <span className="font-bold text-danger">{t("state.skipped")}</span>
+            ))}
         </span>
       </span>
       {file.problem ? (

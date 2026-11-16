@@ -39,6 +39,10 @@ function useNoteText() {
 export function Report({ id, report, year }: { id: string; report?: Preflight; year: string }) {
   const { t } = useTranslation();
   const noteText = useNoteText();
+  // A successful conversion without notes means nothing will be lost.
+  const notes: Note[] = report?.notes.length
+    ? report.notes
+    : [{ severity: "info", code: "no-changes", params: { year } }];
   const status = useAppStore((s) => s.targets.find((x) => x.major === report?.target)?.status);
 
   return (
@@ -63,7 +67,7 @@ export function Report({ id, report, year }: { id: string; report?: Preflight; y
       </h3>
       {report && (
         <ul className="mb-2 flex flex-col gap-1.5">
-          {report.notes.map((note) => {
+          {notes.map((note) => {
             const { icon: Icon, color } = BY_CODE[note.code] ?? BY_SEVERITY[note.severity];
             const { text, hint } = noteText(note);
             return (

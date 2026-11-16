@@ -88,7 +88,6 @@ pub struct TargetInfo {
 #[serde(rename_all = "lowercase")]
 pub enum Severity {
     Info,
-    Warn,
     Block,
 }
 

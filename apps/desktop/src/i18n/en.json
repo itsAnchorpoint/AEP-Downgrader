@@ -64,7 +64,24 @@
     "loading": "Checking the file…"
   },
   "note": {
-    "shadow-color-removed": "Shadow Color will be removed (added in 2024)",
+    "shadow-color-removed_one": "Shadow Color will be removed from {{count}} layer",
+    "shadow-color-removed_other": "Shadow Color will be removed from {{count}} layers",
+    "light-environment-removed_one": "Light environment settings will be removed from {{count}} light",
+    "light-environment-removed_other": "Light environment settings will be removed from {{count}} lights",
+    "layer-style-option-removed_one": "{{count}} layer style option that older versions don’t have will be removed",
+    "layer-style-option-removed_other": "{{count}} layer style options that older versions don’t have will be removed",
+    "layer-records-shortened_one": "{{count}} layer record will be stored in the older, shorter format. No visible change.",
+    "layer-records-shortened_other": "{{count}} layer records will be stored in the older, shorter format. No visible change.",
+    "matte-not-adjacent_one": "{{count}} layer uses a track matte that is not the layer directly above it",
+    "matte-not-adjacent_other": "{{count}} layers use a track matte that is not the layer directly above them",
+    "matte-not-adjacent-hint": "After Effects 2022 cannot represent this. Choose 2023 or newer, or move each matte layer directly above the layer that uses it.",
+    "not-a-downgrade": "Nothing to do for this target: the file is already saved in this version or an older one.",
+    "unsupported-target": "This target version isn’t supported yet.",
+    "unsupported-source": "This file was saved by a version the converter doesn’t know yet.",
+    "structure-not-understood": "The structure of this file isn’t fully understood. It was not converted, to avoid damaging it.",
+    "damaged": "The file looks damaged and can’t be converted.",
+    "preset-not-supported-yet": "Presets (.ffx) can’t be converted yet.",
+    "unreadable": "The file can’t be read.",
     "effects-removed_one": "{{count}} effect doesn’t exist in After Effects {{year}}: {{names}}",
     "effects-removed_other": "{{count}} effects don’t exist in After Effects {{year}}: {{names}}",
     "text-animator-ranges": "Text animator ranges may render slightly differently",
@@ -86,11 +103,20 @@
     "running": "Converting",
     "done": "Done",
     "failed": "Failed",
-    "skipped": "Skipped"
+    "skipped": "Skipped",
+    "nothingToDo": "Nothing to do"
   },
   "error": {
     "write-failed": "Could not write the copy",
     "unreadable": "Could not read the file",
+    "would-overwrite-source": "The copy would replace the original, so it was not written",
+    "not-a-downgrade": "Already saved in this version or an older one",
+    "unsupported-target": "This target version isn’t supported yet",
+    "unsupported-source": "This file comes from a version the converter doesn’t know",
+    "structure-not-understood": "The file structure isn’t fully understood",
+    "damaged": "The file looks damaged",
+    "preset-not-supported-yet": "Presets can’t be converted yet",
+    "matte-not-adjacent": "A track matte is not directly above its layer",
     "unknown": "Conversion failed"
   },
   "done": {

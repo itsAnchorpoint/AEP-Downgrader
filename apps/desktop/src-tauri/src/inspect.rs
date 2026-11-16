@@ -140,11 +140,6 @@ pub fn inspect_paths(paths: &[String]) -> Vec<FileInfo> {
     expand(paths).iter().map(|p| describe(p)).collect()
 }
 
-/// Same identification for one path; used by the mock preflight.
-pub fn describe_path(path: &str) -> FileInfo {
-    describe(&fs::canonicalize(path).unwrap_or_else(|_| PathBuf::from(path)))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
