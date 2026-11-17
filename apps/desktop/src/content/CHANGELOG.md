@@ -12,6 +12,7 @@ AEP Downgrader 2.0 is a rewrite. It no longer just edits the file header. It mak
 - A **Before you convert** panel. It lists what will change for each file and target, and what will be lost, before anything is written.
 - Conversion to After Effects 2026, 2025, 2024, 2023 and 2022 (see the compatibility table in the README).
 - After Effects 27 projects can be converted.
+- Templates (`.aet`) and animation presets (`.ffx`) are converted too, with the same rules as projects.
 - Every target is labelled **Verified** or **Experimental**. Verified means converted files were opened in a real After Effects of that version. Today that is 2024 only.
 - Settings: where to save copies, the file name pattern, what to do when a file already exists (add a number, overwrite or skip), and automatic update checks on or off.
 - Updates inside the app. It checks GitHub at most once a day, shows the release notes, and installs a new version when you click **Update**, after checking its signature. After an update it shows what changed. Works for the Windows installer and portable app, the macOS app and the Linux AppImage.

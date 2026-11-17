@@ -22,7 +22,14 @@ This is the table the tool prints (`aep compat`). The app, the command line and 
 
 The project does not call a target Verified because the output looks right. Only opening the file in the real application counts.
 
-What "Verified" means for 2024 in detail: projects saved by After Effects 25.6 and 26.0, among them a real working project with 25 compositions, 221 layers, 206 effects and 406 expressions, were converted and opened in After Effects 24.5 with no expression errors. A project saved by After Effects 27.0 was also converted and opened in After Effects 24.5. After Effects 24.5 is the only After Effects the maintainer has, so that is the only version tested directly.
+What "Verified" means for 2024 in detail: projects saved by After Effects 25.6 and 26.0, among them a real working project with 25 compositions, 221 layers, 206 effects and 406 expressions, were converted and opened in After Effects 24.5 with no expression errors. A project, a template project and an animation preset saved by After Effects 27.0 were also converted and opened (the preset applied) in After Effects 24.5. After Effects 24.5 is the only After Effects the maintainer has, so that is the only version tested directly.
+
+## Projects, templates and presets
+
+The same targets and rules apply to all three kinds of file:
+
+- **Projects (`.aep`)** and **template projects (`.aet`)** have the same structure. When you open a converted template, After Effects asks where to save it as a project, as it does with any template.
+- **Animation presets (`.ffx`)** hold effects and their settings. The app removes from them what the target version does not have, the same as in a project. A preset carries only a format number, not a full version, so the app shows the After Effects release from the format (a preset from After Effects 27 shows as 2027).
 
 ## Which targets are offered for a file
 
@@ -59,7 +66,6 @@ The app shows the changes that apply to your file in **Before you convert**, bef
 
 - **It cannot make a feature exist in an older version.** Effects and features that only exist in the newer version do not appear in the older one. Where the converter knows about such a feature (for example, the ones listed above) it removes it and tells you. It does not rebuild it.
 - **Third-party plugins are kept in the file.** The older After Effects needs them installed to open the project.
-- **Presets (`.ffx`) are not converted yet.** The app recognises them and says so.
 - **XML projects (`.aepx`) are not supported.**
 - **Some of After Effects's own changes are not reproduced yet.** They are the "except" in the Basis column:
   - 2023: when After Effects removes properties it also shortens the saved panel outline state (the `otln` chunk).

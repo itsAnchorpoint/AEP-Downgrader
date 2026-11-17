@@ -6,7 +6,7 @@
 
 ---
 
-AEP Downgrader makes a copy of an After Effects project (`.aep`) that an older After Effects can open. It does what After Effects does in **File > Save As > Save a Copy As > (older version)**, but without needing the newer version installed.
+AEP Downgrader makes a copy of an After Effects project (`.aep`), template (`.aet`) or animation preset (`.ffx`) that an older After Effects can open. It does what After Effects does in **File > Save As > Save a Copy As > (older version)**, but without needing the newer version installed.
 
 Free, open source ([GPLv3](LICENSE)), for Windows, macOS and Linux.
 
@@ -37,7 +37,7 @@ The Windows installer and portable app, the macOS app in Applications and the Li
 
 ## How to use it
 
-1. Open the app and drop your `.aep` files (or a folder of them) onto the window. You can also click to browse.
+1. Open the app and drop your `.aep`, `.aet` or `.ffx` files (or a folder of them) onto the window. You can also click to browse.
 2. The app shows which After Effects version saved each file.
 3. Pick the version you want to open the file in. Only versions older than the file are offered.
 4. Read the **Before you convert** panel. It lists what will change, and what will be lost.
@@ -64,7 +64,6 @@ Full explanation, and what blocks a conversion: [docs/COMPATIBILITY.md](docs/COM
 - A conversion cannot add anything. Effects and features that exist only in the newer version do not appear in the older one. The app lists what it will remove before you convert.
 - Third-party plugins stay in the file, but must be installed in the older After Effects to open the project.
 - After Effects 2022 cannot express a track matte that is not the layer directly above the layer that uses it. Such a file is not converted to 2022. Choose 2023 or newer, or move each matte layer directly above its target.
-- Presets (`.ffx`) are not converted yet.
 - Keep your originals. Experimental targets in particular may not open.
 
 ## First launch

@@ -17,7 +17,7 @@ chunk = id[4]  u32 size  data[size]  pad[size % 2]      (pad byte is 0x00)
 list  = chunk whose id is "LIST"; its data = kind[4] chunk*
 ```
 
-- The form of a project is `Egg!`. The form of an animation preset (`.ffx`) is `FaFX`.
+- The form of a project is `Egg!`, and so is the form of a template project (`.aet`). The form of an animation preset (`.ffx`) is `FaFX`.
 - A chunk with an odd size is followed by one zero byte that is not counted in the size.
 - `LIST` chunks nest, at any depth.
 - After the body there can be a trailer. After Effects stores an XMP packet there. We keep it as it is.
@@ -119,6 +119,18 @@ When After Effects saves a copy for an older version, it writes a fixed pair, fo
 
 They were read from copies saved by After Effects: 24, 23 and 22 by After Effects 24.5; 26 and 25 by After Effects 27.0. The stamp words carry the Windows platform code. The converter replaces it with the platform of the source file.
 
+### Animation presets (measured)
+
+An animation preset (`.ffx`) is a RIFX file of form `FaFX`. Its first chunk is a 16-byte `head`:
+
+```text
+off 0  u32 3      off 4  u32 format major      off 8  u32 format minor      off 12  u32 0
+```
+
+The format numbers are the same as a project's: a preset saved by After Effects 27.0 carries 98.6. There is no version word and no `svap`. After the head, a `LIST:besc` holds the effects and their properties with the same chunks as a project (`sspc`, `tdgp`, `tdmn`, `tdbs`, ...), including the chunks that the rules below remove (the 27.0 preset has `ofl2` and `elab`).
+
+The converter applies the same steps as for a project and stamps only the format major and minor into `head[4..12]`.
+
 ## 3. What After Effects changes when it saves for an older version (measured)
 
 Reproduced in `convert.rs`. In these rules "everywhere" means in the children of every `LIST`, at any depth, and at the top level. A match name is the bytes of a `tdmn` chunk up to the first NUL byte.
@@ -154,6 +166,8 @@ After Effects checks only the format major when it opens a file:
 - The 26.0 project without any change: refused, with "created with After Effects version 26.0 (Windows 64)".
 - A real working project from 25.6 (25 compositions, 221 layers, 206 effects, 406 expressions): both the full stamp and the major-only change opened, with no expression errors.
 - A project saved by After Effects 27.0 was converted and opened in After Effects 24.5.
+- A template project (`.aet`) saved by After Effects 27.0, converted to 24: opened, with the same 105 items, 21 compositions and 94 layers. After Effects reported 17 effects it does not have (effects added after 24, such as Curl Noise and Unmult); they stay in the file as missing effects, as with a project.
+- An animation preset saved by After Effects 27.0: refused as is ("this file was created with a newer version of After Effects"). Converted to 24, it applied, with the same two effects (Gaussian Blur, Box Blur) and the one animated property as in After Effects 27.0.
 
 From this: to open in 24, the header is enough. The structural steps in the table are needed for targets 23 and 22, and have only been compared against After Effects's own files, not yet opened in those versions.
 
