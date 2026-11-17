@@ -10,6 +10,7 @@
 pub mod compat;
 pub mod convert;
 pub mod diff;
+pub mod effects;
 pub mod inspect;
 pub mod riff;
 pub mod version;

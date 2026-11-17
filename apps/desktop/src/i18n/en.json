@@ -95,7 +95,8 @@
     "target-not-older": "Saved in After Effects {{from}}. Pick an older target than {{year}} to convert this file.",
     "file-unreadable": "This file can’t be read, so it can’t be converted.",
     "unknown": "Unknown note ({{code}})",
-    "plugins-kept-hint": "Plugins are kept in the file but must be installed to open it."
+    "plugins-kept-hint": "Plugins are kept in the file but must be installed to open it.",
+    "effects-removed-hint": "A conversion cannot add effects. The project still opens; After Effects lists these as missing effects."
   },
   "converting": {
     "title": "Converting",

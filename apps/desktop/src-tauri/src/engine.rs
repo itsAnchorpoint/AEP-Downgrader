@@ -68,18 +68,43 @@ fn blocked(target: u32, code: &str) -> Preflight {
     }
 }
 
+/// Notes about effects: built-in effects the target lacks (they stay in the file and After
+/// Effects shows them as missing) and third-party plug-ins the older version needs installed.
+fn effect_notes(bytes: &[u8], target: u32) -> Vec<Note> {
+    let (Ok(file), Ok(major)) = (aep_core::riff::parse(bytes), u8::try_from(target)) else {
+        return Vec::new();
+    };
+    let report = aep_core::effects::report(&file, major);
+    let names = |list: &[aep_core::effects::UsedEffect]| json!(list.iter().map(|e| e.name.as_str()).collect::<Vec<_>>());
+    let mut notes = Vec::new();
+    if !report.missing.is_empty() {
+        let mut params = Map::new();
+        params.insert("count".into(), json!(report.missing.len()));
+        params.insert("names".into(), names(&report.missing));
+        params.insert("year".into(), json!(release_name(major).map_or_else(|| (2000 + target).to_string(), str::to_string)));
+        notes.push(Note { severity: Severity::Warn, code: "effects-removed".into(), params });
+    }
+    if !report.third_party.is_empty() {
+        let mut params = Map::new();
+        params.insert("count".into(), json!(report.third_party.len()));
+        params.insert("names".into(), names(&report.third_party));
+        notes.push(Note { severity: Severity::Info, code: "plugins-kept".into(), params });
+    }
+    notes
+}
+
 /// Converts in memory and throws the bytes away; only the notes matter.
 pub fn preflight(path: &str, target: u32) -> Preflight {
     let Ok(bytes) = fs::read(path) else {
         return blocked(target, "unreadable");
     };
-    match run_core(&bytes, target) {
-        Ok(done) => Preflight { target, blocked: false, notes: done.notes.iter().map(core_note).collect() },
-        Err(ConvertError::Blocked(notes)) => {
-            Preflight { target, blocked: true, notes: notes.iter().map(core_note).collect() }
-        }
-        Err(error) => blocked(target, error_code(&error)),
-    }
+    let (blocked_by_rules, mut notes) = match run_core(&bytes, target) {
+        Ok(done) => (false, done.notes.iter().map(core_note).collect::<Vec<_>>()),
+        Err(ConvertError::Blocked(notes)) => (true, notes.iter().map(core_note).collect()),
+        Err(error) => return blocked(target, error_code(&error)),
+    };
+    notes.extend(effect_notes(&bytes, target));
+    Preflight { target, blocked: blocked_by_rules, notes }
 }
 
 pub enum Outcome {
@@ -180,6 +205,29 @@ mod tests {
     use aep_core::inspect::inspect;
 
     const FIXTURES: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../tests/fixtures");
+
+    fn project_using(effects: &[&str]) -> Vec<u8> {
+        use aep_core::riff::{Node, RiffFile};
+        let tdmn = |name: &str| {
+            let mut data = name.as_bytes().to_vec();
+            data.resize(40, 0);
+            Node::Chunk { id: *b"tdmn", data }
+        };
+        let defs = effects.iter().map(|e| Node::List { kind: *b"EfDf", children: vec![tdmn(e)] }).collect();
+        RiffFile { form: *b"Egg!", children: vec![Node::List { kind: *b"EfdG", children: defs }], trailer: Vec::new() }
+            .to_bytes()
+    }
+
+    #[test]
+    fn effect_notes_name_missing_effects_and_plug_ins() {
+        let notes = effect_notes(&project_using(&["ADBE Unmult", "tc Particular", "ADBE Glo2"]), 24);
+        let codes: Vec<_> = notes.iter().map(|n| n.code.as_str()).collect();
+        assert_eq!(codes, vec!["effects-removed", "plugins-kept"]);
+        assert_eq!(notes[0].params["names"], json!(["Unmult"]));
+        assert_eq!(notes[0].params["year"], json!("2024"));
+        assert_eq!(notes[1].params["names"], json!(["tc Particular"]));
+        assert!(effect_notes(&project_using(&["ADBE Glo2"]), 24).is_empty());
+    }
 
     fn fixture(name: &str) -> String {
         format!("{FIXTURES}/{name}")
