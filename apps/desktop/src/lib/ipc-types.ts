@@ -70,3 +70,27 @@ export interface ProgressEvent {
   outputPath?: string;
   errorCode?: string;
 }
+
+/** How this copy of the app gets updates. "manual": it links to the release page instead. */
+export type InstallKind = "installer" | "portable" | "manual";
+
+export interface AppInfo {
+  version: string;
+  installKind: InstallKind;
+  /** Settings store: a bare file name (app data folder) or an absolute path (portable app). */
+  settingsFile: string;
+}
+
+export interface UpdateInfo {
+  version: string;
+  /** Release notes (Markdown) from the update feed. */
+  notes: string | null;
+  /** Release date, YYYY-MM-DD. */
+  date: string | null;
+  installKind: InstallKind;
+}
+
+export type DownloadEvent =
+  | { event: "started"; data: { total: number | null } }
+  | { event: "progress"; data: { received: number } }
+  | { event: "finished" };

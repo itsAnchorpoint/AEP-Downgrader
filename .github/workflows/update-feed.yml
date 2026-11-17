@@ -1,0 +1,38 @@
+# When a release is published, copies its latest.json to the "updater-beta" release, which is the
+# update feed of beta builds. Stable builds read releases/latest/download/latest.json, which GitHub
+# serves from the newest published non-pre-release, so they need nothing here.
+#
+# "updater-beta" is a pre-release, so it never becomes the latest release and the update check of
+# 1.x (which asks for the latest release) never sees it.
+name: Update feed
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-feed
+  cancel-in-progress: false
+
+jobs:
+  beta-feed:
+    if: github.event.release.tag_name != 'updater-beta'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+      - name: Copy latest.json to the beta feed
+        run: |
+          gh release download "$TAG" --pattern latest.json --dir feed
+          if ! gh release view updater-beta >/dev/null 2>&1; then
+            gh release create updater-beta --prerelease --target "${{ github.event.release.target_commitish }}" \
+              --title "Update feed for beta builds" \
+              --notes "Not a release. Beta builds of AEP Downgrader read their update information from this file. Download the app from the latest release instead."
+          fi
+          gh release upload updater-beta feed/latest.json --clobber
+          echo "Beta feed now points to $TAG" >> "$GITHUB_STEP_SUMMARY"

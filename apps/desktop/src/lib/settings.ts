@@ -39,22 +39,47 @@ export function defaultSettings(): Settings {
 }
 
 const KEY = "settings";
-const tauriStore = new LazyStore("settings.json");
+const MEMORY_KEY = "memory";
+let tauriStore: LazyStore | null = null;
 
-export async function loadSettings(): Promise<Partial<Settings>> {
+/**
+ * Where settings are kept, from `appInfo().settingsFile`: the app data folder, or next to the
+ * exe for the portable Windows app. Call before the first load.
+ */
+export function setSettingsFile(file: string) {
+  tauriStore = new LazyStore(file);
+}
+
+const store = () => (tauriStore ??= new LazyStore("settings.json"));
+
+async function read<T>(key: string): Promise<Partial<T>> {
   try {
-    if (isTauri()) return (await tauriStore.get<Partial<Settings>>(KEY)) ?? {};
-    return JSON.parse(localStorage.getItem(KEY) ?? "{}");
+    if (isTauri()) return (await store().get<Partial<T>>(key)) ?? {};
+    return JSON.parse(localStorage.getItem(key) ?? "{}");
   } catch {
     return {};
   }
 }
 
-export async function saveSettings(settings: Settings): Promise<void> {
+async function write(key: string, value: unknown): Promise<void> {
   try {
-    if (isTauri()) await tauriStore.set(KEY, settings);
-    else localStorage.setItem(KEY, JSON.stringify(settings));
+    if (isTauri()) await store().set(key, value);
+    else localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.error("Could not save settings", error);
+    console.error(`Could not save ${key}`, error);
   }
 }
+
+export const loadSettings = () => read<Settings>(KEY);
+export const saveSettings = (settings: Settings) => write(KEY, settings);
+
+/** What the app remembers between launches that is not a setting. */
+export interface Memory {
+  /** The version that ran last; a newer one opens "What's new" with the changes since. */
+  lastSeenVersion: string;
+  /** When the last update check succeeded (ms since epoch). */
+  lastUpdateCheck: number;
+}
+
+export const loadMemory = () => read<Memory>(MEMORY_KEY);
+export const saveMemory = (memory: Partial<Memory>) => write(MEMORY_KEY, memory);

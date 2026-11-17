@@ -14,6 +14,9 @@ AEP Downgrader 2.0 is a rewrite. It no longer just edits the file header. It mak
 - After Effects 27 projects can be converted.
 - Every target is labelled **Verified** or **Experimental**. Verified means converted files were opened in a real After Effects of that version. Today that is 2024 only.
 - Settings: where to save copies, the file name pattern, what to do when a file already exists (add a number, overwrite or skip), and automatic update checks on or off.
+- Updates inside the app. It checks GitHub at most once a day, shows the release notes, and installs a new version when you click **Update**, after checking its signature. After an update it shows what changed. Works for the Windows installer and portable app, the macOS app and the Linux AppImage.
+- A portable Windows version: one `.exe`, no installation, settings kept next to it.
+- An activity log of what the app did in this session, and **Copy report** for bug reports, with file names hidden by default.
 - Light, dark and After Effects-style themes, five accent colours, English and Russian.
 - A check for track mattes that are not the layer directly above their layer. After Effects 2022 cannot represent them, so the conversion to 2022 is stopped instead of producing a file that may not open correctly.
 - A command-line tool, `aep`, to convert, inspect and compare projects.
@@ -26,7 +29,7 @@ AEP Downgrader 2.0 is a rewrite. It no longer just edits the file header. It mak
 - Copies are named like `project_AE2024.aep`. In 1.x the name looked like `project_AE24x.aep`. You can change the pattern in Settings.
 - If the copy name is taken, the app adds a number instead of overwriting the earlier copy. This is the default and can be changed.
 - Files are identified by reading their structure, not a fixed position in the file.
-- Windows installer, macOS disk image, Linux AppImage and `.deb` package replace the 1.x zip and tar.gz archives.
+- Windows installer and portable app, macOS disk image, Linux AppImage and `.deb` package replace the 1.x zip and tar.gz archives. Each release lists SHA-256 checksums and carries build provenance attestations.
 - Everything is processed on your computer. There is no account and no telemetry. The only network request is the update check, which can be turned off.
 
 ### Fixed

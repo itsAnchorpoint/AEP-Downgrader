@@ -4,8 +4,9 @@ import { AnimatePresence, motion } from "motion/react";
 import Markdown, { type Components } from "react-markdown";
 import { useTranslation } from "react-i18next";
 import changelog from "../content/CHANGELOG.md?raw";
+import { changelogSince } from "../lib/changelog";
 import { ipc } from "../lib/ipc";
-import { REPO_URL } from "../lib/links";
+import { releaseUrl, REPO_URL } from "../lib/links";
 import { useAppStore } from "../store";
 import { Button, IconButton } from "./ui";
 
@@ -58,8 +59,13 @@ export function WhatsNew() {
   const { t } = useTranslation();
   const open = useAppStore((s) => s.whatsNewOpen);
   const setOpen = useAppStore((s) => s.setWhatsNewOpen);
+  const view = useAppStore((s) => s.whatsNewView);
+  const since = useAppStore((s) => s.whatsNewSince);
   const update = useAppStore((s) => s.update);
   const installUpdate = useAppStore((s) => s.installUpdate);
+  const restartApp = useAppStore((s) => s.restartApp);
+  const showUpdate = view === "update" && update.status !== "none";
+  const manual = update.installKind === "manual" || update.status === "failed";
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
@@ -94,9 +100,32 @@ export function WhatsNew() {
                     </Dialog.Close>
                   </div>
                   <div className="changelog min-h-0 flex-1 overflow-y-auto px-6 pt-2 pb-3">
-                    <Markdown skipHtml components={components}>
-                      {changelog}
-                    </Markdown>
+                    {showUpdate ? (
+                      <>
+                        <h2>
+                          {t("whatsNew.version", { version: update.version })}
+                          {update.date && <span className="ml-2 text-sm font-semibold text-muted">{update.date}</span>}
+                        </h2>
+                        {update.notes ? (
+                          <Markdown skipHtml components={components}>
+                            {update.notes}
+                          </Markdown>
+                        ) : (
+                          <p className="my-1 text-sm text-muted">{t("whatsNew.noNotes")}</p>
+                        )}
+                        <Button
+                          variant="link"
+                          className="mt-3 -ml-1 px-1"
+                          onClick={() => void ipc.openUrl(releaseUrl(update.version))}
+                        >
+                          {t("whatsNew.releasePage")}
+                        </Button>
+                      </>
+                    ) : (
+                      <Markdown skipHtml components={components}>
+                        {changelogSince(changelog, since)}
+                      </Markdown>
+                    )}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-6 pt-3 pb-5">
                     <Button variant="link" onClick={() => void ipc.openUrl(REPO_URL)}>
@@ -104,9 +133,13 @@ export function WhatsNew() {
                       {t("done.support")}
                     </Button>
                     <span className="mr-auto text-xs text-muted">{t("whatsNew.foot")}</span>
-                    {update.status === "available" ? (
+                    {update.status === "available" || update.status === "failed" ? (
                       <Button variant="primary" className="h-11 text-base" onClick={() => void installUpdate()}>
-                        {t("whatsNew.updateTo", { version: update.version })}
+                        {t(manual ? "whatsNew.downloadVersion" : "whatsNew.updateTo", { version: update.version })}
+                      </Button>
+                    ) : update.status === "installed" ? (
+                      <Button variant="primary" className="h-11 text-base" onClick={() => void restartApp()}>
+                        {t("update.restart")}
                       </Button>
                     ) : (
                       <Dialog.Close asChild>

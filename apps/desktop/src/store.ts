@@ -3,12 +3,39 @@ import i18n from "./i18n";
 import { appendEntry, entryFor, type LogEntry, type LogLevel, type LogParams } from "./lib/activity-log";
 import { formatBytes, versionNumber } from "./lib/format";
 import { ipc } from "./lib/ipc";
-import type { FileInfo, OutputOptions, Preflight, ProgressEvent, TargetInfo } from "./lib/ipc-types";
-import { defaultSettings, loadSettings, saveSettings, type Settings } from "./lib/settings";
-import { updater } from "./lib/updater";
+import { compareVersions, hasChangesSince } from "./lib/changelog";
+import type { AppInfo, FileInfo, InstallKind, OutputOptions, Preflight, ProgressEvent, TargetInfo } from "./lib/ipc-types";
+import { releaseUrl } from "./lib/links";
+import {
+  defaultSettings,
+  loadMemory,
+  loadSettings,
+  saveMemory,
+  saveSettings,
+  setSettingsFile,
+  type Settings,
+} from "./lib/settings";
+import changelog from "./content/CHANGELOG.md?raw";
 
 export type Phase = "queue" | "converting" | "done";
-export type UpdateStatus = "none" | "available" | "installing" | "installed";
+export type UpdateStatus = "none" | "available" | "downloading" | "installing" | "installed" | "failed";
+
+export interface UpdateState {
+  status: UpdateStatus;
+  version: string;
+  /** Release notes (Markdown) from the update feed. */
+  notes: string | null;
+  date: string | null;
+  installKind: InstallKind;
+  /** Download progress 0..1, or null while the size is unknown. */
+  progress: number | null;
+  bannerDismissed: boolean;
+}
+
+/** "update": notes of the available update. "history": the bundled changelog. */
+export type WhatsNewView = "update" | "history";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 interface AppState {
   settings: Settings;
@@ -24,7 +51,15 @@ interface AppState {
   dragging: boolean;
   supportDismissed: boolean;
   whatsNewOpen: boolean;
-  update: { status: UpdateStatus; version: string; bannerDismissed: boolean };
+  whatsNewView: WhatsNewView;
+  /** In the history view, show only versions newer than this (after an update); null shows all. */
+  whatsNewSince: string | null;
+  appInfo: AppInfo | null;
+  update: UpdateState;
+  /** A check started from Settings is running. */
+  updateChecking: boolean;
+  /** Result of the last check started from Settings, for the line under the button. */
+  updateCheckResult: "up-to-date" | "found" | "failed" | null;
   /** What the app did in this session, oldest first, capped at LOG_CAP. Never leaves memory except via the copied report. */
   log: LogEntry[];
   logOpen: boolean;
@@ -50,9 +85,11 @@ interface AppState {
   chooseFolder(): Promise<void>;
   setView(view: "main" | "settings"): void;
   dismissSupport(): void;
-  setWhatsNewOpen(open: boolean): void;
-  checkUpdate(): Promise<void>;
+  setWhatsNewOpen(open: boolean, view?: WhatsNewView): void;
+  /** `manual`: started by the user from Settings, so the result is shown there. */
+  checkUpdate(manual?: boolean): Promise<void>;
   installUpdate(): Promise<void>;
+  restartApp(): Promise<void>;
   dismissUpdateBanner(): void;
   setLogOpen(open: boolean): void;
   showLogFor(ref: string): void;
@@ -73,7 +110,20 @@ const initialState = {
   dragging: false,
   supportDismissed: false,
   whatsNewOpen: false,
-  update: { status: "none" as UpdateStatus, version: "", bannerDismissed: false },
+  whatsNewView: "history" as WhatsNewView,
+  whatsNewSince: null as string | null,
+  appInfo: null as AppInfo | null,
+  update: {
+    status: "none",
+    version: "",
+    notes: null,
+    date: null,
+    installKind: "installer",
+    progress: null,
+    bannerDismissed: false,
+  } as UpdateState,
+  updateChecking: false,
+  updateCheckResult: null as "up-to-date" | "found" | "failed" | null,
   log: [] as LogEntry[],
   logOpen: false,
   logFocusId: null as number | null,
@@ -185,13 +235,29 @@ export const useAppStore = create<AppState>((set, get) => {
     async init() {
       if (initialized) return; // React StrictMode runs effects twice in dev
       initialized = true;
+      const appInfo = await ipc.appInfo();
+      setSettingsFile(appInfo.settingsFile);
       const saved = await loadSettings();
       const settings = { ...defaultSettings(), ...saved };
       await i18n.changeLanguage(settings.language);
-      set({ settings });
+      set({ settings, appInfo });
       await ipc.onProgress((event) => get().handleProgress(event));
       set({ targets: await ipc.listTargets() });
-      if (settings.autoUpdates) await get().checkUpdate();
+
+      // First launch after an update: show what changed since the version that ran before.
+      const memory = await loadMemory();
+      const before = memory.lastSeenVersion;
+      if (before && compareVersions(appInfo.version, before) > 0 && hasChangesSince(changelog, before)) {
+        set({ whatsNewOpen: true, whatsNewView: "history", whatsNewSince: before });
+      }
+      if (before !== appInfo.version) await saveMemory({ ...memory, lastSeenVersion: appInfo.version });
+
+      // At most one automatic check a day: at launch, and again if the app stays open.
+      const due = () => get().settings.autoUpdates && get().update.status === "none";
+      if (due() && Date.now() - (memory.lastUpdateCheck ?? 0) >= DAY_MS) await get().checkUpdate();
+      setInterval(() => {
+        if (due()) void get().checkUpdate();
+      }, DAY_MS);
     },
 
     async addPaths(paths) {
@@ -312,9 +378,9 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     reset() {
-      const { settings, targets, update, supportDismissed, log, logOpen, logFocusId, logFocusTick, includePaths } = get();
-      // The activity log belongs to the session, not to one batch.
-      set({ ...initialState, settings, targets, update, supportDismissed, log, logOpen, logFocusId, logFocusTick, includePaths });
+      const { phase, files, target, reports, expandedId, jobIds, progress } = initialState;
+      // Only the batch starts over. The activity log, settings and update state belong to the session.
+      set({ phase, files, target, reports, expandedId, jobIds, progress, view: "main", dragging: false });
     },
 
     setDragging: (dragging) => set({ dragging }),
@@ -346,32 +412,74 @@ export const useAppStore = create<AppState>((set, get) => {
 
     setView: (view) => set({ view }),
     dismissSupport: () => set({ supportDismissed: true }),
-    setWhatsNewOpen: (open) => set({ whatsNewOpen: open }),
+    setWhatsNewOpen(open, view) {
+      if (!open) return set({ whatsNewOpen: false });
+      const hasUpdate = get().update.status !== "none";
+      set({ whatsNewOpen: true, whatsNewView: view ?? (hasUpdate ? "update" : "history"), whatsNewSince: null });
+    },
 
-    async checkUpdate() {
+    async checkUpdate(manual = false) {
+      const busy = ["downloading", "installing", "installed"].includes(get().update.status);
+      if (busy || get().updateChecking) return;
+      set({ updateChecking: true, ...(manual ? { updateCheckResult: null } : {}) });
       try {
-        const found = await updater.check();
+        const found = await ipc.checkUpdate();
+        void loadMemory().then((memory) => saveMemory({ ...memory, lastUpdateCheck: Date.now() }));
         if (found) {
-          set({ update: { status: "available", version: found.version, bannerDismissed: false } });
-          record("info", "updateAvailable", { version: found.version });
+          set({
+            update: {
+              status: "available",
+              version: found.version,
+              notes: found.notes,
+              date: found.date,
+              installKind: found.installKind,
+              progress: null,
+              bannerDismissed: false,
+            },
+          });
+          record("info", "updateAvailable", { version: found.version }, `install=${found.installKind}`);
         } else {
           record("info", "updateUpToDate");
         }
+        if (manual) set({ updateCheckResult: found ? "found" : "up-to-date" });
       } catch (error) {
         record("warning", "updateCheckFailed", {}, errorText(error));
+        if (manual) set({ updateCheckResult: "failed" });
+      } finally {
+        set({ updateChecking: false });
       }
     },
 
     async installUpdate() {
-      set((s) => ({ update: { ...s.update, status: "installing" } }));
-      try {
-        await updater.install();
-        set((s) => ({ update: { ...s.update, status: "installed" } }));
-        record("info", "updateInstalled", { version: get().update.version });
-      } catch (error) {
-        set((s) => ({ update: { ...s.update, status: "available" } }));
-        record("error", "updateInstallFailed", { version: get().update.version }, errorText(error));
+      const { status, version, installKind } = get().update;
+      // Installs the app cannot update itself, and failed installs, get the release page.
+      if (installKind === "manual" || status === "failed") {
+        await ipc.openUrl(releaseUrl(version));
+        return;
       }
+      if (status !== "available") return;
+      set((s) => ({ update: { ...s.update, status: "downloading", progress: null } }));
+      let total: number | null = null;
+      try {
+        await ipc.installUpdate((event) => {
+          if (event.event === "started") total = event.data.total;
+          else if (event.event === "progress" && total) {
+            const progress = Math.min(1, event.data.received / total);
+            set((s) => ({ update: { ...s.update, progress } }));
+          } else if (event.event === "finished") {
+            set((s) => ({ update: { ...s.update, status: "installing", progress: 1 } }));
+          }
+        });
+        set((s) => ({ update: { ...s.update, status: "installed", bannerDismissed: false } }));
+        record("info", "updateInstalled", { version });
+      } catch (error) {
+        set((s) => ({ update: { ...s.update, status: "failed", bannerDismissed: false } }));
+        record("error", "updateInstallFailed", { version }, errorText(error));
+      }
+    },
+
+    async restartApp() {
+      await ipc.restartApp();
     },
 
     dismissUpdateBanner: () => set((s) => ({ update: { ...s.update, bannerDismissed: true } })),

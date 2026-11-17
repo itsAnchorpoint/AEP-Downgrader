@@ -1,0 +1,185 @@
+# Builds a release from a version tag (v2.0.0, v2.0.0-beta.1) into a DRAFT GitHub release:
+# installers for every system, the Windows portable exe, the signed update feed (latest.json),
+# SHA256SUMS.txt and build provenance attestations. Review the draft, then publish it by hand;
+# publishing runs update-feed.yml.
+#
+# Needs the repository secrets TAURI_SIGNING_PRIVATE_KEY and TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+# (the updater key; its public half is in apps/desktop/src-tauri/tauri.conf.json).
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to build, for example v2.0.0-beta.1
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  prepare:
+    name: Check and create the draft
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      release_id: ${{ steps.draft.outputs.release_id }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Versions, public key and release notes
+        id: meta
+        run: |
+          node .github/scripts/release-notes.mjs "$TAG" > notes.md
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: notes.md
+      - name: Draft release
+        id: draft
+        run: |
+          version="${TAG#v}"
+          if ! gh release view "$TAG" --json isDraft >/dev/null 2>&1; then
+            flags=(--draft --verify-tag --title "AEP Downgrader $version" --notes-file notes.md)
+            [[ "$version" == *-* ]] && flags+=(--prerelease)
+            gh release create "$TAG" "${flags[@]}"
+          fi
+          [[ "$(gh release view "$TAG" --json isDraft --jq .isDraft)" == "true" ]] \
+            || { echo "Release $TAG is already published; not touching it."; exit 1; }
+          id=$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq ".[] | select(.tag_name == \"$TAG\") | .id" | head -n1)
+          echo "release_id=$id" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build (${{ matrix.name }})
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-22.04
+            args: ""
+          - name: Windows
+            os: windows-latest
+            args: ""
+          - name: macOS
+            os: macos-latest
+            args: "--target universal-apple-darwin"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+      - name: Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: apps/desktop/pnpm-lock.yaml
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ runner.os == 'macOS' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - run: pnpm install --frozen-lockfile
+        working-directory: apps/desktop
+      # Off in the committed config so that building from source needs no signing key.
+      - name: Turn on signed update packages
+        shell: bash
+        run: |
+          node -e '
+            const fs = require("fs");
+            const file = "apps/desktop/src-tauri/tauri.conf.json";
+            const conf = JSON.parse(fs.readFileSync(file, "utf8"));
+            conf.bundle.createUpdaterArtifacts = true;
+            fs.writeFileSync(file, JSON.stringify(conf, null, 2));
+          '
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: apps/desktop
+          tauriScript: pnpm tauri
+          releaseId: ${{ needs.prepare.outputs.release_id }}
+          args: ${{ matrix.args }}
+          retryAttempts: 2
+      - name: Portable exe
+        if: runner.os == 'Windows'
+        shell: bash
+        working-directory: apps/desktop
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          version="${{ needs.prepare.outputs.version }}"
+          name="AEP-Downgrader_${version}_x64-portable.exe"
+          cp src-tauri/target/release/aep-downgrader-desktop.exe "$name"
+          pnpm tauri signer sign --app-version "$version" "$name"
+          gh release upload "$TAG" "$name" "$name.sig" --clobber
+
+  finish:
+    name: Feed, checksums, attestations
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-notes
+      - name: Download the release files
+        run: gh release download "$TAG" --dir assets
+      - name: Complete the update feed
+        run: |
+          version="${{ needs.prepare.outputs.version }}"
+          name="AEP-Downgrader_${version}_x64-portable.exe"
+          url="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$name"
+          node .github/scripts/finish-feed.mjs assets/latest.json notes.md "assets/$name.sig" "$url"
+      - name: Checksums
+        working-directory: assets
+        run: |
+          shopt -s nullglob
+          sha256sum *.exe *.dmg *.AppImage *.deb *.tar.gz | tee SHA256SUMS.txt
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-checksums: assets/SHA256SUMS.txt
+      - name: Upload the feed and checksums
+        run: gh release upload "$TAG" assets/latest.json assets/SHA256SUMS.txt --clobber
+      - name: Summary
+        run: |
+          {
+            echo "### Draft release $TAG is ready"
+            echo
+            echo "Check the files and notes, then publish it on the Releases page."
+            echo "Publishing updates the beta feed (update-feed.yml); stable releases also become the latest release."
+          } >> "$GITHUB_STEP_SUMMARY"

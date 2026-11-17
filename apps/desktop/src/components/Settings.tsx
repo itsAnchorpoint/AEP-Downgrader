@@ -30,7 +30,12 @@ function Row({ title, hint, children }: { title: ReactNode; hint?: ReactNode; ch
 export function Settings() {
   const { t } = useTranslation();
   const { settings, targets, target } = useAppStore();
-  const { updateSettings, chooseFolder, setView } = useAppStore();
+  const { updateSettings, chooseFolder, setView, checkUpdate, updateChecking, updateCheckResult } = useAppStore();
+  const checkResult = {
+    "up-to-date": t("settings.upToDate"),
+    found: t("settings.updateFound"),
+    failed: t("settings.checkFailed"),
+  };
   const locked = usesOwnAccent(settings.theme);
   const year = targets.find((x) => x.major === target)?.name ?? "2024";
 
@@ -141,7 +146,24 @@ export function Settings() {
           </Row>
           <Row
             title={<label htmlFor="auto-updates">{t("settings.updates")}</label>}
-            hint={t("settings.updatesSub")}
+            hint={
+              <>
+                {t("settings.updatesSub")}{" "}
+                <Button
+                  variant="link"
+                  className="min-h-0! px-0 align-baseline"
+                  disabled={updateChecking}
+                  onClick={() => void checkUpdate(true)}
+                >
+                  {updateChecking ? t("settings.checking") : t("settings.checkNow")}
+                </Button>
+                {updateCheckResult && !updateChecking && (
+                  <span role="status" className="ml-2">
+                    {checkResult[updateCheckResult]}
+                  </span>
+                )}
+              </>
+            }
           >
             <Switch.Root
               id="auto-updates"

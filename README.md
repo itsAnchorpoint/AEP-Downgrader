@@ -14,7 +14,7 @@ Free, open source ([GPLv3](LICENSE)), for Windows, macOS and Linux.
 
 - Files are read and written on your machine only. There is no upload.
 - There is no account and no telemetry.
-- The only network request the app makes is the update check, which asks GitHub for the latest release number. You can turn it off in Settings.
+- The only network request the app makes is the update check: at most once a day it reads a small file about the latest release from GitHub. You can turn it off in Settings. Updates are installed only when you click **Update**, and only if their signature matches.
 - The source code is open, so you can check all of this. Details: [docs/PRIVACY.md](docs/PRIVACY.md).
 
 ## Download
@@ -23,9 +23,17 @@ Free, open source ([GPLv3](LICENSE)), for Windows, macOS and Linux.
 
 When 2.0 is released, the Releases page will carry:
 
-- Windows: an installer (`.exe`)
-- macOS: a disk image (`.dmg`)
+- Windows: an installer (`…_x64-setup.exe`), or a portable app (`…_x64-portable.exe`) that needs no installation and keeps its settings next to itself
+- macOS: a disk image (`.dmg`), for Intel and Apple silicon
 - Linux: an AppImage and a `.deb` package
+
+Each release also has `SHA256SUMS.txt` and [build provenance attestations](https://github.com/itsAnchorpoint/AEP-Downgrader/attestations), so you can check that a file was built from this repository by GitHub Actions.
+
+## Updates
+
+The app checks for a new version at most once a day (you can turn this off, or check by hand, in Settings). When there is one, a bar at the top of the window says so, and **What's new** shows the release notes. **Update** downloads it, checks its signature and installs it; then restart the app. After an update the app shows what changed since the version you had.
+
+The Windows installer and portable app, the macOS app in Applications and the Linux AppImage update themselves. The `.deb` package does not: the app links to the release page instead.
 
 ## How to use it
 
@@ -86,7 +94,7 @@ aep diff [--full] [--no-noise] <a> <b>  structural difference between two projec
 - **Report a file that is not recognised** ("Unknown version", or a conversion that fails) by [opening an issue](https://github.com/itsAnchorpoint/AEP-Downgrader/issues). Say which After Effects version and system saved it. Do **not** attach a confidential project. The issue only needs to say that you have such a file, and a private way to send it can be arranged. Project files contain the paths of your footage, so treat them as private.
 - **Contribute code.** See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Thank you to the volunteers who tested. Special thanks to Shiiru, who supplied files from After Effects 27.0 on macOS.
+Thank you to the volunteers who tested. Special thanks to Shiiru, who supplied files from After Effects 27.0 on macOS, and to Павел Бизонов, who supplied files from After Effects 26.2 on macOS.
 
 ## Build from source
 

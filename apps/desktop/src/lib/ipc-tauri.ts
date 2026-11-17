@@ -1,10 +1,10 @@
-import { invoke, isTauri } from "@tauri-apps/api/core";
+import { Channel, invoke, isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { open } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import type { Ipc } from "./ipc";
-import type { ProgressEvent } from "./ipc-types";
+import type { DownloadEvent, ProgressEvent } from "./ipc-types";
 
 export { isTauri };
 
@@ -37,5 +37,13 @@ export function createTauriIpc(): Ipc {
       }),
     openUrl: (url) => openUrl(url),
     systemInfo: () => invoke("system_info"),
+    appInfo: () => invoke("app_info"),
+    checkUpdate: () => invoke("check_update"),
+    installUpdate(onEvent) {
+      const channel = new Channel<DownloadEvent>();
+      channel.onmessage = onEvent;
+      return invoke("install_update", { onEvent: channel });
+    },
+    restartApp: () => invoke("restart_app"),
   };
 }

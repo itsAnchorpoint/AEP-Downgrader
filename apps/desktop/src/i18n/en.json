@@ -145,13 +145,22 @@
     "action": "Update",
     "installing": "Installing the update…",
     "installed": "Update installed. Restart the app to finish.",
-    "dismiss": "Dismiss update notice"
+    "dismiss": "Dismiss update notice",
+    "downloading": "Downloading the update…",
+    "downloadingPercent": "Downloading the update… {{percent}}%",
+    "restart": "Restart",
+    "download": "Download",
+    "failed": "The update could not be installed. Download it from the release page."
   },
   "whatsNew": {
     "title": "What’s new",
     "foot": "Free, open source, no ads.",
     "close": "Close",
-    "updateTo": "Update to {{version}}"
+    "updateTo": "Update to {{version}}",
+    "version": "Version {{version}}",
+    "noNotes": "The release notes are on the release page.",
+    "releasePage": "Open the release page",
+    "downloadVersion": "Download {{version}}"
   },
   "settings": {
     "title": "Settings",
@@ -184,7 +193,12 @@
       "cobalt": "Cobalt"
     },
     "ae": "After Effects",
-    "accentLocked": "The After Effects theme uses its own colors"
+    "accentLocked": "The After Effects theme uses its own colors",
+    "checkNow": "Check now",
+    "checking": "Checking…",
+    "upToDate": "This is the latest version.",
+    "updateFound": "A new version is available.",
+    "checkFailed": "Could not reach GitHub."
   },
   "privacy": {
     "title": "Privacy",

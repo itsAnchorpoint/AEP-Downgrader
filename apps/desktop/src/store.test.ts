@@ -191,3 +191,61 @@ describe("activity log", () => {
     expect(store().logFocusId).toBeNull();
   });
 });
+
+describe("updates", () => {
+  it("downloads, installs and then offers a restart", async () => {
+    await store().checkUpdate();
+    expect(store().update).toMatchObject({ status: "available", version: "2.1.0", installKind: "installer" });
+    expect(store().update.notes).toContain("Presets");
+    const install = store().installUpdate();
+    expect(store().update.status).toBe("downloading");
+    await install;
+    expect(store().update.status).toBe("installed");
+    expect(store().update.progress).toBe(1);
+  });
+
+  it("sends installs the app cannot update to the release page", async () => {
+    const opened: string[] = [];
+    const original = ipc.openUrl;
+    ipc.openUrl = async (url) => void opened.push(url);
+    try {
+      await store().checkUpdate();
+      useAppStore.setState({ update: { ...store().update, installKind: "manual" } });
+      await store().installUpdate();
+      expect(opened).toEqual(["https://github.com/itsAnchorpoint/AEP-Downgrader/releases/tag/v2.1.0"]);
+      expect(store().update.status).toBe("available");
+    } finally {
+      ipc.openUrl = original;
+    }
+  });
+
+  it("falls back to the release page when an install fails", async () => {
+    const original = ipc.installUpdate;
+    ipc.installUpdate = async () => {
+      throw new Error("signature mismatch");
+    };
+    try {
+      await store().checkUpdate();
+      await store().installUpdate();
+      expect(store().update.status).toBe("failed");
+      expect(store().log.find((e) => e.key === "updateInstallFailed")?.level).toBe("error");
+    } finally {
+      ipc.installUpdate = original;
+    }
+  });
+
+  it("shows the result of a check started from Settings", async () => {
+    await store().checkUpdate(true);
+    expect(store().updateCheckResult).toBe("found");
+    expect(store().updateChecking).toBe(false);
+  });
+
+  it("opens What's new on the update notes when an update is waiting", async () => {
+    store().setWhatsNewOpen(true);
+    expect(store().whatsNewView).toBe("history");
+    await store().checkUpdate();
+    store().setWhatsNewOpen(true);
+    expect(store().whatsNewView).toBe("update");
+    expect(store().whatsNewSince).toBeNull();
+  });
+});

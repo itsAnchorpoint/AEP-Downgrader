@@ -1,5 +1,7 @@
 import type { Ipc } from "./ipc";
+import { version } from "../../package.json";
 import type {
+  AppInfo,
   FileInfo,
   FileKind,
   Job,
@@ -11,6 +13,7 @@ import type {
   Problem,
   SystemInfo,
   TargetInfo,
+  UpdateInfo,
 } from "./ipc-types";
 import { outputName } from "./pattern";
 
@@ -123,6 +126,13 @@ function outputPath(job: Job, options: OutputOptions): string {
   return `${dir}/${outputName(options.pattern, baseName(job.path), 2000 + job.target)}`;
 }
 
+const MOCK_UPDATE: UpdateInfo = {
+  version: "2.1.0",
+  notes: "### Added\n\n- Presets (`.ffx`) can be converted.\n\n### Fixed\n\n- Copies keep the colour settings of sources.\n",
+  date: "2026-12-01",
+  installKind: "installer",
+};
+
 /** `stepMs` is how long one file "converts". Tests pass 0 or fake timers. */
 export function createMockIpc(stepMs = 700): Ipc {
   const listeners = new Set<(event: ProgressEvent) => void>();
@@ -186,5 +196,22 @@ export function createMockIpc(stepMs = 700): Ipc {
       const os = /Windows/.test(ua) ? "windows" : /Mac/.test(ua) ? "macos" : /Linux/.test(ua) ? "linux" : "unknown";
       return { os, arch: /arm64|aarch64/i.test(ua) ? "aarch64" : /x86_64|x64|Win64|amd64/i.test(ua) ? "x86_64" : "unknown" };
     },
+    appInfo: async (): Promise<AppInfo> => ({ version, installKind: "installer", settingsFile: "settings.json" }),
+    // Only dev builds pretend that an update exists.
+    checkUpdate: async () => {
+      await wait(300);
+      return import.meta.env.DEV ? MOCK_UPDATE : null;
+    },
+    async installUpdate(onEvent) {
+      const total = 6_000_000;
+      onEvent({ event: "started", data: { total } });
+      for (let received = 0; received < total; received += 600_000) {
+        await wait(stepMs / 5);
+        onEvent({ event: "progress", data: { received } });
+      }
+      onEvent({ event: "finished" });
+      await wait(stepMs);
+    },
+    restartApp: async () => window.location.reload(),
   };
 }
