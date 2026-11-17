@@ -66,7 +66,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "REPLACE_WITH_UPDATER_PUBLIC_KEY",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlBQjNDNUZEMERGNUExNUYKUldSZm9mVU4vY1d6bXZoZEZhU1FqSTdjVUtzSnhFQTd2WWhHUUtVeU54M0lNQVFyMlBqVjZFOGIK",
       "endpoints": [
         "https://github.com/itsAnchorpoint/AEP-Downgrader/releases/latest/download/latest.json"
       ],
