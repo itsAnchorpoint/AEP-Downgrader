@@ -14,7 +14,7 @@ version = "2.0.0-alpha.0"
 
 [[package]]
 name = "aep-downgrader-desktop"
-version = "2.0.0-beta.2"
+version = "2.0.0-beta.3"
 dependencies = [
  "aep-core",
  "self-replace",
