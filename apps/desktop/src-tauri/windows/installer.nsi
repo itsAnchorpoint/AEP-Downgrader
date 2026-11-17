@@ -120,7 +120,7 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
 
 ; Languages: NSIS's own strings, Tauri's strings, then ours with the plug-in (hooks.nsh).
 {{#each languages}}
-LoadLanguageFile "${NSISDIR}\Contrib\Language files\{{this}}.nlf"
+LoadLanguageFile "${NSISDIR}\Contrib\Language files\\{{this}}.nlf"
 {{/each}}
 {{#each language_files}}
 !include "{{this}}"
