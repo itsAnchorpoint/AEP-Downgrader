@@ -167,7 +167,8 @@ jobs:
           version="${{ needs.prepare.outputs.version }}"
           name="AEP-Downgrader_${version}_x64-portable.exe"
           url="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$name"
-          node .github/scripts/finish-feed.mjs assets/latest.json notes.md "assets/$name.sig" "$url"
+          gh release view "$TAG" --json assets > assets.json
+          node .github/scripts/finish-feed.mjs assets/latest.json notes.md "assets/$name.sig" "$url" assets.json
       - name: Checksums
         working-directory: assets
         run: |
