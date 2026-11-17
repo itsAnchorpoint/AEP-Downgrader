@@ -80,6 +80,9 @@ jobs:
           cargo test
       - name: Build installers
         run: pnpm tauri build ${{ matrix.args }}
+        env:
+          # Tauri skips the Finder step that lays out the disk image window when CI=true.
+          TAURI_BUNDLER_DMG_IGNORE_CI: "true"
       - uses: actions/upload-artifact@v4
         with:
           name: AEP-Downgrader-${{ matrix.name }}
