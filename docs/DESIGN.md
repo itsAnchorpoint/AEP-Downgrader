@@ -64,3 +64,4 @@ What turns minimal into finished. Use all of them lightly, so that each is felt 
 
 - Build static assets (disk image background, social images) as HTML with the real fonts (`apps/desktop/src/assets/fonts`) and render them with headless Chromium at 1x and 2x. See `apps/desktop/src-tauri/dmg/render.sh`.
 - Review a rendered preview with the real surroundings (icons, Finder labels, window size) before shipping it.
+- **Disk image window:** Finder draws file names in black whenever the window has a background picture, even in Dark Mode. Put a light plate behind each label (the app's plate is paper, the Applications plate is lime). Finder's labels use text size 16 and sit about 84 pt below the icon centre.
