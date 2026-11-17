@@ -117,7 +117,7 @@ pnpm tauri build    # installers for your system
 
 ## For developers
 
-How the file format works and how the conversion rules were found: [docs/FORMAT.md](docs/FORMAT.md).
+How the file format works and how the conversion rules were found: [docs/FORMAT.md](docs/FORMAT.md). How the app and its assets should look: [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Licence and trademarks
 
