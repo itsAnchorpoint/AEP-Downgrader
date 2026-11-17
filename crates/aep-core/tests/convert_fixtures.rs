@@ -402,3 +402,61 @@ fn test_h_local_270_preset_to_every_target() {
         assert_eq!(count(&ours, b"tdmn"), count(&source, b"tdmn"));
     }
 }
+
+const LOCAL_BIZONOV: &str = concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../tests/fixtures-local/bizonov"
+);
+
+/// A project saved by After Effects 26.2.1 (macOS) converted to 25 and 24, against the copies
+/// After Effects 26.2 itself saved for 25.x and 24.x. What may remain:
+/// - colour settings of sources (`Pin` > `CLRS`: `dcui`, `apid`, `Utf8`), a known gap;
+/// - the camera and iris properties After Effects writes into view layers when it saves a
+///   copy (`ADBE Camera ...`, `ADBE Iris ...` with their `tdbs` lists): saved state, not a
+///   format rule (After Effects 24.5 does the same);
+/// - `idpi` reordered within one item, and value changes of bookkeeping chunks.
+/// Nothing the copy lacks may be left in ours apart from those.
+#[test]
+fn test_i_local_262_to_25_and_24() {
+    if !Path::new(LOCAL_BIZONOV).is_dir() {
+        eprintln!("fixtures-local/bizonov not present; skipping");
+        return;
+    }
+    let read = |name: &str| std::fs::read(Path::new(LOCAL_BIZONOV).join(name)).expect("read");
+    let input = read("AEPD_test_26.2_mac.aep");
+    for (target, reference) in [(25u8, "AEPD_test_25_mac.aep"), (24, "AEPD_test_24_mac.aep")] {
+        let changes = remaining(&input, target, &read(reference));
+        let in_colour = |l: &diff::Lone| l.path.contains("Pin ") || l.path.ends_with("CLRS");
+        let mut camera_pending = false;
+        for c in &changes {
+            match c {
+                Change::Removed(l) => assert!(
+                    in_colour(l) || l.key == "idpi",
+                    "{target}: ours has {} at {} that After Effects removed:\n{}",
+                    l.key,
+                    l.path,
+                    report(&changes)
+                ),
+                Change::Added(l) => {
+                    let camera = l.key == "tdmn"
+                        && (l.preview.starts_with("ADBE Camera")
+                            || l.preview.starts_with("ADBE Iris"));
+                    let ok = in_colour(l)
+                        || l.key == "idpi"
+                        || camera
+                        || (l.key == "LIST:tdbs" && camera_pending);
+                    assert!(
+                        ok,
+                        "{target}: After Effects has {} {:?} at {} that ours lacks:\n{}",
+                        l.key,
+                        l.preview,
+                        l.path,
+                        report(&changes)
+                    );
+                    camera_pending = camera;
+                }
+                Change::Changed(_) => {}
+            }
+        }
+    }
+}
