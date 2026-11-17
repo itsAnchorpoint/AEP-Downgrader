@@ -9,3 +9,6 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </StrictMode>,
 );
+
+// Development only: ?demo=<state> opens a named screen for screenshots (see lib/demo.ts).
+if (import.meta.env.DEV) void import("./lib/demo").then((demo) => demo.runDemo());

@@ -28,7 +28,7 @@ const PLATFORMS: Platform[] = ["windows", "mac-arm", "mac-intel"];
 const TARGETS: TargetInfo[] = [26, 25, 24, 23, 22].map((major) => ({
   major,
   name: String(2000 + major),
-  status: major >= 24 ? "verified" : "experimental",
+  status: major === 24 ? "verified" : "experimental", // as in aep_core::compat
 }));
 
 function hash(text: string): number {
