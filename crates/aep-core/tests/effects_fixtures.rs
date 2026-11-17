@@ -10,7 +10,9 @@ const LOCAL_SHIIRU27: &str = concat!(
 );
 
 /// After Effects 24.5, opening the 27.0 template converted to 24, listed exactly these
-/// 17 missing effects (dialog "This project contains references to missing effects").
+/// 17 missing effects (dialog "This project contains references to missing effects"):
+/// 16 built-in effects newer than 24, and Goodbye Greenscreen, a Blace plug-in that the
+/// tester has installed and the AE 24.5 used for the check does not.
 #[test]
 fn template_270_for_24_lists_what_after_effects_245_reported() {
     let path = Path::new(LOCAL_SHIIRU27).join("AEPD_template_27.0.aet");
@@ -19,11 +21,8 @@ fn template_270_for_24_lists_what_after_effects_245_reported() {
         return;
     }
     let file = parse(&std::fs::read(path).unwrap()).unwrap();
-    let mut names: Vec<String> = report(&file, 24)
-        .missing
-        .into_iter()
-        .map(|e| e.name)
-        .collect();
+    let effects = report(&file, 24);
+    let mut names: Vec<String> = effects.missing.into_iter().map(|e| e.name).collect();
     names.sort();
     let mut expected = vec![
         "Color And Contrast",
@@ -38,7 +37,6 @@ fn template_270_for_24_lists_what_after_effects_245_reported() {
         "Film Color",
         "Flare",
         "Gate",
-        "Goodbye Greenscreen",
         "Midtones",
         "Texture",
         "Unmult",
@@ -46,4 +44,10 @@ fn template_270_for_24_lists_what_after_effects_245_reported() {
     ];
     expected.sort();
     assert_eq!(names, expected);
+    assert!(
+        effects
+            .third_party
+            .iter()
+            .any(|e| e.match_name == "ADBE Goodbye Greenscreen" && e.name == "Goodbye Greenscreen")
+    );
 }

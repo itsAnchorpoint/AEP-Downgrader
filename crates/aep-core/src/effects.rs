@@ -15,7 +15,10 @@
 //!   tells a 26.x user an effect is missing when it may be there. No lists from 22, 23 or 25
 //!   exist yet, so effects added in 23 or 25 are not known (none appeared between 24.5 and 26.2).
 //! - [`BUILT_IN_OTHER`]: built-in effects whose match name does not start with `ADBE ` or `CC `,
-//!   from the effect list of a stock After Effects 27.0 on macOS.
+//!   from the effect list of After Effects 27.0 on macOS.
+//! - [`PLUG_INS_NAMED_ADBE`]: third-party plug-ins whose match name starts with `ADBE ` anyway,
+//!   found in testers' effect lists by their plug-in category (Goodbye Greenscreen is listed
+//!   under "Blace Plugins" and sold by Blace on aescripts.com).
 //!
 //! # How effects are found
 //!
@@ -44,7 +47,6 @@ pub const ADDED: &[(&str, &str, u8)] = &[
     ("ADBE Aud Deesser", "De-esser", 27),
     ("ADBE Contour Paint", "Contour Paint", 27),
     ("ADBE Variable Vibrance", "Variable Vibrance", 26), // after 26.2, by 27.0
-    ("ADBE Goodbye Greenscreen", "Goodbye Greenscreen", 26), // after 26.2, by 27.0
     ("ADBE Color And Contrast", "Color And Contrast", 26), // after 26.2, by 27.0
     ("ADBE Color Film", "Film Color", 26),               // after 26.2, by 27.0
     ("ADBE Color Shift", "Color Shift", 26),             // after 26.2, by 27.0
@@ -73,6 +75,9 @@ pub const BUILT_IN_OTHER: &[&str] = &[
     "mochaAECC",
 ];
 
+/// Third-party plug-ins whose match name starts with `ADBE ` like a built-in effect.
+pub const PLUG_INS_NAMED_ADBE: &[&str] = &["ADBE Goodbye Greenscreen"];
+
 /// An effect the file uses.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UsedEffect {
@@ -100,6 +105,9 @@ fn match_name(data: &[u8]) -> String {
 /// `true` for match names of built-in effects. Pseudo effects (`Pseudo/...`, expression
 /// controls saved with presets) are not plug-ins and count as built-in.
 pub fn is_built_in(match_name: &str) -> bool {
+    if PLUG_INS_NAMED_ADBE.contains(&match_name) {
+        return false;
+    }
     match_name.starts_with("ADBE ")
         || match_name.starts_with("CC ")
         || match_name.starts_with("Pseudo/")
@@ -259,6 +267,7 @@ mod tests {
         assert!(!is_built_in("tc Particular"));
         assert!(!is_built_in("Keylight 906 Pro"));
         assert!(!is_built_in("VideoCopilot OpticalFlares"));
+        assert!(!is_built_in("ADBE Goodbye Greenscreen"));
     }
 
     #[test]
