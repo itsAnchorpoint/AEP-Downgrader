@@ -11,8 +11,8 @@ const LOCAL_SHIIRU27: &str = concat!(
 
 /// After Effects 24.5, opening the 27.0 template converted to 24, listed exactly these
 /// 17 missing effects (dialog "This project contains references to missing effects"):
-/// 16 built-in effects newer than 24, and Goodbye Greenscreen, a Blace plug-in that the
-/// tester has installed and the AE 24.5 used for the check does not.
+/// 15 built-in effects newer than 24, and two plug-ins that the tester has installed and the
+/// AE 24.5 used for the check does not (Goodbye Greenscreen, Variable Vibrance).
 #[test]
 fn template_270_for_24_lists_what_after_effects_245_reported() {
     let path = Path::new(LOCAL_SHIIRU27).join("AEPD_template_27.0.aet");
@@ -40,14 +40,16 @@ fn template_270_for_24_lists_what_after_effects_245_reported() {
         "Midtones",
         "Texture",
         "Unmult",
-        "Variable Vibrance",
     ];
     expected.sort();
     assert_eq!(names, expected);
-    assert!(
-        effects
-            .third_party
-            .iter()
-            .any(|e| e.match_name == "ADBE Goodbye Greenscreen" && e.name == "Goodbye Greenscreen")
-    );
+    for plug_in in ["Goodbye Greenscreen", "Variable Vibrance"] {
+        assert!(
+            effects
+                .third_party
+                .iter()
+                .any(|e| e.match_name == format!("ADBE {plug_in}") && e.name == plug_in),
+            "{plug_in} is not reported as a plug-in"
+        );
+    }
 }

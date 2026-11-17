@@ -16,9 +16,11 @@
 //!   exist yet, so effects added in 23 or 25 are not known (none appeared between 24.5 and 26.2).
 //! - [`BUILT_IN_OTHER`]: built-in effects whose match name does not start with `ADBE ` or `CC `,
 //!   from the effect list of After Effects 27.0 on macOS.
-//! - [`PLUG_INS_NAMED_ADBE`]: third-party plug-ins whose match name starts with `ADBE ` anyway,
-//!   found in testers' effect lists by their plug-in category (Goodbye Greenscreen is listed
-//!   under "Blace Plugins" and sold by Blace on aescripts.com).
+//! - [`PLUG_INS_NAMED_ADBE`]: third-party plug-ins whose match name starts with `ADBE ` anyway.
+//!   Goodbye Greenscreen is listed under "Blace Plugins" in the tester's effect list and sold by
+//!   Blace on aescripts.com. Variable Vibrance (category "Color Styles") is in no stock list
+//!   (not in 24.5, not in 26.2), yet the tester remembers it in his After Effects 25 and 26, so
+//!   it came with a plug-in he installed.
 //!
 //! # How effects are found
 //!
@@ -46,16 +48,15 @@ pub const ADDED: &[(&str, &str, u8)] = &[
     ("ADBE Curl Noise", "Curl Noise", 26),
     ("ADBE Aud Deesser", "De-esser", 27),
     ("ADBE Contour Paint", "Contour Paint", 27),
-    ("ADBE Variable Vibrance", "Variable Vibrance", 26), // after 26.2, by 27.0
     ("ADBE Color And Contrast", "Color And Contrast", 26), // after 26.2, by 27.0
-    ("ADBE Color Film", "Film Color", 26),               // after 26.2, by 27.0
-    ("ADBE Color Shift", "Color Shift", 26),             // after 26.2, by 27.0
-    ("ADBE Color Texture", "Texture", 26),               // after 26.2, by 27.0
-    ("ADBE CompoundEffect", "Compound Effect", 26),      // after 26.2, by 27.0
-    ("ADBE Contrast", "Contrast", 26),                   // after 26.2, by 27.0
-    ("ADBE Flare", "Flare", 26),                         // after 26.2, by 27.0
-    ("ADBE LUT Transform", "LUT Transform", 26),         // after 26.2, by 27.0
-    ("ADBE Midtones", "Midtones", 26),                   // after 26.2, by 27.0
+    ("ADBE Color Film", "Film Color", 26),                 // after 26.2, by 27.0
+    ("ADBE Color Shift", "Color Shift", 26),               // after 26.2, by 27.0
+    ("ADBE Color Texture", "Texture", 26),                 // after 26.2, by 27.0
+    ("ADBE CompoundEffect", "Compound Effect", 26),        // after 26.2, by 27.0
+    ("ADBE Contrast", "Contrast", 26),                     // after 26.2, by 27.0
+    ("ADBE Flare", "Flare", 26),                           // after 26.2, by 27.0
+    ("ADBE LUT Transform", "LUT Transform", 26),           // after 26.2, by 27.0
+    ("ADBE Midtones", "Midtones", 26),                     // after 26.2, by 27.0
 ];
 
 /// Built-in effects whose match name does not start with `ADBE ` or `CC `. Match names that
@@ -76,7 +77,7 @@ pub const BUILT_IN_OTHER: &[&str] = &[
 ];
 
 /// Third-party plug-ins whose match name starts with `ADBE ` like a built-in effect.
-pub const PLUG_INS_NAMED_ADBE: &[&str] = &["ADBE Goodbye Greenscreen"];
+pub const PLUG_INS_NAMED_ADBE: &[&str] = &["ADBE Goodbye Greenscreen", "ADBE Variable Vibrance"];
 
 /// An effect the file uses.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -268,6 +269,7 @@ mod tests {
         assert!(!is_built_in("Keylight 906 Pro"));
         assert!(!is_built_in("VideoCopilot OpticalFlares"));
         assert!(!is_built_in("ADBE Goodbye Greenscreen"));
+        assert!(!is_built_in("ADBE Variable Vibrance"));
     }
 
     #[test]
@@ -312,7 +314,7 @@ mod tests {
                 kind: *b"besc",
                 children: vec![
                     tdmn("ADBE Effect Parade"),
-                    tdmn("ADBE Variable Vibrance"),
+                    tdmn("ADBE Contour Paint"),
                     tdmn("tc Particular"),
                 ],
             }],
@@ -324,7 +326,7 @@ mod tests {
                 .iter()
                 .map(|e| e.name.as_str())
                 .collect::<Vec<_>>(),
-            vec!["Variable Vibrance"]
+            vec!["Contour Paint"]
         );
         assert!(r.third_party.is_empty());
     }
