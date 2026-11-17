@@ -415,6 +415,7 @@ const LOCAL_BIZONOV: &str = concat!(
 ///   copy (`ADBE Camera ...`, `ADBE Iris ...` with their `tdbs` lists): saved state, not a
 ///   format rule (After Effects 24.5 does the same);
 /// - `idpi` reordered within one item, and value changes of bookkeeping chunks.
+///
 /// Nothing the copy lacks may be left in ours apart from those.
 #[test]
 fn test_i_local_262_to_25_and_24() {
