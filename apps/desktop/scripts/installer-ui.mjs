@@ -11,6 +11,8 @@ const platform = process.env.TAURI_ENV_PLATFORM;
 const force = process.argv.includes("--force");
 if (!force && (platform ? platform !== "windows" : process.platform !== "win32")) process.exit(0);
 
+execFileSync(process.execPath, [fileURLToPath(new URL("check-installer-template.mjs", import.meta.url))], { stdio: "inherit" });
+
 const target = process.platform === "win32" ? "i686-pc-windows-msvc" : "i686-pc-windows-gnu";
 const ui = fileURLToPath(new URL("../src-tauri/windows/ui/", import.meta.url));
 const plugin = fileURLToPath(new URL("../src-tauri/windows/plugin/", import.meta.url));

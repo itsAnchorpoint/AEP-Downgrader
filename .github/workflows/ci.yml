@@ -73,6 +73,8 @@ jobs:
             apps/desktop/src-tauri
             apps/desktop/src-tauri/windows/ui
       - run: pnpm install --frozen-lockfile
+      - name: Windows installer template matches the Tauri versions
+        run: node scripts/check-installer-template.mjs
       - run: pnpm exec tsc --noEmit
       - run: pnpm test
       - name: Rust tests and lint

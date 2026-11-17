@@ -47,7 +47,7 @@ cargo test
 cargo clippy --all-targets -- -D warnings
 ```
 
-Run the app with `pnpm tauri dev`, and build installers with `pnpm tauri build`. On Windows the build first compiles the installer's window (an NSIS plug-in in `apps/desktop/src-tauri/windows/ui`) for 32-bit Windows; `scripts/installer-ui.mjs` adds that Rust target itself. CI runs all of this on every push and pull request, and builds the installers on Windows (NSIS), macOS (dmg) and Linux (AppImage and deb).
+Run the app with `pnpm tauri dev`, and build installers with `pnpm tauri build`. On Windows the build first compiles the installer's window (an NSIS plug-in in `apps/desktop/src-tauri/windows/ui`) for 32-bit Windows; `scripts/installer-ui.mjs` adds that Rust target itself. The installer template (`windows/installer.nsi`) is a copy of Tauri's, so after updating `@tauri-apps/cli` or `tauri-plugin-updater` the build stops until the template is compared with Tauri's new one (`scripts/check-installer-template.mjs` says what to compare). CI runs all of this on every push and pull request, and builds the installers on Windows (NSIS), macOS (dmg) and Linux (AppImage and deb).
 
 The core also has to compile for WebAssembly: `cargo check -p aep-core --target wasm32-unknown-unknown`.
 

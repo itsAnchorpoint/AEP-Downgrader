@@ -13,6 +13,11 @@
 ;   follows Windows).
 ; The command line is Tauri's: /P passive (the app updater), /S silent, /UPDATE, /R restart,
 ; /ARGS, /NS no shortcuts.
+;
+; Checked against: tauri-cli 2.12.4, tauri-plugin-updater 2.14.1
+; scripts/check-installer-template.mjs stops the build when the project uses other versions: then
+; compare this file with Tauri's new template (and how the new updater runs the installer), port
+; what changed, update the line above, and test an update from the app on Windows again.
 
 Unicode true
 ManifestDPIAware true
