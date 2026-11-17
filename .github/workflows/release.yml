@@ -61,7 +61,8 @@ jobs:
           fi
           [[ "$(gh release view "$TAG" --json isDraft --jq .isDraft)" == "true" ]] \
             || { echo "Release $TAG is already published; not touching it."; exit 1; }
-          id=$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq ".[] | select(.tag_name == \"$TAG\") | .id" | head -n1)
+          id=$(gh release view "$TAG" --json databaseId --jq .databaseId)
+          [[ "$id" =~ ^[0-9]+$ ]] || { echo "Could not read the id of release $TAG"; exit 1; }
           echo "release_id=$id" >> "$GITHUB_OUTPUT"
 
   build:
