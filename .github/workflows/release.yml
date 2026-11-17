@@ -101,7 +101,7 @@ jobs:
           cache-dependency-path: apps/desktop/pnpm-lock.yaml
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ runner.os == 'macOS' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+          targets: ${{ runner.os == 'macOS' && 'aarch64-apple-darwin,x86_64-apple-darwin' || runner.os == 'Windows' && 'i686-pc-windows-msvc' || '' }}
       - run: pnpm install --frozen-lockfile
         working-directory: apps/desktop
       # Off in the committed config so that building from source needs no signing key.

@@ -24,3 +24,6 @@ Thumbs.db
 *.pem
 *.key
 *.pub
+
+# Windows installer window plug-in, built by apps/desktop/scripts/installer-ui.mjs
+apps/desktop/src-tauri/windows/plugin/

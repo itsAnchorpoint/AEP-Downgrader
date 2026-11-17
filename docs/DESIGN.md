@@ -68,7 +68,7 @@ Everything outside the app follows this page too, so the product looks like one 
 |---|---|
 | App window (all themes) | Being brought up to the reference level |
 | macOS disk image window | Done: the reference artifact |
-| Windows installer (NSIS header and sidebar images) | To do |
+| Windows installer (the whole window, every page, also updates and uninstalling) | Done: drawn by our NSIS plug-in, `apps/desktop/src-tauri/windows` |
 | App icon (Trail) | Done |
 | Website, download and support pages | Later |
 | Link previews (Open Graph, GitHub social preview), README header | Later |
@@ -77,4 +77,5 @@ Everything outside the app follows this page too, so the product looks like one 
 
 - Build static assets (disk image background, social images) as HTML with the real fonts (`apps/desktop/src/assets/fonts`) and render them with headless Chromium at 1x and 2x. See `apps/desktop/src-tauri/dmg/render.sh`.
 - Review a rendered preview with the real surroundings (icons, Finder labels, window size) before shipping it.
+- **Windows installer window:** the plug-in in `apps/desktop/src-tauri/windows/ui` draws every page in software (tiny-skia, rustybuzz, the app's fonts), so it looks the same on every Windows version and under Wine. Preview all pages as PNGs without Windows: `AEPD_PREVIEW=<dir> cargo test --release preview -- --ignored` in that folder. Its art (Fold, Trail) is rendered by `windows/assets/render.sh`; the texts are in `windows/hooks.nsh`.
 - **Disk image window:** Finder draws file names in black whenever the window has a background picture, even in Dark Mode. Put a light plate behind each label (the app's plate is paper, the Applications plate is lime). Finder's labels use text size 16 and sit about 84 pt below the icon centre.

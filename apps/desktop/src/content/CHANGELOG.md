@@ -17,6 +17,7 @@ AEP Downgrader 2.0 is a rewrite. It no longer just edits the file header. It mak
 - Settings: where to save copies, the file name pattern, what to do when a file already exists (add a number, overwrite or skip), and automatic update checks on or off.
 - Updates inside the app. It checks GitHub at most once a day, shows the release notes, and installs a new version when you click **Update**, after checking its signature. After an update it shows what changed. Works for the Windows installer and portable app, the macOS app and the Linux AppImage.
 - A portable Windows version: one `.exe`, no installation, settings kept next to it.
+- A Windows installer in the app's design: one window and one click, in English or Russian, with no administrator rights needed. Updates and uninstalling use the same window.
 - An activity log of what the app did in this session, and **Copy report** for bug reports, with file names hidden by default.
 - Light, dark and After Effects-style themes, five accent colours, English and Russian.
 - A check for track mattes that are not the layer directly above their layer. After Effects 2022 cannot represent them, so the conversion to 2022 is stopped instead of producing a file that may not open correctly.

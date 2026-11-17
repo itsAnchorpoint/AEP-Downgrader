@@ -1,0 +1,8 @@
+# The plug-in runs inside the NSIS installer (32-bit), before any runtime is installed:
+# link the C runtime statically.
+[target.i686-pc-windows-gnu]
+linker = "i686-w64-mingw32-gcc"
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.i686-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
