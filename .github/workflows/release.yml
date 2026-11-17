@@ -137,7 +137,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           version="${{ needs.prepare.outputs.version }}"
-          name="AEP-Downgrader_${version}_x64-portable.exe"
+          name="AEP-Downgrader_x64-portable.exe"
           cp src-tauri/target/release/aep-downgrader-desktop.exe "$name"
           pnpm tauri signer sign --app-version "$version" "$name"
           gh release upload "$TAG" "$name" "$name.sig" --clobber
@@ -165,7 +165,7 @@ jobs:
       - name: Complete the update feed
         run: |
           version="${{ needs.prepare.outputs.version }}"
-          name="AEP-Downgrader_${version}_x64-portable.exe"
+          name="AEP-Downgrader_x64-portable.exe"
           url="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$name"
           gh release view "$TAG" --json assets > assets.json
           node .github/scripts/finish-feed.mjs assets/latest.json notes.md "assets/$name.sig" "$url" assets.json
