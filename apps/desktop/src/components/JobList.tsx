@@ -100,7 +100,7 @@ export function JobList({
 }) {
   const { t } = useTranslation();
   return (
-    <ul className="min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain border-t-2 border-line-strong">
+    <ul className="min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain border-t border-line">
       {files.map((file, index) => {
         const event = progress[file.id] ?? { id: file.id, state: "queued" as const };
         const warned = reports[file.id]?.notes.some((n) => n.severity === "warn") ?? false;

@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import Markdown, { type Components } from "react-markdown";
 import { useTranslation } from "react-i18next";
 import changelog from "../content/CHANGELOG.md?raw";
-import { changelogSince } from "../lib/changelog";
+import { changelogSince, headingVersion } from "../lib/changelog";
 import { ipc } from "../lib/ipc";
 import { releaseUrl, REPO_URL } from "../lib/links";
 import { useAppStore } from "../store";
@@ -12,19 +12,40 @@ import { Button, IconButton } from "./ui";
 
 // react-markdown builds React elements and skips raw HTML, so the text is never injected as markup.
 const SECTION_TAGS: Record<string, { icon: LucideIcon; tone: string }> = {
-  Added: { icon: Plus, tone: "bg-accent text-accent-fg" },
-  Changed: { icon: RefreshCw, tone: "bg-accent text-accent-fg" },
-  Fixed: { icon: Check, tone: "bg-warn-fill text-ink-black" },
+  Added: { icon: Plus, tone: "text-accent-text" },
+  Changed: { icon: RefreshCw, tone: "text-accent-text" },
+  Fixed: { icon: Check, tone: "text-ok" },
 };
 
+/** "Version 2.0.0" with the date on its own line; the version never breaks across lines. */
+function VersionHeading({ version, date }: { version: string; date?: string | null }) {
+  const { t } = useTranslation();
+  const [word, ...rest] = t("whatsNew.version", { version: "\u0000" }).split("\u0000");
+  return (
+    <h2>
+      {word}
+      <span className="whitespace-nowrap">{version}</span>
+      {rest.join("")}
+      {date && <span className="mt-1.5 block text-sm font-semibold tracking-normal text-muted tabular-nums">{date}</span>}
+    </h2>
+  );
+}
+
 const components: Components = {
-  h1: () => null, // the dialog title replaces the file's own heading
+  h1: () => null, // the version headings carry the dialog
+  // "## [2.0.1] - 2026-11-25" and "## [Unreleased] 2.0.0" read as "Version 2.0.1" plus the date.
+  h2: ({ children }) => {
+    const text = String(Array.isArray(children) ? children.join("") : children ?? "");
+    const version = headingVersion(`## ${text}`);
+    const date = /\d{4}-\d{2}-\d{2}/.exec(text)?.[0] ?? null;
+    return version ? <VersionHeading version={version} date={date} /> : <h2>{children}</h2>;
+  },
   h3: ({ children }) => {
     const tag = SECTION_TAGS[String(children)];
     return (
-      <h3 className="mt-4 mb-1 flex items-center gap-2 text-sm font-black tracking-[0.12em] uppercase">
+      <h3 className="mt-5 mb-1 flex items-center gap-2 text-base font-extrabold">
         {tag && (
-          <span className={`grid size-5.5 place-items-center rounded-[7px] ${tag.tone}`} aria-hidden>
+          <span className={`grid size-6 place-items-center rounded-sm surface ${tag.tone}`} aria-hidden>
             <tag.icon className="size-3.5" strokeWidth={3} />
           </span>
         )}
@@ -87,12 +108,12 @@ export function WhatsNew() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 8 }}
                   transition={{ duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}
-                  className="flex max-h-full w-full max-w-lg flex-col overflow-hidden rounded-xl bg-surface shadow-pop"
+                  className="flex max-h-full w-full max-w-lg flex-col overflow-hidden rounded-xl surface [--surface-shadow:0_30px_90px_-20px_rgb(0_0_0/0.6)]"
                 >
                   <div className="flex items-start justify-between gap-3 px-6 pt-5">
-                    <Dialog.Title className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-black tracking-[0.12em] text-accent-fg uppercase">
-                      {t("whatsNew.title")}
-                    </Dialog.Title>
+                    {/* The version heading below is the visible title. */}
+                    <Dialog.Title className="sr-only">{t("whatsNew.title")}</Dialog.Title>
+                    <span />
                     <Dialog.Close asChild>
                       <IconButton label={t("whatsNew.close")} className="rounded-full! shadow-outline">
                         <X className="size-4" aria-hidden />
@@ -102,10 +123,7 @@ export function WhatsNew() {
                   <div className="changelog min-h-0 flex-1 overflow-y-auto px-6 pt-2 pb-3">
                     {showUpdate ? (
                       <>
-                        <h2>
-                          {t("whatsNew.version", { version: update.version })}
-                          {update.date && <span className="ml-2 text-sm font-semibold text-muted">{update.date}</span>}
-                        </h2>
+                        <VersionHeading version={update.version} date={update.date} />
                         {update.notes ? (
                           <Markdown skipHtml components={components}>
                             {update.notes}

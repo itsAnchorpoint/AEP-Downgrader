@@ -22,7 +22,7 @@ export function Done() {
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: "spring", stiffness: 420, damping: 15 }}
-          className="grid size-16 shrink-0 place-items-center rounded-full bg-accent text-accent-fg"
+          className="grid size-16 shrink-0 place-items-center rounded-full fill-accent"
           aria-hidden
         >
           <Check className="size-8" strokeWidth={3.25} />
@@ -44,7 +44,7 @@ export function Done() {
       </div>
       <JobList files={jobs} reports={reports} progress={progress} year={year} finished />
       {!supportDismissed && (
-        <div className="mt-auto flex items-center gap-3 rounded-full py-2 pr-2 pl-4 text-sm text-muted shadow-outline">
+        <div className="mt-auto flex items-center gap-3 rounded-full py-2 pr-2 pl-4 text-sm text-muted surface">
           <Heart className="size-4.5 shrink-0 text-danger" aria-hidden />
           <span className="min-w-0 flex-1">
             {t("done.supportLine")}{" "}

@@ -19,12 +19,12 @@ const LEVELS: Record<LogLevel, { icon: typeof Info; tone: string; row: string }>
   warning: {
     icon: TriangleAlert,
     tone: "text-warn",
-    row: "shadow-[inset_3px_0_0_var(--color-warn)]",
+    row: "bg-[color-mix(in_srgb,var(--color-warn)_8%,transparent)]",
   },
   error: {
     icon: CircleX,
     tone: "text-danger",
-    row: "bg-[color-mix(in_srgb,var(--color-danger)_12%,transparent)] shadow-[inset_3px_0_0_var(--color-danger)]",
+    row: "bg-[color-mix(in_srgb,var(--color-danger)_12%,transparent)]",
   },
 };
 
@@ -124,7 +124,7 @@ function LogBody() {
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 pt-2.5 pb-1">
         <h2 className="flex items-center gap-2 text-base font-black tracking-tight">
           {t("log.title")}
-          <span className="rounded-full bg-accent px-2 py-px font-mono text-xs font-bold text-accent-fg">{log.length}</span>
+          <span className="rounded-full bg-raised px-2 py-px text-xs font-extrabold text-fg tabular-nums">{log.length}</span>
         </h2>
         <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1.5">
           <label className="flex items-center gap-2 text-sm font-bold" htmlFor="log-full-paths">
@@ -202,7 +202,7 @@ export function LogPanel() {
             setLogOpen(false);
             document.getElementById(LOG_TOGGLE_ID)?.focus();
           }}
-          className="mx-6 mb-3 flex h-[clamp(10.5rem,31vh,20rem)] shrink-0 flex-col overflow-hidden rounded-lg bg-surface shadow-outline max-[820px]:mx-4 [@media(max-height:640px)]:absolute [@media(max-height:640px)]:inset-x-0 [@media(max-height:640px)]:bottom-0 [@media(max-height:640px)]:z-20 [@media(max-height:640px)]:h-[clamp(11rem,52vh,22rem)] [@media(max-height:640px)]:shadow-[0_0_0_2px_var(--color-line-strong),0_12px_40px_rgb(0_0_0/0.35)]"
+          className="mx-6 mb-3 flex h-[clamp(10.5rem,31vh,20rem)] shrink-0 flex-col overflow-hidden rounded-lg surface max-[820px]:mx-4 [@media(max-height:640px)]:absolute [@media(max-height:640px)]:inset-x-0 [@media(max-height:640px)]:bottom-0 [@media(max-height:640px)]:z-20 [@media(max-height:640px)]:h-[clamp(11rem,52vh,22rem)] [@media(max-height:640px)]:shadow-[0_0_0_2px_var(--color-line-strong),0_12px_40px_rgb(0_0_0/0.35)]"
         >
           <LogBody />
         </motion.section>

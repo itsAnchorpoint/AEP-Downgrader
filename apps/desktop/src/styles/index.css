@@ -18,7 +18,11 @@ html[data-theme="ae"] {
 }
 
 body {
-  background: var(--color-bg);
+  background-color: var(--color-bg);
+  background-image:
+    radial-gradient(900px 520px at 8% -12%, var(--page-light), transparent 70%),
+    radial-gradient(140% 110% at 50% 30%, transparent 55%, var(--page-vignette));
+  background-attachment: fixed;
   color: var(--color-fg);
   font-family: var(--font-sans);
   font-size: var(--text-base);
@@ -30,6 +34,82 @@ body {
 :focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
+}
+
+/* Film grain over the whole window: one pre-rendered tile, no live filter (fast in WebKitGTK). */
+#root::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  background: url("../assets/grain.png");
+  opacity: var(--grain-opacity);
+}
+
+/* The parts the browser draws carry the design too. */
+::selection {
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+}
+input,
+textarea {
+  caret-color: var(--color-accent-text);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: var(--color-line-strong) padding-box;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+/* Surfaces and fills (docs/DESIGN.md, Depth): gradient, top highlight, soft deep shadow. */
+@utility surface {
+  background-image: linear-gradient(var(--surface-top), var(--surface-bottom));
+  box-shadow:
+    inset 0 1px 0 var(--surface-highlight),
+    0 0 0 1px var(--surface-edge),
+    var(--surface-shadow);
+}
+@utility fill-accent {
+  background-color: var(--color-accent);
+  background-image: linear-gradient(color-mix(in oklab, var(--color-accent), white 32%), var(--color-accent));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.5),
+    0 10px 26px -10px color-mix(in oklab, var(--color-accent) 75%, transparent);
+  color: var(--color-accent-fg);
+}
+/* A selected option among several (segmented controls): the strong fill without the glow,
+   so a row of settings does not light up like a row of buttons. */
+@utility fill-selected {
+  background-color: var(--color-strong);
+  background-image: linear-gradient(color-mix(in oklab, var(--color-strong), white 18%), var(--color-strong));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3);
+  color: var(--color-on-strong);
+}
+/* The loudest fill: ink in the light theme, the accent in the dark ones. */
+@utility fill-strong {
+  background-color: var(--color-strong);
+  background-image: linear-gradient(color-mix(in oklab, var(--color-strong), white 24%), var(--color-strong));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    0 10px 26px -10px color-mix(in oklab, var(--color-strong) 70%, transparent);
+  color: var(--color-on-strong);
 }
 
 /* Indeterminate progress: a bar sliding by transform only. Runs only while a file converts. */
@@ -70,17 +150,41 @@ body {
 .drop-zone:hover .ring {
   animation-duration: 1.6s;
 }
+/* The drop zone says "drop here" with a dashed outline inside its surface. */
+.drop-zone::before {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border: 2px dashed var(--color-line);
+  border-radius: calc(var(--radius-xl) - 12px);
+  pointer-events: none;
+  transition: border-color 200ms;
+}
+.drop-zone:hover::before {
+  border-color: var(--color-line-strong);
+}
+.drop-target-active::before {
+  border-color: var(--color-accent);
+}
+/* While files are dragged over the window the drop zone glows in the accent. */
+.drop-target-active {
+  box-shadow:
+    inset 0 0 0 3px var(--color-accent),
+    0 0 60px -12px color-mix(in oklab, var(--color-accent) 60%, transparent),
+    var(--surface-shadow);
+}
 
 /* Changelog markdown: the newest version is the big headline. */
 .changelog h2 {
-  margin-top: 1.5rem;
-  font-size: var(--text-xl);
-  font-weight: 900;
+  margin-top: 2rem;
+  font-size: var(--text-2xl);
+  line-height: 1.05;
+  font-weight: 800;
   letter-spacing: var(--tracking-display);
 }
 .changelog h2:first-of-type {
-  margin-top: 0.25rem;
-  font-size: 3rem;
+  margin-top: 0;
+  font-size: 2.5rem;
   line-height: 1;
 }
 

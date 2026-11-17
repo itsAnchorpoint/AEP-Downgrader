@@ -60,6 +60,19 @@ What turns minimal into finished. Use all of them lightly, so that each is felt 
 | Brand motifs (Fold ribbon, Trail mark) | Generic clip-art arrows and shapes |
 | Real tokens and fonts in an HTML mock-up, rendered and reviewed | Hand-placed SVG text with fallback fonts |
 
+## Brand surfaces
+
+Everything outside the app follows this page too, so the product looks like one thing from the first download:
+
+| Surface | State |
+|---|---|
+| App window (all themes) | Being brought up to the reference level |
+| macOS disk image window | Done: the reference artifact |
+| Windows installer (NSIS header and sidebar images) | To do |
+| App icon (Trail) | Done |
+| Website, download and support pages | Later |
+| Link previews (Open Graph, GitHub social preview), README header | Later |
+
 ## Making and reviewing assets
 
 - Build static assets (disk image background, social images) as HTML with the real fonts (`apps/desktop/src/assets/fonts`) and render them with headless Chromium at 1x and 2x. See `apps/desktop/src-tauri/dmg/render.sh`.

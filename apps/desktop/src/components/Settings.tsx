@@ -12,7 +12,7 @@ import { Button, Segmented } from "./ui";
 
 /** A group is a heavy rule followed by rows, like a ruled ledger. */
 function Group({ children }: { children: ReactNode }) {
-  return <div className="border-t-2 border-line-strong">{children}</div>;
+  return <div className="border-t border-line">{children}</div>;
 }
 
 function Row({ title, hint, children }: { title: ReactNode; hint?: ReactNode; children: ReactNode }) {
@@ -176,17 +176,17 @@ export function Settings() {
           </Row>
         </Group>
 
-        <section className="flex gap-4 rounded-lg bg-accent p-5 text-accent-fg [--color-focus:var(--color-accent-fg)]">
-          <ShieldCheck className="size-9 shrink-0" strokeWidth={2.25} aria-hidden />
+        <section className="flex gap-4 rounded-lg surface p-5">
+          <ShieldCheck className="size-9 shrink-0 text-accent-text" strokeWidth={2.25} aria-hidden />
           <div className="min-w-0">
             <h2 className="mb-1 text-xl leading-tight font-black tracking-display">{t("privacy.title")}</h2>
-            <p className="text-sm">{t("privacy.body")}</p>
+            <p className="text-sm text-muted">{t("privacy.body")}</p>
             <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
               <Button variant="link" className="-ml-1 px-1 font-extrabold" onClick={() => void ipc.openUrl(REPO_URL)}>
                 {t("privacy.source")}
                 <ExternalLink className="size-3.5" aria-hidden />
               </Button>
-              <span className="font-mono text-xs">{t("settings.version", { version })}</span>
+              <span className="font-mono text-xs text-muted">{t("settings.version", { version })}</span>
             </div>
           </div>
         </section>

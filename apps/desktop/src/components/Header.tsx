@@ -37,7 +37,7 @@ export function Header() {
       <div className="flex items-center gap-2.5">
         <LogoMark />
         <span className="text-base font-extrabold tracking-tight">{t("app.name")}</span>
-        <span className="rounded-[5px] bg-accent px-1.5 font-mono text-xs font-bold text-accent-fg">{version}</span>
+        <span className="rounded-[5px] px-1.5 font-mono text-xs font-bold text-muted shadow-[inset_0_0_0_1px_var(--color-line)]">{version}</span>
       </div>
       <div className="flex items-center gap-0.5">
         <IconButton

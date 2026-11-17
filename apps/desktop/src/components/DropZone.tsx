@@ -4,7 +4,9 @@ import { useTranslation } from "react-i18next";
 import { useAppStore } from "../store";
 import { PrivacyLine } from "./ui";
 
-const RING_SIZES = ["size-[150px] -m-[75px] opacity-55", "size-[190px] -m-[95px] opacity-30", "size-[230px] -m-[115px] opacity-15"];
+// Rings around the 104 px circle. The outer one reaches 108 px from the centre (56 px past the
+// circle), so the circle keeps 56 px above it and 56 + 24 px of air below it to the text.
+const RING_SIZES = ["size-[140px] -m-[70px] opacity-55", "size-[178px] -m-[89px] opacity-30", "size-[216px] -m-[108px] opacity-15"];
 const EXTENSIONS = [".aep", ".aet", ".ffx"];
 
 export function DropZone() {
@@ -25,7 +27,7 @@ export function DropZone() {
           initial={{ opacity: 0, rotate: -8, scale: 0.7 }}
           animate={{ opacity: 1, rotate: -2, scale: 1 }}
           transition={{ delay: 0.25, type: "spring", stiffness: 380, damping: 14 }}
-          className="inline-block rounded-[0.12em] bg-accent px-[0.12em] text-accent-fg"
+          className="inline-block rounded-[0.12em] fill-accent px-[0.12em]"
         >
           {t("drop.heroMark")}
         </motion.mark>{" "}
@@ -35,11 +37,11 @@ export function DropZone() {
       <button
         type="button"
         onClick={() => void browse()}
-        className={`drop-zone group relative flex min-h-0 flex-1 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl bg-surface p-6 text-center transition-[translate,scale] duration-300 ease-out-quint hover:scale-[1.008] active:scale-[0.99] ${
-          dragging ? "shadow-outline-accent" : "shadow-outline"
+        className={`drop-zone group relative flex min-h-0 flex-1 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl surface p-6 text-center transition-[translate,scale] duration-300 ease-out-quint hover:scale-[1.008] active:scale-[0.99] ${
+          dragging ? "drop-target-active" : ""
         }`}
       >
-        <span className="relative mb-12 grid size-26 place-items-center max-[820px]:mb-10" aria-hidden>
+        <span className="relative mt-14 mb-20 grid size-26 shrink-0 place-items-center [@media(max-height:620px)]:mt-12 [@media(max-height:620px)]:mb-[68px] [@media(max-height:620px)]:scale-[0.85]" aria-hidden>
           {RING_SIZES.map((size, i) => (
             <span
               key={size}
@@ -48,7 +50,7 @@ export function DropZone() {
             />
           ))}
           <span
-            className={`relative z-10 grid size-26 place-items-center rounded-full bg-accent text-accent-fg transition-transform duration-300 ease-pop group-hover:scale-110 ${
+            className={`relative z-10 grid size-26 place-items-center rounded-full fill-accent transition-transform duration-300 ease-pop group-hover:scale-110 ${
               dragging ? "scale-125" : ""
             }`}
           >

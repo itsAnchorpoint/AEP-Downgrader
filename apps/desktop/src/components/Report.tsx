@@ -53,7 +53,7 @@ export function Report({ id, report, year }: { id: string; report?: Preflight; y
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.24, ease: [0.2, 0.8, 0.2, 1] }}
-      className="mb-2 ml-16 border-l-2 border-line-strong py-1 pl-4 text-sm max-[820px]:ml-6"
+      className="mb-3 ml-16 rounded-md bg-raised/60 px-4 py-3 text-sm max-[820px]:ml-6"
     >
       <h3 className="mb-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-base font-extrabold">
         {report ? (

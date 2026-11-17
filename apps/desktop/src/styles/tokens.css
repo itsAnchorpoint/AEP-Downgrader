@@ -108,3 +108,39 @@
   --color-strong: var(--color-accent);
   --color-on-strong: var(--color-accent-fg);
 }
+
+/*
+ * Depth, light and texture (docs/DESIGN.md): surfaces lighter at the top with a 1px highlight
+ * and a soft deep shadow; a glow from the top left, a vignette and film grain on the page.
+ */
+:root {
+  --surface-top: #fffdf8;
+  --surface-bottom: #f6f1e7;
+  --surface-highlight: rgb(255 255 255 / 0.95);
+  --surface-edge: rgb(11 11 12 / 0.08);
+  --surface-shadow: 0 18px 38px -22px rgb(70 52 20 / 0.35);
+  --page-light: rgb(255 255 255 / 0.6);
+  --page-vignette: rgb(90 66 24 / 0.07);
+  --grain-opacity: 0.04;
+}
+[data-theme="dark"] {
+  --surface-top: #1c1c20;
+  --surface-bottom: #131315;
+  --surface-highlight: rgb(255 255 255 / 0.07);
+  --surface-edge: rgb(255 255 255 / 0.055);
+  --surface-shadow: 0 24px 48px -16px rgb(0 0 0 / 0.75);
+  --page-light: rgb(255 255 255 / 0.06);
+  --page-vignette: rgb(0 0 0 / 0.55);
+  --grain-opacity: 0.07;
+}
+/* After Effects itself is flat grey: depth stays, light and grain stay out. */
+[data-theme="ae"] {
+  --surface-top: #2a2a2a;
+  --surface-bottom: #242424;
+  --surface-highlight: rgb(255 255 255 / 0.05);
+  --surface-edge: rgb(255 255 255 / 0.05);
+  --surface-shadow: 0 18px 40px -18px rgb(0 0 0 / 0.6);
+  --page-light: transparent;
+  --page-vignette: transparent;
+  --grain-opacity: 0;
+}

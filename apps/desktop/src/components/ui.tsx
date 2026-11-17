@@ -6,9 +6,9 @@ type Variant = "primary" | "secondary" | "ghost" | "link";
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    "rounded-full px-4 bg-strong text-on-strong font-extrabold hover:scale-[1.03] active:scale-[0.97] disabled:opacity-40 disabled:hover:scale-100",
+    "rounded-full px-4 fill-strong font-extrabold hover:scale-[1.03] active:scale-[0.96] disabled:opacity-40 disabled:hover:scale-100",
   secondary:
-    "rounded-full px-4 shadow-outline text-fg hover:bg-hover active:bg-press active:scale-[0.97] disabled:opacity-40",
+    "rounded-full px-4 shadow-outline text-fg hover:bg-hover active:bg-press active:scale-[0.96] disabled:opacity-40",
   ghost: "rounded-md text-muted hover:text-fg hover:bg-hover active:bg-press disabled:opacity-40",
   link: "rounded-sm px-1 underline decoration-2 underline-offset-4 hover:bg-hover",
 };
@@ -47,8 +47,8 @@ export function StatusBadge({ status, pill = false }: { status: "verified" | "ex
   const Icon = status === "verified" ? Check : FlaskConical;
   const tone = pill
     ? status === "verified"
-      ? "rounded-full bg-accent px-2.5 py-0.5 text-accent-fg"
-      : "rounded-full bg-warn-fill px-2.5 py-0.5 text-ink-black"
+      ? "rounded-full px-2.5 py-0.5 text-accent-text shadow-[inset_0_0_0_1.5px_currentColor]"
+      : "rounded-full px-2.5 py-0.5 text-warn shadow-[inset_0_0_0_1.5px_currentColor]"
     : status === "verified"
       ? "text-ok"
       : "text-warn";
@@ -84,8 +84,8 @@ export function Segmented<T extends string>({
             aria-pressed={on}
             disabled={disabled}
             onClick={() => onChange(o.value)}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold transition-[translate,scale,background-color] duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100 ${
-              on ? "bg-strong text-on-strong" : "shadow-outline enabled:hover:bg-hover"
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold transition-[translate,scale,background-color] duration-200 active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100 ${
+              on ? "fill-selected" : "shadow-outline enabled:hover:bg-hover"
             }`}
           >
             {o.leading}

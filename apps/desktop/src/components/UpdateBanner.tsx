@@ -24,7 +24,7 @@ export function UpdateBanner() {
   else if (update.status === "installed") text = t("update.installed");
   else if (update.status === "failed") text = t("update.failed");
 
-  const primary = "min-h-8! bg-accent-fg! text-accent!";
+  const primary = "min-h-8!";
 
   return (
     <AnimatePresence>
@@ -35,13 +35,13 @@ export function UpdateBanner() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.35, ease: [0.2, 0.8, 0.2, 1] }}
-          className="relative flex shrink-0 items-center gap-3 bg-accent py-2 pr-2.5 pl-6 text-sm font-bold text-accent-fg [--color-focus:var(--color-accent-fg)]"
+          className="relative mx-6 mt-1 mb-2 flex shrink-0 items-center gap-3 overflow-hidden rounded-full surface py-1.5 pr-1.5 pl-4 text-sm font-bold max-[820px]:mx-4"
         >
-          <ArrowUpToLine className="size-5 shrink-0" strokeWidth={2.75} aria-hidden />
+          <ArrowUpToLine className="size-5 shrink-0 text-accent-text" strokeWidth={2.75} aria-hidden />
           <span className="min-w-0 flex-1 truncate">{text}</span>
           {update.status === "available" && (
             <>
-              <Button variant="link" className="text-accent-fg" onClick={() => setWhatsNewOpen(true, "update")}>
+              <Button variant="link" onClick={() => setWhatsNewOpen(true, "update")}>
                 {t("update.whatsNew")}
               </Button>
               <Button variant="primary" className={primary} onClick={() => void installUpdate()}>
@@ -63,14 +63,14 @@ export function UpdateBanner() {
             <IconButton
               label={t("update.dismiss")}
               onClick={dismiss}
-              className="size-8! text-accent-fg! hover:bg-black/15!"
+              className="size-8! rounded-full!"
             >
               <X className="size-4" aria-hidden />
             </IconButton>
           )}
           {busy && (
             <span
-              className="absolute bottom-0 left-0 h-0.75 bg-accent-fg transition-[width] duration-300"
+              className="absolute bottom-0 left-0 h-[3px] rounded-full bg-accent transition-[width] duration-300"
               style={{ width: `${percent ?? 0}%` }}
               aria-hidden
             />

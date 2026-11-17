@@ -33,7 +33,7 @@ export function Converting() {
         <h2 className="flex items-center gap-3 text-title leading-none font-black tracking-display">
           {t("converting.title")}
           <span
-            className="rounded-full bg-accent px-2.5 py-1 font-mono text-sm font-bold tracking-normal text-accent-fg"
+            className="rounded-full bg-raised px-2.5 py-1 text-sm font-extrabold tracking-normal text-fg tabular-nums"
             aria-live="polite"
           >
             {t("converting.progress", { current: Math.min(finished + 1, jobs.length), total: jobs.length })}
@@ -42,7 +42,7 @@ export function Converting() {
         <Percent value={jobs.length ? (finished / jobs.length) * 100 : 0} />
       </div>
       <JobList files={jobs} reports={reports} progress={progress} year={year} finished={false} />
-      <div className="mt-auto border-t-2 border-line pt-3">
+      <div className="mt-auto border-t border-line pt-3">
         <PrivacyLine />
       </div>
     </div>

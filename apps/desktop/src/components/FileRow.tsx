@@ -7,14 +7,14 @@ import type { FileInfo, Preflight } from "../lib/ipc-types";
 import { DetailsButton } from "./LogPanel";
 import { Report } from "./Report";
 
-/** Square tile with the file extension; presets are amber, problems are outlined in red. */
+/** Square tile with the file extension: accent for projects, amber for presets, red outline for problems. */
 export function FileTypeIcon({ file }: { file: FileInfo }) {
   const ext = file.name.split(".").pop()?.slice(0, 4).toUpperCase() ?? "";
   const tone = file.problem
     ? "text-danger shadow-[inset_0_0_0_2px_var(--color-danger)] text-xl"
     : file.kind === "preset"
-      ? "bg-warn-fill text-ink-black text-xs"
-      : "bg-accent text-accent-fg text-xs";
+      ? "surface text-warn text-xs"
+      : "surface text-accent-text text-xs";
   return (
     <span
       className={`grid size-12 shrink-0 place-items-center rounded-md font-black tracking-wider ${tone}`}
@@ -154,7 +154,7 @@ export function FileRow({
             aria-controls={reportId}
             onClick={onToggle}
             className={`${layout} text-left -outline-offset-4 transition-colors hover:bg-hover active:bg-press ${
-              expanded ? "pl-4 shadow-[inset_4px_0_0_var(--color-strong)]" : ""
+              expanded ? "bg-hover" : ""
             }`}
           >
             {body}

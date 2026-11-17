@@ -13,7 +13,7 @@ function TargetPicker() {
 
   return (
     <div role="group" aria-labelledby="target-label">
-      <p id="target-label" className="mb-2 text-sm font-extrabold tracking-[0.1em] text-muted uppercase">
+      <p id="target-label" className="mb-2 text-sm font-bold text-muted">
         {t("queue.convertTo")} <b className="font-extrabold text-fg">{t("file.versionPlain")}</b>
       </p>
       <div className="flex gap-2">
@@ -27,8 +27,8 @@ function TargetPicker() {
               onClick={() => void setTarget(x.major)}
               className={`flex min-w-0 flex-1 flex-col items-start rounded-md px-3 py-1.5 transition-[translate,scale,background-color] duration-250 ease-pop max-[820px]:px-2 ${
                 on
-                  ? "-translate-y-[3px] bg-strong text-on-strong"
-                  : "shadow-outline hover:-translate-y-[3px] hover:bg-hover active:scale-95"
+                  ? "-translate-y-[3px] fill-strong"
+                  : "surface hover:-translate-y-[3px] active:scale-[0.96]"
               }`}
             >
               <span className="font-mono text-2xl leading-tight font-black tracking-tight max-[820px]:text-xl">
@@ -57,7 +57,7 @@ export function Queue() {
       <div className="flex items-center justify-between gap-3">
         <h2 className="flex items-center gap-3 text-title leading-none font-black tracking-display">
           {t("queue.files")}
-          <span className="rounded-full bg-accent px-2.5 py-1 text-sm font-extrabold tracking-normal text-accent-fg">
+          <span className="rounded-full bg-raised px-2.5 py-1 text-sm font-extrabold tracking-normal text-fg tabular-nums">
             {files.length}
           </span>
         </h2>
@@ -70,7 +70,7 @@ export function Queue() {
         </div>
       </div>
 
-      <ul className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain border-t-2 border-line-strong">
+      <ul className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain border-t border-line">
         <AnimatePresence>
           {files.map((file, index) => (
             <FileRow
@@ -87,7 +87,7 @@ export function Queue() {
         </AnimatePresence>
       </ul>
 
-      <div className="flex flex-col gap-2.5 border-t-2 border-line pt-3">
+      <div className="flex flex-col gap-2.5 border-t border-line pt-3">
         <TargetPicker />
         <div className="flex items-center gap-4">
           <p className="flex min-w-0 flex-1 items-center gap-2 text-sm text-muted max-[820px]:hidden">
