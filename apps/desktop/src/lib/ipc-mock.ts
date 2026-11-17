@@ -103,9 +103,7 @@ function preflightFor(path: string, target: number): Preflight {
   }
 
   const notes: Note[] = [];
-  if (info.kind === "preset") {
-    notes.push(note("info", "preset-no-changes"));
-  } else {
+  {
     if (info.version.major >= 25 && target <= 24) {
       notes.push(note("warn", "shadow-color-removed", { count: 2 }));
       notes.push(note("warn", "effects-removed", { count: 2, names: ["Curl Noise", "Unmult"], year }));

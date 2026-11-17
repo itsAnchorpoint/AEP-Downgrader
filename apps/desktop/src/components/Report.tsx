@@ -20,7 +20,6 @@ const BY_CODE: Record<string, Look> = {
   "newer-data-removed": { icon: MinusCircle, color: "text-danger" },
   "plugins-kept": { icon: Box, color: "text-warn" },
   "no-changes": { icon: CircleCheck, color: "text-ok" },
-  "preset-no-changes": { icon: CircleCheck, color: "text-ok" },
 };
 
 /** Notes carry a code and params; the text always comes from the catalog. */

@@ -1,4 +1,4 @@
-//! Rewrite a project so that an older After Effects opens it.
+//! Rewrite a project, template or animation preset so that an older After Effects opens it.
 //!
 //! The rules below reproduce what After Effects itself does in
 //! "Save a Copy As <older version>". They were derived by comparing files
@@ -9,8 +9,10 @@
 //!
 //! 1. Parse the input ([`crate::riff::parse`]); failure → [`ConvertError::Unreadable`].
 //! 2. Safety net: `parsed.to_bytes()` must equal the input, else [`ConvertError::NotRoundTrip`].
-//! 3. The form must be `Egg!` (else [`ConvertError::NotAProject`]) and there must be a
-//!    top-level `head` chunk that [`Head::parse`] accepts (else [`ConvertError::NoHead`]).
+//! 3. The form must be `Egg!` (project or template) or `FaFX` (animation preset), else
+//!    [`ConvertError::NotAProject`]. A project needs a top-level `head` chunk that
+//!    [`Head::parse`] accepts; a preset needs a top-level `head` chunk of at least 12 bytes
+//!    (see *Presets* below). Otherwise [`ConvertError::NoHead`].
 //! 4. [`stamp_for`]`(target_ae_major)` must exist (else [`ConvertError::UnsupportedTarget`]).
 //!    The source format major must be at most 98 (else [`ConvertError::UnknownSource`]), and the
 //!    stamp's format major must be lower than the source's (else [`ConvertError::NotADowngrade`],
@@ -18,9 +20,10 @@
 //! 5. Apply the steps for every format major from the source down to the target's + 1,
 //!    highest first (table below). Collect notes.
 //! 6. If any note is a blocker, return [`ConvertError::Blocked`] with all notes. Nothing is written.
-//! 7. Stamp `head`: write the target stamp's format and word into the first eight bytes of the
-//!    `head` chunk, keeping the source file's platform bits
-//!    (`stamp.word.with_platform(source.app.platform())`). `svap` is left alone.
+//! 7. Stamp `head`. Project: write the target stamp's format and word into the first eight
+//!    bytes of the `head` chunk, keeping the source file's platform bits
+//!    (`stamp.word.with_platform(source.app.platform())`); `svap` is left alone. Preset: write
+//!    the stamp's format major and minor into `head[4..8]` and `head[8..12]`.
 //! 8. Serialize. Return the bytes, the notes, and the old and new [`Head`].
 //!
 //! # Steps (format major → what leaving it does)
@@ -79,6 +82,15 @@
 //! order: `Material3dRemoved`, `NewerDataRemoved`, then the notes of S1, M1, L1, E1, B1 as
 //! listed here.
 //!
+//! # Presets
+//!
+//! An animation preset (`.ffx`) is a RIFX file of form `FaFX`. Its top-level `head` chunk
+//! (16 bytes in every sample) holds a big-endian u32 `3`, then the format major and minor as
+//! big-endian u32s, the same format numbers a project of that After Effects version has
+//! (After Effects 27.0 writes 98.6). The rest of the file stores effects and properties with
+//! the same chunks as a project, so the same steps apply to it. A preset has no version word;
+//! [`Converted::from`] and [`Converted::to`] then carry `AppVersion(0)`.
+//!
 //! Known gap: After Effects also shortens the `otln` chunk (panel outline state) when it
 //! removes properties. That is not reproduced yet. After Effects 27 also rewrites colour
 //! settings of sources (`dcui`, `apid`, an ICC profile in `Utf8`) and migrates the Compound
@@ -86,7 +98,7 @@
 
 use crate::inspect::FileKind;
 use crate::riff::{FourCc, Node, RiffError, parse};
-use crate::version::{FormatVersion, Head, STAMPS, stamp_for};
+use crate::version::{AppVersion, FormatVersion, Head, STAMPS, stamp_for};
 
 const EGG: FourCc = *b"Egg!";
 const FAFX: FourCc = *b"FaFX";
@@ -178,8 +190,24 @@ pub enum ConvertError {
 pub struct Converted {
     pub bytes: Vec<u8>,
     pub notes: Vec<Note>,
+    /// [`FileKind::Project`] (also templates) or [`FileKind::Preset`].
+    pub kind: FileKind,
+    /// Format before and after. For a preset the version word is `AppVersion(0)`.
     pub from: Head,
     pub to: Head,
+}
+
+/// Format of a preset's `head` chunk data: major at `[4..8]`, minor at `[8..12]`, both
+/// big-endian u32. `None` when shorter than 12 bytes or a number does not fit in 16 bits.
+pub fn preset_format(head: &[u8]) -> Option<FormatVersion> {
+    let field = |at: usize| -> Option<u16> {
+        let bytes: [u8; 4] = head.get(at..at + 4)?.try_into().ok()?;
+        u16::try_from(u32::from_be_bytes(bytes)).ok()
+    };
+    Some(FormatVersion {
+        major: field(4)?,
+        minor: field(8)?,
+    })
 }
 
 /// Convert `input` for After Effects `target_ae_major` (22, 23, 24, 25 or 26).
@@ -194,16 +222,20 @@ pub fn convert(input: &[u8], target_ae_major: u8) -> Result<Converted, ConvertEr
     }
 
     // 3. Form and head.
-    if file.form != EGG {
-        let kind = if file.form == FAFX {
-            FileKind::Preset
-        } else {
-            FileKind::Unknown
-        };
-        return Err(ConvertError::NotAProject(kind));
-    }
+    let kind = match file.form {
+        EGG => FileKind::Project,
+        FAFX => FileKind::Preset,
+        _ => return Err(ConvertError::NotAProject(FileKind::Unknown)),
+    };
     let head_bytes = file.chunk(HEAD).ok_or(ConvertError::NoHead)?;
-    let head = Head::parse(head_bytes).ok_or(ConvertError::NoHead)?;
+    let head = if kind == FileKind::Project {
+        Head::parse(head_bytes).ok_or(ConvertError::NoHead)?
+    } else {
+        Head {
+            format: preset_format(head_bytes).ok_or(ConvertError::NoHead)?,
+            app: AppVersion(0),
+        }
+    };
 
     // 4. Target stamp, then source format, then the downgrade check.
     let stamp = stamp_for(target_ae_major).ok_or(ConvertError::UnsupportedTarget {
@@ -294,18 +326,30 @@ pub fn convert(input: &[u8], target_ae_major: u8) -> Result<Converted, ConvertEr
         return Err(ConvertError::Blocked(notes));
     }
 
-    // 7. Stamp the head, keeping the source platform bits. The head is a
-    //    top-level chunk and is at least eight bytes long (Head::parse accepted
-    //    it), so `write_into` always succeeds here.
-    let new_head = Head {
-        format: stamp.format,
-        app: stamp.word.with_platform(head.app.platform()),
+    // 7. Stamp the head. Project: format and word, keeping the source platform bits; the
+    //    head is at least eight bytes long (Head::parse accepted it), so `write_into`
+    //    always succeeds. Preset: format major and minor; the head is at least 12 bytes
+    //    long (preset_format accepted it).
+    let new_head = match kind {
+        FileKind::Preset => Head {
+            format: stamp.format,
+            app: AppVersion(0),
+        },
+        _ => Head {
+            format: stamp.format,
+            app: stamp.word.with_platform(head.app.platform()),
+        },
     };
     for node in file.children.iter_mut() {
         if let Node::Chunk { id, data } = node
             && *id == HEAD
         {
-            new_head.write_into(data);
+            if kind == FileKind::Preset {
+                data[4..8].copy_from_slice(&u32::from(stamp.format.major).to_be_bytes());
+                data[8..12].copy_from_slice(&u32::from(stamp.format.minor).to_be_bytes());
+            } else {
+                new_head.write_into(data);
+            }
         }
     }
 
@@ -314,6 +358,7 @@ pub fn convert(input: &[u8], target_ae_major: u8) -> Result<Converted, ConvertEr
     Ok(Converted {
         bytes,
         notes,
+        kind,
         from: head,
         to: new_head,
     })
@@ -1192,19 +1237,134 @@ mod tests {
         }
     }
 
+    /// A preset: `head` = u32 3, major, minor, u32 0, then the given top-level nodes.
+    fn preset_bytes(major: u32, minor: u32, extra_top: Vec<Node>) -> Vec<u8> {
+        let mut head = Vec::new();
+        for v in [3u32, major, minor, 0] {
+            head.extend_from_slice(&v.to_be_bytes());
+        }
+        let mut children = vec![Node::Chunk {
+            id: HEAD,
+            data: head,
+        }];
+        children.extend(extra_top);
+        RiffFile {
+            form: FAFX,
+            children,
+            trailer: Vec::new(),
+        }
+        .to_bytes()
+    }
+
+    fn preset_effects() -> Node {
+        Node::List {
+            kind: *b"besc",
+            children: vec![Node::List {
+                kind: *b"sspc",
+                children: vec![
+                    empty_chunk(*b"fnam", 4),
+                    empty_chunk(OFL2, 4),
+                    empty_chunk(ELAB, 4),
+                ],
+            }],
+        }
+    }
+
     #[test]
-    fn error_fafx_is_preset() {
-        let mut file = RiffFile {
+    fn preset_format_reads_the_head() {
+        let mut head = Vec::new();
+        for v in [3u32, 98, 6, 0] {
+            head.extend_from_slice(&v.to_be_bytes());
+        }
+        assert_eq!(
+            preset_format(&head),
+            Some(FormatVersion {
+                major: 98,
+                minor: 6
+            })
+        );
+        assert_eq!(preset_format(&head[..11]), None);
+        let mut huge = head.clone();
+        huge[4..8].copy_from_slice(&0x0001_0000u32.to_be_bytes());
+        assert_eq!(preset_format(&huge), None);
+    }
+
+    #[test]
+    fn preset_98_to_24_applies_the_steps_and_stamps_the_head() {
+        let input = preset_bytes(98, 6, vec![preset_effects()]);
+        let out = convert(&input, 24).expect("preset converts");
+        assert_eq!(out.kind, FileKind::Preset);
+        assert_eq!(
+            out.from.format,
+            FormatVersion {
+                major: 98,
+                minor: 6
+            }
+        );
+        assert_eq!(
+            out.to.format,
+            FormatVersion {
+                major: 95,
+                minor: 6
+            }
+        );
+        assert_eq!(out.notes, vec![note(NoteCode::NewerDataRemoved, 2)]);
+
+        let parsed = parse(&out.bytes).expect("reparse");
+        assert_eq!(parsed.form, FAFX);
+        let head = parsed.chunk(HEAD).expect("head");
+        assert_eq!(&head[0..4], &3u32.to_be_bytes());
+        assert_eq!(
+            preset_format(head),
+            Some(FormatVersion {
+                major: 95,
+                minor: 6
+            })
+        );
+        assert_eq!(&head[12..16], &0u32.to_be_bytes());
+        let mut ids = Vec::new();
+        parsed.walk(&mut |_, node| ids.push(node.id()));
+        assert!(!ids.contains(&OFL2) && !ids.contains(&ELAB));
+        assert!(ids.contains(b"fnam"));
+    }
+
+    #[test]
+    fn preset_errors() {
+        // FaFX without a head, or with a head too short for a format.
+        let no_head = RiffFile {
             form: FAFX,
             children: vec![],
             trailer: Vec::new(),
-        };
-        let _ = &mut file;
-        let bytes = file.to_bytes();
-        match convert(&bytes, 23) {
-            Err(ConvertError::NotAProject(FileKind::Preset)) => {}
-            other => panic!("expected NotAProject(Preset), got {other:?}"),
         }
+        .to_bytes();
+        assert_eq!(convert(&no_head, 23), Err(ConvertError::NoHead));
+        let short = RiffFile {
+            form: FAFX,
+            children: vec![empty_chunk(HEAD, 8)],
+            trailer: Vec::new(),
+        }
+        .to_bytes();
+        assert_eq!(convert(&short, 23), Err(ConvertError::NoHead));
+        // Same rules as projects for unknown sources and non-downgrades.
+        assert!(matches!(
+            convert(&preset_bytes(99, 0, vec![]), 24),
+            Err(ConvertError::UnknownSource { .. })
+        ));
+        assert!(matches!(
+            convert(&preset_bytes(95, 6, vec![]), 24),
+            Err(ConvertError::NotADowngrade { .. })
+        ));
+        // Another form is still not a project.
+        let other = RiffFile {
+            form: *b"WAVE",
+            children: vec![],
+            trailer: Vec::new(),
+        }
+        .to_bytes();
+        assert_eq!(
+            convert(&other, 23),
+            Err(ConvertError::NotAProject(FileKind::Unknown))
+        );
     }
 
     #[test]

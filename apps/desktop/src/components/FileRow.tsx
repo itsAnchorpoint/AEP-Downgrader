@@ -2,7 +2,7 @@ import { ChevronDown, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { formatBytes, versionNumber } from "../lib/format";
+import { aeMajorForFormat, formatBytes, versionNumber } from "../lib/format";
 import type { FileInfo, Preflight } from "../lib/ipc-types";
 import { DetailsButton } from "./LogPanel";
 import { Report } from "./Report";
@@ -42,10 +42,17 @@ function VersionLine({ file }: { file: FileInfo }) {
   const v = file.version;
   if (file.problem) return <span className="font-bold text-danger">{t(`problem.${file.problem}`)}</span>;
   if (!v) {
-    // Presets carry only a format number until more is known.
-    return file.format ? (
-      <span className="font-mono text-xs">{t("file.format", { major: file.format.major, minor: file.format.minor })}</span>
-    ) : null;
+    // Presets carry a format number but no version word; the format tells the release.
+    if (!file.format) return null;
+    const major = aeMajorForFormat(file.format.major);
+    return (
+      <>
+        {major !== null && <span className="text-fg">{t("file.version", { name: String(2000 + major) })}</span>}
+        <Sep>
+          <span className="font-mono text-xs">{t("file.format", { major: file.format.major, minor: file.format.minor })}</span>
+        </Sep>
+      </>
+    );
   }
   return (
     <>

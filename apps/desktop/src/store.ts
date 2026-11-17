@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import i18n from "./i18n";
 import { appendEntry, entryFor, type LogEntry, type LogLevel, type LogParams } from "./lib/activity-log";
-import { formatBytes, versionNumber } from "./lib/format";
+import { aeMajorForFormat, formatBytes, versionNumber } from "./lib/format";
 import { ipc } from "./lib/ipc";
 import { compareVersions, hasChangesSince } from "./lib/changelog";
 import type { AppInfo, FileInfo, InstallKind, OutputOptions, Preflight, ProgressEvent, TargetInfo } from "./lib/ipc-types";
@@ -142,7 +142,7 @@ export function isConvertible(file: FileInfo, reports: Record<string, Preflight>
 
 /** The newest verified target that is older than the newest file; else the first target. */
 export function pickTarget(targets: TargetInfo[], files: FileInfo[]): number | null {
-  const newest = Math.max(0, ...files.map((f) => f.version?.major ?? 0));
+  const newest = Math.max(0, ...files.map((f) => f.version?.major ?? aeMajorForFormat(f.format?.major) ?? 0));
   const best = targets.find((t) => t.status === "verified" && t.major < newest);
   return (best ?? targets[0])?.major ?? null;
 }

@@ -85,7 +85,6 @@
     "unsupported-source": "This file was saved by a version the converter doesn’t know yet.",
     "structure-not-understood": "The structure of this file isn’t fully understood. It was not converted, to avoid damaging it.",
     "damaged": "The file looks damaged and can’t be converted.",
-    "preset-not-supported-yet": "Presets (.ffx) can’t be converted yet.",
     "unreadable": "The file can’t be read.",
     "effects-removed_one": "{{count}} effect doesn’t exist in After Effects {{year}}: {{names}}",
     "effects-removed_other": "{{count}} effects don’t exist in After Effects {{year}}: {{names}}",
@@ -93,7 +92,6 @@
     "plugins-kept": "Third-party plugins used: {{names}}",
     "experimental-target": "Experimental target: not fully tested yet. Keep your originals.",
     "no-changes": "Nothing will be lost. This project only uses features available in After Effects {{year}}.",
-    "preset-no-changes": "Presets carry no effects that need to be removed.",
     "target-not-older": "Saved in After Effects {{from}}. Pick an older target than {{year}} to convert this file.",
     "file-unreadable": "This file can’t be read, so it can’t be converted.",
     "unknown": "Unknown note ({{code}})",
@@ -120,7 +118,6 @@
     "unsupported-source": "This file comes from a version the converter doesn’t know",
     "structure-not-understood": "The file structure isn’t fully understood",
     "damaged": "The file looks damaged",
-    "preset-not-supported-yet": "Presets can’t be converted yet",
     "matte-not-adjacent": "A track matte is not directly above its layer",
     "unknown": "Conversion failed"
   },

@@ -12,6 +12,8 @@ const PREFIX_LEN: u64 = 64 * 1024;
 const FOLDER_EXTENSIONS: [&str; 3] = ["aep", "aet", "ffx"];
 /// Newest After Effects major this app knows about.
 const NEWEST_KNOWN_MAJOR: u8 = 27;
+/// Newest file format major the converter knows (After Effects 27 writes 98).
+const NEWEST_KNOWN_FORMAT: u16 = 98;
 
 fn extension(path: &Path) -> String {
     path.extension()
@@ -122,6 +124,11 @@ fn describe(path: &Path) -> FileInfo {
         CoreKind::Preset => {
             info.kind = FileKind::Preset;
             info.format = found.preset_format.map(format);
+            match found.preset_format {
+                Some(f) if f.major > NEWEST_KNOWN_FORMAT => info.problem = Some(Problem::TooNew),
+                Some(_) => {}
+                None => info.problem = Some(Problem::Damaged),
+            }
         }
         CoreKind::XmlProject => {
             info.kind = FileKind::Xml;

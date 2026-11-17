@@ -5,7 +5,6 @@ use crate::models::*;
 use crate::pattern::output_name;
 use aep_core::compat;
 use aep_core::convert::{convert, ConvertError, Converted, Note as CoreNote};
-use aep_core::inspect::FileKind as CoreKind;
 use aep_core::version::release_name;
 use serde_json::{json, Map};
 use std::collections::VecDeque;
@@ -47,7 +46,6 @@ fn error_code(error: &ConvertError) -> &'static str {
         ConvertError::UnknownSource { format } if format.major < 94 => "not-a-downgrade",
         ConvertError::UnknownSource { .. } => "unsupported-source",
         ConvertError::NotRoundTrip => "structure-not-understood",
-        ConvertError::NotAProject(CoreKind::Preset) => "preset-not-supported-yet",
         ConvertError::Unreadable(_) | ConvertError::NoHead | ConvertError::NotAProject(_) => "damaged",
     }
 }

@@ -355,3 +355,50 @@ fn test_g_local_26_to_25() {
         report(&changes)
     );
 }
+
+/// The After Effects 27.0 animation preset (Gaussian Blur and Box Blur) for every target:
+/// the head carries the target's format, and the chunks of the newer formats are gone while
+/// the effects stay. Whether After Effects 24.5 applies the result is checked in After Effects.
+#[test]
+fn test_h_local_270_preset_to_every_target() {
+    if !Path::new(LOCAL_SHIIRU27).is_dir() {
+        eprintln!("fixtures-local/shiiru27 not present; skipping");
+        return;
+    }
+    let input = local27("AEPD_preset_27.0.ffx");
+    let count = |file: &RiffFile, id: &[u8; 4]| {
+        let mut n = 0;
+        file.walk(&mut |_, node| {
+            if &node.id() == id {
+                n += 1;
+            }
+        });
+        n
+    };
+    let source = parse_bytes(&input);
+    assert_eq!(count(&source, b"ofl2"), 2);
+    assert_eq!(count(&source, b"elab"), 2);
+    for (target, format, removed) in [
+        (26u8, (97u16, 11u16), 2u32),
+        (25, (96, 9), 4),
+        (24, (95, 6), 4),
+        (23, (94, 9), 4),
+        (22, (93, 43), 4),
+    ] {
+        let out = convert(&input, target).expect("preset converts");
+        assert_eq!((out.to.format.major, out.to.format.minor), format);
+        assert_eq!(
+            out.notes
+                .iter()
+                .map(|n| (n.code, n.count))
+                .collect::<Vec<_>>(),
+            vec![(NoteCode::NewerDataRemoved, removed)]
+        );
+        let ours = parse_bytes(&out.bytes);
+        assert_eq!(ours.form, *b"FaFX");
+        assert_eq!(count(&ours, b"ofl2"), 0);
+        assert_eq!(count(&ours, b"elab"), if target == 26 { 2 } else { 0 });
+        assert_eq!(count(&ours, b"sspc"), count(&source, b"sspc"));
+        assert_eq!(count(&ours, b"tdmn"), count(&source, b"tdmn"));
+    }
+}

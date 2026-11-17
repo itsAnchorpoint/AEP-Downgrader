@@ -266,9 +266,15 @@ fn targets(path: &str) -> ExitCode {
             return ExitCode::from(1);
         }
     };
-    let head = match aep_core::inspect::inspect(&bytes).head {
-        Some(head) => head,
-        None => {
+    let found = aep_core::inspect::inspect(&bytes);
+    // A preset has no version word, only a format; the targets depend on the format alone.
+    let head = match (found.head, found.preset_format) {
+        (Some(head), _) => head,
+        (None, Some(format)) => aep_core::version::Head {
+            format,
+            app: aep_core::version::AppVersion(0),
+        },
+        (None, None) => {
             eprintln!("no head chunk in {path}");
             return ExitCode::from(1);
         }
