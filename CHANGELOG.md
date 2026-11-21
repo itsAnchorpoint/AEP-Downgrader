@@ -15,6 +15,7 @@ AEP Downgrader 2.0 is a rewrite. It no longer just edits the file header. It mak
 - Templates (`.aet`) and animation presets (`.ffx`) are converted too, with the same rules as projects.
 - Every target is labelled **Verified** or **Experimental**. Verified means converted files were opened in a real After Effects of that version. Today that is 2024 only.
 - Settings: where to save copies, the file name pattern, what to do when a file already exists (add a number, overwrite or skip), and automatic update checks on or off.
+- **Stop** during a conversion: files already converting finish, the rest are left out. Keyboard shortcuts: Ctrl+O (⌘O) to add files, Ctrl+Enter (⌘↩) to convert.
 - Updates inside the app. It checks GitHub at most once a day, shows the release notes, and installs a new version when you click **Update**, after checking its signature. After an update it shows what changed. Works for the Windows installer and portable app, the macOS app and the Linux AppImage.
 - A portable Windows version: one `.exe`, no installation, settings kept next to it.
 - A Windows installer in the app's design: one window and one click, in English or Russian, with no administrator rights needed. Updates and uninstalling use the same window.
