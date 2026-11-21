@@ -72,6 +72,12 @@ textarea {
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+/* WebView2 (Chromium) skips the ::-webkit-scrollbar rules while the standard properties are set,
+   and its own thin scrollbar keeps the classic arrow buttons; on Windows the pill above draws. */
+[data-platform="windows"] * {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
 h1,
 h2,
 h3 {

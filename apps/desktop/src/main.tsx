@@ -2,7 +2,11 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./i18n";
+import { platform } from "./lib/platform";
 import "./styles/index.css";
+
+// Styles that differ by system key off this (index.css: scrollbars on Windows).
+document.documentElement.dataset.platform = platform;
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
