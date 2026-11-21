@@ -31,9 +31,9 @@ mod tests {
             }
             .into(),
             footer_sub: if ru {
-                "Без аккаунта, без загрузки, без телеметрии."
+                "Без аккаунта, отправки файлов и телеметрии."
             } else {
-                "No account. No upload. No telemetry."
+                "No account, no uploads, no telemetry."
             }
             .into(),
         }
@@ -71,10 +71,11 @@ mod tests {
             .unwrap_or(1.5);
         let pages = [
             ("1-welcome", false, page(Kind::Welcome, "Install in [one click]", "Open After Effects projects, templates and presets in older versions. **Free and open source.**", "Install", "Change folder", "", false)),
-            ("2-installing", false, page(Kind::Progress, "Installing", "AEP Downgrader 2.0.0 goes to your user folder. This takes a few seconds.", "Copying files…", "", "", false)),
+            ("2-installing", false, page(Kind::Progress, "Installing", "AEP Downgrader 2.0.0 will be ready in a few seconds.", "Copying files…", "", "", false)),
             ("3-done", false, page(Kind::Finish, "All [set]", "Find AEP Downgrader in the Start menu.", "Open AEP Downgrader", "Close", "Add a desktop shortcut", true)),
             ("4-update", false, page(Kind::Progress, "Updating to [2.0.1]", "The app opens again by itself when it is done.", "Replacing the app…", "", "", false)),
-            ("5-uninstall", false, page(Kind::Confirm, "Sorry to see you [go]", "This removes AEP Downgrader. Your After Effects files stay where they are.", "Remove", "Keep it", "Also delete settings and history", false)),
+            ("5-uninstall", false, page(Kind::Confirm, "Remove [AEP Downgrader]?", "Your After Effects files stay where they are.", "Remove", "Keep it", "Also delete settings", false)),
+            ("5-uninstall-ru", true, page(Kind::Confirm, "Удалить [AEP Downgrader]?", "Файлы After Effects останутся на месте.", "Удалить", "Оставить", "Удалить и настройки", false)),
             ("6-welcome-ru", true, page(Kind::Welcome, "Установка в [один клик]", "Открывайте проекты, шаблоны и пресеты After Effects в старых версиях. **Бесплатно и с открытым кодом.**", "Установить", "Выбрать папку", "", false)),
             ("7-folder", false, page(Kind::Welcome, "Install in [one click]", "Open After Effects projects, templates and presets in older versions. **Free and open source.**", "Install", "Change folder", "", false)),
             ("8-error", false, page(Kind::Error, "Something went [wrong]", "The installation stopped before it finished. Close this window and run the installer again.", "Close", "", "", false)),

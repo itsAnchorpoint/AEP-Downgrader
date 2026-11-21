@@ -18,7 +18,7 @@ Bold and kinetic: black, warm paper and one loud lime. Confident type, tactile s
 ## Type
 
 - **Onest** for everything a person reads. Display: weight 800, tracking `-0.035em` to `-0.04em`, line height about 1.05. Body: weight 600–700 at 13–15 px.
-- **Highlight one word** of a headline on a lime plate: radius about 10 px, padding `0 10px 3px`, ink text. Example: "Open it in **any** older version.", "Drop it in **Applications**".
+- **Highlight one word** of a headline on a lime plate: radius about 10 px, padding `0 10px 3px`, ink text. Example: "Drop it in **Applications**", "Install in **one click**". Use it on brand surfaces (disk image, installer, site), not on the app's working screens.
 - **JetBrains Mono only for data**: version numbers, file extensions, technical values, log details. Not for labels, badges or decoration. No uppercase, letter-spaced "label" badges.
 - Sentence case everywhere. Short, plain words a motion designer uses.
 
@@ -41,13 +41,24 @@ What turns minimal into finished. Use all of them lightly, so that each is felt 
 ## Brand marks and icons
 
 - **Trail** is the app icon and the small mark in the header.
-- **Fold**, the folded `.aep` ribbon with an arrowhead, is the illustrative motif for the site, the disk image and marketing. It reads as "this file goes down a version".
+- **Fold**, the folded `.aep` ribbon with an arrowhead, is the illustrative motif for the site, the disk image, the installer and marketing. It reads as "this file goes down a version".
+- **The lockup** on the app's start screen (`components/Lockup.tsx`): the Fold ribbon above the word "Downgrader", its arrow running down past the end of the word to the depth of the "g". The word's left edge sits on the content edge; the ribbon floats above it and may reach into the title bar. Proportions to the font size: ribbon height 1.96, ribbon left edge 3.27 from the D, ribbon top 1.54 above the capitals, a visible gap between the "r" and the arrowhead. The ribbon stays lime in every theme and accent, like the app icon. Its shadow sits on a wrapper, so the reveal animation's clip never cuts it.
+- UI icons never use AI clichés (sparkles, magic wands, stars) for ordinary features.
 - UI icons are Lucide with stroke 2–3. Meaningful icons can be lime: for example, the lock in the privacy line and the shield in the first-launch hint.
+
+## Working screens
+
+- **One loud element per view**: the main action (Convert) or the drop circle. A chosen option among several (target tiles, segmented settings) is an outline in the text colour on a raised surface, not an accent fill. Unchosen options are quieter: a thin outline in the line colour and muted text.
+- **Status colours mean status**: red only for "can't convert", amber for something that changes or is lost, green for verified or done. Files that are simply not projects (macOS sidecars) are muted, not red. An experimental target keeps its amber badge where it is chosen, and the report says so too.
+- **Say it in the row**: every file row states its report in a word (nothing lost, N changes, can't convert), so nobody has to open it to find out.
+- **The title bar** is the app's own on macOS (overlay, traffic lights in the bar) and Windows (no frame, own window buttons with a red close); Linux keeps the system frame and the bar becomes a toolbar. It carries only the tools; the product name is the start screen's lockup.
+- **Fit the space, not the window**: the drop circle and its rings size themselves to the drop zone's height (container queries), so the content stays centred under the update banner, with the log open and in a small window.
 
 ## Motion
 
 - `--ease-pop` for small affordances (press, toggle, badge), `--ease-out-quint` for entrances.
 - 150–350 ms. Respect `prefers-reduced-motion`.
+- No idle loops: the drop rings pulse only on hover or while files are dragged over the window. One-time intros (the lockup) play once per session.
 
 ## Do and don't
 
@@ -66,7 +77,7 @@ Everything outside the app follows this page too, so the product looks like one 
 
 | Surface | State |
 |---|---|
-| App window (all themes) | Being brought up to the reference level |
+| App window (all themes) | Second pass done (title bar, lockup, working screens); final check on real Windows and macOS |
 | macOS disk image window | Done: the reference artifact |
 | Windows installer (the whole window, every page, also updates and uninstalling) | Done: drawn by our NSIS plug-in, `apps/desktop/src-tauri/windows` |
 | App icon (Trail) | Done |
