@@ -18,6 +18,9 @@ const states = list(statesArg, ["empty", "queue", "report", "converting", "done"
 const themes = list(themesArg, ["dark", "light", "ae"]);
 const langs = list(langsArg, ["en", "ru"]);
 const [width, height] = (sizeArg ?? "920x680").split("x").map(Number);
+// Optional extra query (SHOT_QUERY="&v=a") and a file name tag (SHOT_TAG=a) for design variants.
+const extra = process.env.SHOT_QUERY ?? "";
+const tag = process.env.SHOT_TAG ? `-${process.env.SHOT_TAG}` : "";
 
 const profile = mkdtempSync(join(tmpdir(), "aepd-shots-"));
 const port = 9300 + Math.floor(Math.random() * 500);
@@ -61,7 +64,7 @@ let count = 0;
 for (const state of states) for (const theme of themes) for (const lang of langs) {
   // Each shot starts from empty storage, so settings never leak from one shot to the next.
   await send("Storage.clearDataForOrigin", { origin: "http://localhost:1420", storageTypes: "all" });
-  await send("Page.navigate", { url: `http://localhost:1420/?demo=${state}&theme=${theme}&lang=${lang}` });
+  await send("Page.navigate", { url: `http://localhost:1420/?demo=${state}&theme=${theme}&lang=${lang}${extra}` });
   let ready = false;
   for (let i = 0; i < 100 && !ready; i++) {
     await sleep(100);
@@ -70,7 +73,7 @@ for (const state of states) for (const theme of themes) for (const lang of langs
   if (!ready) console.error(`not ready: ${state} ${theme} ${lang}`);
   await sleep(400); // fonts and the last paint
   const shot = await send("Page.captureScreenshot", { format: "png" });
-  writeFileSync(join(out, `${state}-${theme}-${lang}-${width}x${height}.png`), Buffer.from(shot.result.data, "base64"));
+  writeFileSync(join(out, `${state}-${theme}-${lang}-${width}x${height}${tag}.png`), Buffer.from(shot.result.data, "base64"));
   count++;
 }
 ws.close();

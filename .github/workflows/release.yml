@@ -45,11 +45,14 @@ jobs:
         id: meta
         run: |
           node .github/scripts/release-notes.mjs "$TAG" > notes.md
+          node .github/scripts/release-notes.mjs "$TAG" --app > app-notes.md
           echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         with:
           name: release-notes
-          path: notes.md
+          path: |
+            notes.md
+            app-notes.md
       - name: Draft release
         id: draft
         run: |
@@ -168,7 +171,7 @@ jobs:
           name="AEP-Downgrader_x64-portable.exe"
           url="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$name"
           gh release view "$TAG" --json assets > assets.json
-          node .github/scripts/finish-feed.mjs assets/latest.json notes.md "assets/$name.sig" "$url" assets.json
+          node .github/scripts/finish-feed.mjs assets/latest.json app-notes.md "assets/$name.sig" "$url" assets.json
       - name: Checksums
         working-directory: assets
         run: |

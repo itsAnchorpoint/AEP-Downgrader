@@ -13,7 +13,7 @@
   --text-lg: 1.125rem;
   --text-xl: 1.25rem;
   --text-2xl: 1.75rem;
-  --text-title: clamp(1.625rem, 3.6vw, 2.375rem);
+  --text-title: 2.125rem;
   --text-hero: clamp(2rem, 5.6vw, 3.75rem);
   --tracking-display: -0.035em;
   --tracking-tight: -0.015em;
@@ -143,4 +143,13 @@
   --page-light: transparent;
   --page-vignette: transparent;
   --grain-opacity: 0;
+}
+
+/* The start screen's Fold ribbon (components/Lockup.tsx): a warm soft shadow on paper, a deep one on black. */
+:root {
+  --lockup-shadow: rgb(60 50 20 / 0.28);
+}
+[data-theme="dark"],
+[data-theme="ae"] {
+  --lockup-shadow: rgb(0 0 0 / 0.5);
 }

@@ -1,0 +1,17 @@
+{
+  "app": {
+    "windows": [
+      {
+        "title": "AEP Downgrader",
+        "width": 920,
+        "height": 680,
+        "minWidth": 760,
+        "minHeight": 560,
+        "center": true,
+        "dragDropEnabled": true,
+        "decorations": false,
+        "shadow": true
+      }
+    ]
+  }
+}

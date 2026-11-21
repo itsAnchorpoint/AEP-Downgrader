@@ -1,26 +1,63 @@
-import { Activity, ScrollText, SlidersHorizontal } from "lucide-react";
+import { Activity, Copy, Minus, ScrollText, SlidersHorizontal, Square, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { version } from "../../package.json";
+import { isTauri } from "../lib/ipc-tauri";
+import { platform } from "../lib/platform";
+import { watchMaximized, windowAction } from "../lib/window";
 import { useAppStore } from "../store";
 import { LOG_PANEL_ID, LOG_TOGGLE_ID } from "./LogPanel";
 import { IconButton } from "./ui";
 
-/** The Trail logo's small drawing; the arrow follows the accent colour. */
-function LogoMark() {
+/** A dot on a tool button; the ring cuts it out of the icon behind it. */
+function Dot({ tone }: { tone: string }) {
+  return <span className={`absolute top-1.5 right-1.5 size-2 rounded-full ring-2 ring-bg ${tone}`} aria-hidden />;
+}
+
+/** Minimize, maximize and close for the frameless window on Windows (46 px cells, red close). */
+function WindowControls() {
+  const { t } = useTranslation();
+  const [maximized, setMaximized] = useState(false);
+  useEffect(() => {
+    const stop = watchMaximized(setMaximized);
+    return () => void stop.then((fn) => fn());
+  }, []);
+  const cell =
+    "grid h-full w-[46px] place-items-center text-muted transition-colors hover:bg-hover hover:text-fg active:bg-press";
   return (
-    <svg viewBox="0 0 32 32" className="size-7 shrink-0" aria-hidden>
-      <path
-        d="M19.8 1C23.7 1 25.7 1 27.2 1.8C28.5 2.4 29.6 3.5 30.2 4.8C31 6.3 31 8.3 31 12.2V19.8C31 23.7 31 25.7 30.2 27.2C29.6 28.5 28.5 29.6 27.2 30.2C25.7 31 23.7 31 19.8 31H12.2C8.3 31 6.3 31 4.8 30.2C3.5 29.6 2.4 28.5 1.8 27.2C1 25.7 1 23.7 1 19.8V12.2C1 8.3 1 6.3 1.8 4.8C2.4 3.5 3.5 2.4 4.8 1.8C6.3 1 8.3 1 12.2 1Z"
-        fill="#0b0b0c"
-      />
-      <path
-        d="M8.5 6.1C10.4 6.1 11.9 7.6 11.9 9.5C11.9 9.6 11.9 9.8 11.9 9.9L14 12L17 9L22.4 14.4V12.3H26.6V21.6H17.3V17.4H19.4L17 15L14 18L8.9 12.9C8.8 12.9 8.6 12.9 8.5 12.9C6.6 12.9 5.1 11.4 5.1 9.5C5.1 7.6 6.6 6.1 8.5 6.1Z"
-        fill="var(--color-accent)"
-      />
-    </svg>
+    <div className="flex h-full items-stretch">
+      <button type="button" aria-label={t("window.minimize")} className={cell} onClick={() => void windowAction("minimize")}>
+        <Minus className="size-4" strokeWidth={1.5} aria-hidden />
+      </button>
+      <button
+        type="button"
+        aria-label={t(maximized ? "window.restore" : "window.maximize")}
+        className={cell}
+        onClick={() => void windowAction("toggleMaximize")}
+      >
+        {maximized ? (
+          <Copy className="size-3.5 -scale-x-100" strokeWidth={1.5} aria-hidden />
+        ) : (
+          <Square className="size-3.5" strokeWidth={1.5} aria-hidden />
+        )}
+      </button>
+      <button
+        type="button"
+        aria-label={t("window.close")}
+        className={`${cell} hover:bg-[#c42b1c]! hover:text-white! active:bg-[#a52314]!`}
+        onClick={() => void windowAction("close")}
+      >
+        <X className="size-4" strokeWidth={1.5} aria-hidden />
+      </button>
+    </div>
   );
 }
 
+/**
+ * The title bar. On macOS and Windows it is the window's own (tauri.conf.json: overlay title bar;
+ * tauri.windows.conf.json: no frame), so it drags the window and leaves room for the traffic
+ * lights or draws the window buttons. On Linux the system draws the frame and this is a toolbar.
+ * The product name lives on the start screen, so the bar carries only the tools.
+ */
 export function Header() {
   const { t } = useTranslation();
   const view = useAppStore((s) => s.view);
@@ -33,13 +70,20 @@ export function Header() {
   const errors = useAppStore((s) => s.log.filter((e) => e.level === "error").length);
 
   return (
-    <header className="flex h-12 shrink-0 items-center justify-between gap-3 px-5">
-      <div className="flex items-center gap-2.5">
-        <LogoMark />
-        <span className="text-base font-extrabold tracking-tight">{t("app.name")}</span>
-        <span className="rounded-[5px] px-1.5 font-mono text-xs font-bold text-muted shadow-[inset_0_0_0_1px_var(--color-line)]">{version}</span>
-      </div>
-      <div className="flex items-center gap-0.5">
+    <header data-tauri-drag-region className="relative flex h-11 shrink-0 items-center">
+      {platform === "mac" &&
+        (isTauri() ? (
+          <span className="w-[78px] shrink-0" data-tauri-drag-region />
+        ) : (
+          // Browser preview only: where macOS draws the traffic lights.
+          <span className="flex w-[78px] shrink-0 gap-2 pl-[18px]" aria-hidden>
+            {["#ff5f57", "#febc2e", "#28c840"].map((c) => (
+              <span key={c} className="size-3 rounded-full" style={{ background: c }} />
+            ))}
+          </span>
+        ))}
+      <span className="flex-1 self-stretch" data-tauri-drag-region />
+      <div className={`flex items-center gap-0.5 ${platform === "windows" ? "pr-2" : "pr-4"}`}>
         <IconButton
           id={LOG_TOGGLE_ID}
           label={errors > 0 ? t("header.logErrors", { count: errors }) : t("header.log")}
@@ -48,16 +92,12 @@ export function Header() {
           onClick={() => setLogOpen(!logOpen)}
           className={`relative ${logOpen ? "bg-press text-fg" : ""}`}
         >
-          <Activity className="size-4.5" aria-hidden />
-          {errors > 0 && (
-            <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-danger" aria-hidden />
-          )}
+          <Activity className="size-4.5" strokeWidth={2.25} aria-hidden />
+          {errors > 0 && <Dot tone="bg-danger" />}
         </IconButton>
         <IconButton label={t("header.whatsNew")} onClick={() => setWhatsNewOpen(true)} className="relative">
-          <ScrollText className="size-4.5" aria-hidden />
-          {update.status === "available" && (
-            <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-accent" aria-hidden />
-          )}
+          <ScrollText className="size-4.5" strokeWidth={2.25} aria-hidden />
+          {update.status === "available" && <Dot tone="bg-accent" />}
         </IconButton>
         <IconButton
           label={t("header.settings")}
@@ -65,9 +105,10 @@ export function Header() {
           onClick={() => setView(inSettings ? "main" : "settings")}
           className={inSettings ? "bg-press text-fg" : ""}
         >
-          <SlidersHorizontal className="size-4.5" aria-hidden />
+          <SlidersHorizontal className="size-4.5" strokeWidth={2.25} aria-hidden />
         </IconButton>
       </div>
+      {platform === "windows" && <WindowControls />}
     </header>
   );
 }

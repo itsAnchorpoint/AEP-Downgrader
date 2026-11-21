@@ -1,4 +1,5 @@
-import { ArrowRight, Plus, ShieldCheck } from "lucide-react";
+import { ArrowRight, FlaskConical, Info, Plus, ShieldCheck } from "lucide-react";
+import type { KeyboardEvent } from "react";
 import { AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { isConvertible, useAppStore } from "../store";
@@ -10,33 +11,42 @@ function TargetPicker() {
   const targets = useAppStore((s) => s.targets);
   const target = useAppStore((s) => s.target);
   const setTarget = useAppStore((s) => s.setTarget);
+  const current = targets.findIndex((x) => x.major === target);
+
+  // One choice out of a few: a radio group, arrow keys move the choice.
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
+    if (!step || current < 0) return;
+    e.preventDefault();
+    const next = targets[(current + step + targets.length) % targets.length];
+    void setTarget(next.major);
+    (e.currentTarget.querySelector(`[data-major="${next.major}"]`) as HTMLElement | null)?.focus();
+  };
 
   return (
-    <div role="group" aria-labelledby="target-label">
+    <div>
       <p id="target-label" className="mb-2 text-sm font-bold text-muted">
         {t("queue.convertTo")} <b className="font-extrabold text-fg">{t("file.versionPlain")}</b>
       </p>
-      <div className="flex gap-2">
+      <div role="radiogroup" aria-labelledby="target-label" className="flex gap-2" onKeyDown={onKeyDown}>
         {targets.map((x) => {
           const on = x.major === target;
           return (
             <button
               key={x.major}
               type="button"
-              aria-pressed={on}
+              role="radio"
+              aria-checked={on}
+              tabIndex={on ? 0 : -1}
+              data-major={x.major}
+              title={t(x.status === "verified" ? "target.verifiedHint" : "target.experimentalHint")}
               onClick={() => void setTarget(x.major)}
-              className={`flex min-w-0 flex-1 flex-col items-start rounded-md px-3 py-1.5 transition-[translate,scale,background-color] duration-250 ease-pop max-[820px]:px-2 ${
-                on
-                  ? "-translate-y-[3px] fill-strong"
-                  : "surface hover:-translate-y-[3px] active:scale-[0.96]"
+              className={`flex min-w-0 flex-1 flex-col items-start rounded-md px-3 py-1.5 transition-[background-color,box-shadow,scale] duration-200 active:scale-[0.97] max-[820px]:px-2 ${
+                on ? "bg-raised shadow-[inset_0_0_0_2px_var(--color-fg)]" : "surface hover:bg-hover"
               }`}
             >
-              <span className="font-mono text-2xl leading-tight font-black tracking-tight max-[820px]:text-xl">
-                {x.name}
-              </span>
-              <span className={on ? "[&_span]:text-inherit" : ""}>
-                <StatusBadge status={x.status} />
-              </span>
+              <span className="font-mono text-2xl leading-tight font-extrabold max-[820px]:text-xl">{x.name}</span>
+              <StatusBadge status={x.status} quiet={!on} />
             </button>
           );
         })}
@@ -51,11 +61,12 @@ export function Queue() {
   const { browse, clearFiles, removeFile, toggleExpanded, convert } = useAppStore();
   const year = targets.find((x) => x.major === target)?.name ?? "";
   const count = files.filter((f) => isConvertible(f, reports)).length;
+  const experimental = targets.find((x) => x.major === target)?.status === "experimental";
 
   return (
     <div className="flex h-full flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-3 text-title leading-none font-black tracking-display">
+        <h2 className="flex items-center gap-3 text-title leading-none font-extrabold tracking-display">
           {t("queue.files")}
           <span className="rounded-full bg-raised px-2.5 py-1 text-sm font-extrabold tracking-normal text-fg tabular-nums">
             {files.length}
@@ -66,11 +77,13 @@ export function Queue() {
             <Plus className="size-4" aria-hidden strokeWidth={2.5} />
             {t("queue.addMore")}
           </Button>
-          <Button onClick={clearFiles}>{t("queue.clear")}</Button>
+          <Button variant="ghost" className="px-3" onClick={clearFiles}>
+            {t("queue.clear")}
+          </Button>
         </div>
       </div>
 
-      <ul className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain border-t border-line">
+      <ul className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain scroll-fade pb-4 border-t border-line">
         <AnimatePresence>
           {files.map((file, index) => (
             <FileRow
@@ -89,20 +102,28 @@ export function Queue() {
 
       <div className="flex flex-col gap-2.5 border-t border-line pt-3">
         <TargetPicker />
+        {experimental && count > 0 && (
+          <p className="flex items-start gap-2 text-sm font-bold text-warn">
+            <FlaskConical className="mt-0.5 size-4 shrink-0" aria-hidden />
+            {t("queue.experimental", { year })}
+          </p>
+        )}
         <div className="flex items-center gap-4">
-          <p className="flex min-w-0 flex-1 items-center gap-2 text-sm text-muted max-[820px]:hidden">
-            <ShieldCheck className="size-4 shrink-0" aria-hidden />
+          <p className="flex min-w-0 flex-1 items-center gap-2 text-sm text-muted">
+            {count > 0 ? <ShieldCheck className="size-4 shrink-0" aria-hidden /> : <Info className="size-4 shrink-0" aria-hidden />}
             <span className="truncate">
-              {settings.location === "folder" && settings.folder
-                ? t("queue.saveFolder", { folder: settings.folder })
-                : t("queue.saveNext")}
+              {count === 0
+                ? t("queue.nothingToConvert", { year })
+                : settings.location === "folder" && settings.folder
+                  ? t("queue.saveFolder", { folder: settings.folder })
+                  : t("queue.saveNext")}
             </span>
           </p>
           <Button
             variant="primary"
             disabled={count === 0}
             onClick={() => void convert()}
-            className="group/convert h-14 px-8! text-xl tracking-tight max-[820px]:flex-1"
+            className="group/convert h-14 shrink-0 px-8! text-xl tracking-tight max-[820px]:px-6!"
           >
             {count > 0 ? t("queue.convert", { count }) : t("queue.convert")}
             <ArrowRight

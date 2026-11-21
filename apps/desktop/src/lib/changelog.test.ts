@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import changelog from "../content/CHANGELOG.md?raw";
-import { changelogSince, compareVersions, hasChangesSince, headingVersion } from "./changelog";
+import changelog from "../content/whatsnew.en.md?raw";
+import { changelogSince, compareVersions, hasChangesSince, headingVersion, notesFor, RU_NOTES_MARKER } from "./changelog";
 
 const SAMPLE = `# Changelog
 
@@ -48,9 +48,9 @@ describe("headingVersion", () => {
 });
 
 describe("changelogSince", () => {
-  it("keeps the title and only the newer sections", () => {
+  it("keeps only the newer sections, without the title and introduction", () => {
     const text = changelogSince(SAMPLE, "2.0.0");
-    expect(text).toContain("# Changelog");
+    expect(text).not.toContain("# Changelog");
     expect(text).not.toContain("All notable changes");
     expect(text).toContain("## [2.1.0]");
     expect(text).toContain("- A crash.");
@@ -58,8 +58,18 @@ describe("changelogSince", () => {
     expect(text).not.toContain("- Everything.");
   });
 
-  it("returns the whole file without a starting version", () => {
-    expect(changelogSince(SAMPLE, null)).toBe(SAMPLE);
+  it("returns every section without a starting version, but no introduction", () => {
+    const text = changelogSince(SAMPLE, null);
+    expect(text.startsWith("## ")).toBe(true);
+    expect(text).toContain("- Everything.");
+    expect(text).not.toContain("All notable changes");
+  });
+
+  it("picks the notes in the app language from the feed", () => {
+    const notes = `- English\n\n${RU_NOTES_MARKER}\n\n- Русский`;
+    expect(notesFor(notes, "ru")).toBe("- Русский");
+    expect(notesFor(notes, "en")).toBe("- English");
+    expect(notesFor("- Only English", "ru")).toBe("- Only English");
   });
 
   it("reports whether anything is newer", () => {
@@ -67,7 +77,7 @@ describe("changelogSince", () => {
     expect(hasChangesSince(SAMPLE, "2.1.0")).toBe(false);
   });
 
-  it("finds the current release in the bundled changelog", () => {
+  it("finds the current release in the bundled notes", () => {
     expect(hasChangesSince(changelog, "1.2.0")).toBe(true);
   });
 });

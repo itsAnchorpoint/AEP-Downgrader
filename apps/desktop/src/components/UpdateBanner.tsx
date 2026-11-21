@@ -1,4 +1,4 @@
-import { ArrowUpToLine, X } from "lucide-react";
+import { ArrowDownToLine, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../store";
@@ -30,32 +30,41 @@ export function UpdateBanner() {
     <AnimatePresence>
       {visible && (
         <motion.div
-          role="status"
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.35, ease: [0.2, 0.8, 0.2, 1] }}
-          className="relative mx-6 mt-1 mb-2 flex shrink-0 items-center gap-3 overflow-hidden rounded-full surface py-1.5 pr-1.5 pl-4 text-sm font-bold max-[820px]:mx-4"
+          className="relative mx-6 mt-1 mb-2 flex min-h-11 shrink-0 items-center gap-3 rounded-full surface py-1.5 pr-1.5 pl-4 text-sm font-bold max-[820px]:mx-4"
         >
-          <ArrowUpToLine className="size-5 shrink-0 text-accent-text" strokeWidth={2.75} aria-hidden />
-          <span className="min-w-0 flex-1 truncate">{text}</span>
+          <ArrowDownToLine className="size-5 shrink-0 text-accent-text" strokeWidth={2.75} aria-hidden />
+          <span role="status" className="min-w-0 flex-1 truncate">
+            {text}
+          </span>
+          {busy && (
+            <span className="mr-3 h-1.5 w-32 shrink-0 overflow-hidden rounded-full bg-raised" aria-hidden>
+              <span
+                className="block h-full rounded-full bg-accent-text transition-[width] duration-300"
+                style={{ width: `${percent ?? 0}%` }}
+              />
+            </span>
+          )}
           {update.status === "available" && (
             <>
               <Button variant="link" onClick={() => setWhatsNewOpen(true, "update")}>
                 {t("update.whatsNew")}
               </Button>
-              <Button variant="primary" className={primary} onClick={() => void installUpdate()}>
+              <Button className={primary} onClick={() => void installUpdate()}>
                 {manual ? t("update.download") : t("update.action")}
               </Button>
             </>
           )}
           {update.status === "installed" && (
-            <Button variant="primary" className={primary} onClick={() => void restartApp()}>
+            <Button className={primary} onClick={() => void restartApp()}>
               {t("update.restart")}
             </Button>
           )}
           {update.status === "failed" && (
-            <Button variant="primary" className={primary} onClick={() => void installUpdate()}>
+            <Button className={primary} onClick={() => void installUpdate()}>
               {t("update.download")}
             </Button>
           )}
@@ -67,13 +76,6 @@ export function UpdateBanner() {
             >
               <X className="size-4" aria-hidden />
             </IconButton>
-          )}
-          {busy && (
-            <span
-              className="absolute bottom-0 left-0 h-[3px] rounded-full bg-accent transition-[width] duration-300"
-              style={{ width: `${percent ?? 0}%` }}
-              aria-hidden
-            />
           )}
         </motion.div>
       )}

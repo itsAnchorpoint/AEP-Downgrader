@@ -3,30 +3,56 @@ import { Check, Heart, type LucideIcon, Plus, RefreshCw, X } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react";
 import Markdown, { type Components } from "react-markdown";
 import { useTranslation } from "react-i18next";
-import changelog from "../content/CHANGELOG.md?raw";
-import { changelogSince, headingVersion } from "../lib/changelog";
+import notesEn from "../content/whatsnew.en.md?raw";
+import notesRu from "../content/whatsnew.ru.md?raw";
+import { Children, isValidElement, type ReactNode } from "react";
+import { changelogSince, headingVersion, notesFor } from "../lib/changelog";
 import { ipc } from "../lib/ipc";
 import { releaseUrl, REPO_URL } from "../lib/links";
 import { useAppStore } from "../store";
 import { Button, IconButton } from "./ui";
 
 // react-markdown builds React elements and skips raw HTML, so the text is never injected as markup.
+const ADDED = { icon: Plus, tone: "text-accent-text" };
+const CHANGED = { icon: RefreshCw, tone: "text-accent-text" };
+const FIXED = { icon: Check, tone: "text-ok" };
 const SECTION_TAGS: Record<string, { icon: LucideIcon; tone: string }> = {
-  Added: { icon: Plus, tone: "text-accent-text" },
-  Changed: { icon: RefreshCw, tone: "text-accent-text" },
-  Fixed: { icon: Check, tone: "text-ok" },
+  Added: ADDED,
+  Changed: CHANGED,
+  Fixed: FIXED,
+  Добавлено: ADDED,
+  Изменено: CHANGED,
+  Исправлено: FIXED,
 };
+
+/** The plain text of rendered markdown children (headings may contain links). */
+function textOf(node: ReactNode): string {
+  return Children.toArray(node)
+    .map((child) =>
+      typeof child === "string" || typeof child === "number"
+        ? String(child)
+        : isValidElement<{ children?: ReactNode }>(child)
+          ? textOf(child.props.children)
+          : "",
+    )
+    .join("");
+}
 
 /** "Version 2.0.0" with the date on its own line; the version never breaks across lines. */
 function VersionHeading({ version, date }: { version: string; date?: string | null }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [word, ...rest] = t("whatsNew.version", { version: "\u0000" }).split("\u0000");
+  const day = date ? new Date(/^\d{4}-\d{2}-\d{2}$/.test(date) ? `${date}T12:00:00` : date) : null;
+  const shownDate =
+    day && !Number.isNaN(day.getTime())
+      ? new Intl.DateTimeFormat(i18n.language, { day: "numeric", month: "long", year: "numeric" }).format(day)
+      : null;
   return (
     <h2>
       {word}
       <span className="whitespace-nowrap">{version}</span>
       {rest.join("")}
-      {date && <span className="mt-1.5 block text-sm font-semibold tracking-normal text-muted tabular-nums">{date}</span>}
+      {shownDate && <span className="mt-1.5 block text-sm font-semibold tracking-normal text-muted">{shownDate}</span>}
     </h2>
   );
 }
@@ -35,13 +61,14 @@ const components: Components = {
   h1: () => null, // the version headings carry the dialog
   // "## [2.0.1] - 2026-11-25" and "## [Unreleased] 2.0.0" read as "Version 2.0.1" plus the date.
   h2: ({ children }) => {
-    const text = String(Array.isArray(children) ? children.join("") : children ?? "");
-    const version = headingVersion(`## ${text}`);
+    const text = textOf(children);
+    // A heading with a link reference loses its brackets when rendered: fall back to the first version in it.
+    const version = headingVersion(`## ${text}`) ?? /\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?/.exec(text)?.[0] ?? null;
     const date = /\d{4}-\d{2}-\d{2}/.exec(text)?.[0] ?? null;
     return version ? <VersionHeading version={version} date={date} /> : <h2>{children}</h2>;
   },
   h3: ({ children }) => {
-    const tag = SECTION_TAGS[String(children)];
+    const tag = SECTION_TAGS[textOf(children)];
     return (
       <h3 className="mt-5 mb-1 flex items-center gap-2 text-base font-extrabold">
         {tag && (
@@ -77,7 +104,7 @@ const components: Components = {
 };
 
 export function WhatsNew() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const open = useAppStore((s) => s.whatsNewOpen);
   const setOpen = useAppStore((s) => s.setWhatsNewOpen);
   const view = useAppStore((s) => s.whatsNewView);
@@ -115,18 +142,18 @@ export function WhatsNew() {
                     <Dialog.Title className="sr-only">{t("whatsNew.title")}</Dialog.Title>
                     <span />
                     <Dialog.Close asChild>
-                      <IconButton label={t("whatsNew.close")} className="rounded-full! shadow-outline">
+                      <IconButton label={t("whatsNew.close")} className="-mr-2 rounded-full!">
                         <X className="size-4" aria-hidden />
                       </IconButton>
                     </Dialog.Close>
                   </div>
-                  <div className="changelog min-h-0 flex-1 overflow-y-auto px-6 pt-2 pb-3">
+                  <div className="changelog scroll-fade min-h-0 flex-1 overflow-y-auto px-6 pt-2 pb-5">
                     {showUpdate ? (
                       <>
                         <VersionHeading version={update.version} date={update.date} />
                         {update.notes ? (
                           <Markdown skipHtml components={components}>
-                            {update.notes}
+                            {notesFor(update.notes, i18n.language)}
                           </Markdown>
                         ) : (
                           <p className="my-1 text-sm text-muted">{t("whatsNew.noNotes")}</p>
@@ -141,27 +168,27 @@ export function WhatsNew() {
                       </>
                     ) : (
                       <Markdown skipHtml components={components}>
-                        {changelogSince(changelog, since)}
+                        {changelogSince(i18n.language === "ru" ? notesRu : notesEn, since)}
                       </Markdown>
                     )}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-6 pt-3 pb-5">
                     <Button variant="link" onClick={() => void ipc.openUrl(REPO_URL)}>
-                      <Heart className="size-4 text-danger" aria-hidden />
+                      <Heart className="size-4 text-accent-text" aria-hidden />
                       {t("done.support")}
                     </Button>
-                    <span className="mr-auto text-xs text-muted">{t("whatsNew.foot")}</span>
+                    <span className="text-xs text-muted">{t("whatsNew.foot")}</span>
                     {update.status === "available" || update.status === "failed" ? (
-                      <Button variant="primary" className="h-11 text-base" onClick={() => void installUpdate()}>
+                      <Button variant="primary" className="ml-auto h-11 text-base" onClick={() => void installUpdate()}>
                         {t(manual ? "whatsNew.downloadVersion" : "whatsNew.updateTo", { version: update.version })}
                       </Button>
                     ) : update.status === "installed" ? (
-                      <Button variant="primary" className="h-11 text-base" onClick={() => void restartApp()}>
+                      <Button variant="primary" className="ml-auto h-11 text-base" onClick={() => void restartApp()}>
                         {t("update.restart")}
                       </Button>
                     ) : (
                       <Dialog.Close asChild>
-                        <Button>{t("whatsNew.close")}</Button>
+                        <Button className="ml-auto">{t("whatsNew.close")}</Button>
                       </Dialog.Close>
                     )}
                   </div>

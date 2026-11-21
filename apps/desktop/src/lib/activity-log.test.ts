@@ -50,7 +50,7 @@ describe("messages", () => {
   it("render in the language asked for, and the panel shows file names only", () => {
     expect(renderMessage(entries[0], en, "name")).toBe("Added Intro v5.aep");
     expect(renderMessage(entries[0], ru, "name")).toBe("Добавлен Intro v5.aep");
-    expect(renderMessage(entries[3], en, "name")).toBe("Intro v5.aep failed: Could not write the copy");
+    expect(renderMessage(entries[3], en, "name")).toBe("Couldn’t convert Intro v5.aep: Couldn’t save the copy. Check that the folder is writable and the disk has space.");
   });
 
   it("translate setting values and plural forms", () => {
@@ -77,7 +77,7 @@ describe("report", () => {
     expect(report).toContain("Language: ru");
     expect(report).toContain("Theme: dark");
     expect(report).toContain("[17:05:09Z] INFO  Added <file-1>.aep");
-    expect(report).toContain("ERROR <file-1>.aep failed: Could not write the copy");
+    expect(report).toContain("ERROR Couldn’t convert <file-1>.aep: Couldn’t save the copy.");
     expect(report).toContain("code=write-failed");
     expect(report).toContain("size=12.4 MB");
   });

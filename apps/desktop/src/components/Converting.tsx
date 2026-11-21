@@ -14,7 +14,7 @@ function Percent({ value }: { value: number }) {
     return () => controls.stop();
   }, [shown, value]);
   return (
-    <motion.span aria-hidden className="font-mono text-5xl leading-none font-black tracking-display text-accent-text tabular-nums">
+    <motion.span aria-hidden className="font-mono text-5xl leading-none font-extrabold tracking-display text-accent-text tabular-nums">
       {text}
     </motion.span>
   );
@@ -30,7 +30,7 @@ export function Converting() {
   return (
     <div className="flex h-full flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-3 text-title leading-none font-black tracking-display">
+        <h2 className="flex items-center gap-3 text-title leading-none font-extrabold tracking-display">
           {t("converting.title")}
           <span
             className="rounded-full bg-raised px-2.5 py-1 text-sm font-extrabold tracking-normal text-fg tabular-nums"
@@ -42,7 +42,7 @@ export function Converting() {
         <Percent value={jobs.length ? (finished / jobs.length) * 100 : 0} />
       </div>
       <JobList files={jobs} reports={reports} progress={progress} year={year} finished={false} />
-      <div className="mt-auto border-t border-line pt-3">
+      <div className="mt-auto">
         <PrivacyLine />
       </div>
     </div>

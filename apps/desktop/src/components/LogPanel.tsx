@@ -30,7 +30,7 @@ const LEVELS: Record<LogLevel, { icon: typeof Info; tone: string; row: string }>
 
 const clock = (time: number) => new Date(time).toLocaleTimeString([], { hour12: false });
 
-function Entry({ entry, focused }: { entry: LogEntry; focused: boolean }) {
+function Entry({ entry, focused, technical }: { entry: LogEntry; focused: boolean; technical: boolean }) {
   const { t } = useTranslation();
   const look = LEVELS[entry.level];
   const Icon = look.icon;
@@ -50,7 +50,7 @@ function Entry({ entry, focused }: { entry: LogEntry; focused: boolean }) {
         <span className={`break-words ${entry.level === "info" ? "" : "font-bold"}`}>
           {renderMessage(entry, t, "name")}
         </span>
-        {entry.detail && (
+        {technical && entry.detail && (
           <span className="mt-0.5 block font-mono text-xs break-words text-muted select-text">{entry.detail}</span>
         )}
       </span>
@@ -97,6 +97,7 @@ function LogBody() {
   const setIncludePaths = useAppStore((s) => s.setIncludePaths);
   const setLogOpen = useAppStore((s) => s.setLogOpen);
   const { status, copy } = useReportCopy();
+  const [technical, setTechnical] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
   const stuck = useRef(true);
 
@@ -122,11 +123,24 @@ function LogBody() {
   return (
     <>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 pt-2.5 pb-1">
-        <h2 className="flex items-center gap-2 text-base font-black tracking-tight">
+        <h2 className="flex items-center gap-2 text-base font-extrabold tracking-tight">
           {t("log.title")}
-          <span className="rounded-full bg-raised px-2 py-px text-xs font-extrabold text-fg tabular-nums">{log.length}</span>
+          <span className="rounded-full px-2 py-px text-xs font-extrabold text-muted tabular-nums shadow-[inset_0_0_0_1.5px_var(--color-line)]">
+            {log.length}
+          </span>
         </h2>
         <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <label className="flex items-center gap-2 text-sm font-bold" htmlFor="log-technical">
+            <Switch.Root
+              id="log-technical"
+              checked={technical}
+              onCheckedChange={setTechnical}
+              className="relative h-6 w-11 shrink-0 rounded-full bg-toggle-off transition-colors data-[state=checked]:bg-strong"
+            >
+              <Switch.Thumb className="block size-4.5 translate-x-1 rounded-full bg-white transition-transform duration-200 ease-pop data-[state=checked]:translate-x-6 data-[state=checked]:bg-on-strong" />
+            </Switch.Root>
+            {t("log.technical")}
+          </label>
           <label className="flex items-center gap-2 text-sm font-bold" htmlFor="log-full-paths">
             <Switch.Root
               id="log-full-paths"
@@ -174,7 +188,7 @@ function LogBody() {
         ) : (
           <ol className="py-1">
             {log.map((entry) => (
-              <Entry key={entry.id} entry={entry} focused={entry.id === focusId} />
+              <Entry key={entry.id} entry={entry} focused={entry.id === focusId} technical={technical} />
             ))}
           </ol>
         )}

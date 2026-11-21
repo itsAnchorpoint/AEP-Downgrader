@@ -10,9 +10,14 @@ import { ACCENTS, usesOwnAccent } from "../lib/settings";
 import { useAppStore } from "../store";
 import { Button, Segmented } from "./ui";
 
-/** A group is a heavy rule followed by rows, like a ruled ledger. */
-function Group({ children }: { children: ReactNode }) {
-  return <div className="border-t border-line">{children}</div>;
+/** A titled group of rows, like a ruled ledger. */
+function Group({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section>
+      <h3 className="pb-1.5 text-sm font-bold text-muted">{title}</h3>
+      <div className="border-t border-line">{children}</div>
+    </section>
+  );
 }
 
 function Row({ title, hint, children }: { title: ReactNode; hint?: ReactNode; children: ReactNode }) {
@@ -22,7 +27,7 @@ function Row({ title, hint, children }: { title: ReactNode; hint?: ReactNode; ch
         <div className="text-base font-extrabold tracking-tight">{title}</div>
         {hint && <p className="mt-0.5 text-sm text-muted">{hint}</p>}
       </div>
-      <div className="flex max-w-[62%] flex-wrap items-center justify-end gap-2 max-[820px]:max-w-full">{children}</div>
+      <div className="flex max-w-[62%] flex-wrap items-center justify-end gap-2 max-[820px]:ml-auto max-[820px]:max-w-full">{children}</div>
     </div>
   );
 }
@@ -38,6 +43,8 @@ export function Settings() {
   };
   const locked = usesOwnAccent(settings.theme);
   const year = targets.find((x) => x.major === target)?.name ?? "2024";
+  // A copy with the original's name can't go next to the original (the engine refuses it).
+  const sameName = settings.location === "next-to-source" && outputName(settings.pattern, "Intro_v05.aep", year) === "Intro_v05.aep";
 
   return (
     <div className="flex h-full flex-col gap-3">
@@ -46,51 +53,11 @@ export function Settings() {
           <ArrowLeft className="size-4" aria-hidden strokeWidth={2.5} />
           {t("header.back")}
         </Button>
-        <h2 className="text-title leading-none font-black tracking-display">{t("settings.title")}</h2>
+        <h2 className="text-title leading-none font-extrabold tracking-display">{t("settings.title")}</h2>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-x-hidden overflow-y-auto pb-1">
-        <Group>
-          <Row title={t("settings.language")}>
-            <Segmented
-              label={t("settings.language")}
-              value={settings.language}
-              onChange={(language) => updateSettings({ language })}
-              options={[
-                { value: "en", label: "English" },
-                { value: "ru", label: "Русский" },
-              ]}
-            />
-          </Row>
-          <Row title={t("settings.theme")}>
-            <Segmented
-              label={t("settings.theme")}
-              value={settings.theme}
-              onChange={(theme) => updateSettings({ theme })}
-              options={[
-                { value: "system", label: t("settings.system") },
-                { value: "light", label: t("settings.light") },
-                { value: "dark", label: t("settings.dark") },
-                { value: "ae", label: t("settings.ae") },
-              ]}
-            />
-          </Row>
-          <Row title={t("settings.accent")} hint={locked ? t("settings.accentLocked") : undefined}>
-            <Segmented
-              label={t("settings.accent")}
-              disabled={locked}
-              value={settings.accent}
-              onChange={(accent) => updateSettings({ accent })}
-              options={ACCENTS.map((accent) => ({
-                value: accent,
-                label: t(`settings.accents.${accent}`),
-                leading: <i data-accent={accent} className="size-3.5 rounded-full bg-accent ring-2 ring-current/50" />,
-              }))}
-            />
-          </Row>
-        </Group>
-
-        <Group>
+      <div className="scroll-fade flex min-h-0 flex-1 flex-col gap-6 overflow-x-hidden overflow-y-auto pb-6">
+        <Group title={t("settings.groupFiles")}>
           <Row title={t("settings.save")}>
             <Segmented
               label={t("settings.save")}
@@ -121,6 +88,7 @@ export function Settings() {
                 <span className="font-mono font-bold text-fg select-text">
                   {outputName(settings.pattern, "Intro_v05.aep", year)}
                 </span>
+                {sameName && <span className="mt-1 block font-bold text-warn">{t("settings.patternSame")}</span>}
               </>
             }
           >
@@ -129,10 +97,10 @@ export function Settings() {
               value={settings.pattern}
               onChange={(e) => updateSettings({ pattern: e.target.value })}
               spellCheck={false}
-              className="h-10 w-56 rounded-md bg-transparent px-3.5 font-mono text-sm font-semibold shadow-outline select-text focus:shadow-[inset_0_0_0_3px_var(--color-strong)]"
+              className="h-10 w-56 rounded-md bg-transparent px-3.5 font-mono text-sm font-semibold shadow-outline select-text focus:shadow-[inset_0_0_0_2px_var(--color-fg)] focus-visible:outline-none"
             />
           </Row>
-          <Row title={t("settings.exists")}>
+          <Row title={t("settings.exists")} hint={settings.onExists === "overwrite" ? t("settings.overwriteHint") : undefined}>
             <Segmented
               label={t("settings.exists")}
               value={settings.onExists}
@@ -176,11 +144,53 @@ export function Settings() {
           </Row>
         </Group>
 
+        <Group title={t("settings.groupLook")}>
+          <Row title={t("settings.language")}>
+            <Segmented
+              label={t("settings.language")}
+              value={settings.language}
+              onChange={(language) => updateSettings({ language })}
+              options={[
+                { value: "en", label: "English" },
+                { value: "ru", label: "Русский" },
+              ]}
+            />
+          </Row>
+          <Row title={t("settings.theme")}>
+            <Segmented
+              label={t("settings.theme")}
+              value={settings.theme}
+              onChange={(theme) => updateSettings({ theme })}
+              options={[
+                { value: "system", label: t("settings.system") },
+                { value: "light", label: t("settings.light") },
+                { value: "dark", label: t("settings.dark") },
+                { value: "ae", label: t("settings.ae") },
+              ]}
+            />
+          </Row>
+          <Row title={t("settings.accent")} hint={locked ? t("settings.accentLocked") : undefined}>
+            {!locked && (
+            <Segmented
+              label={t("settings.accent")}
+              disabled={locked}
+              value={settings.accent}
+              onChange={(accent) => updateSettings({ accent })}
+              options={ACCENTS.map((accent) => ({
+                value: accent,
+                label: t(`settings.accents.${accent}`),
+                leading: <i data-accent={accent} className="size-3.5 rounded-full bg-accent ring-2 ring-current/50" />,
+              }))}
+            />
+            )}
+          </Row>
+        </Group>
+
         <section className="flex gap-4 rounded-lg surface p-5">
           <ShieldCheck className="size-9 shrink-0 text-accent-text" strokeWidth={2.25} aria-hidden />
           <div className="min-w-0">
-            <h2 className="mb-1 text-xl leading-tight font-black tracking-display">{t("privacy.title")}</h2>
-            <p className="text-sm text-muted">{t("privacy.body")}</p>
+            <h2 className="mb-1 text-xl leading-tight font-extrabold tracking-display">{t("privacy.title")}</h2>
+            <p className="max-w-[62ch] text-sm text-muted">{t("privacy.body")}</p>
             <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
               <Button variant="link" className="-ml-1 px-1 font-extrabold" onClick={() => void ipc.openUrl(REPO_URL)}>
                 {t("privacy.source")}

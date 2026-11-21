@@ -38,12 +38,15 @@ export function headingVersion(line: string): string | null {
 }
 
 /**
- * The part of CHANGELOG.md a user has not seen: the title plus every version section newer than
- * `since`. With `since` null, the whole file. Sections whose heading has no version are left out
- * when `since` is given.
+ * The release notes a user has not seen: every version section newer than `since` (all of them
+ * when `since` is null). Anything before the first section, such as an introduction, is left out,
+ * and so are sections whose heading has no version when `since` is given.
  */
 export function changelogSince(markdown: string, since: string | null): string {
-  if (since === null) return markdown;
+  if (since === null) {
+    const first = markdown.search(/^##\s/m);
+    return first < 0 ? markdown : markdown.slice(first);
+  }
   const lines = markdown.split("\n");
   const out: string[] = [];
   let keep = true; // the title before the first section
@@ -54,18 +57,26 @@ export function changelogSince(markdown: string, since: string | null): string {
       const version = headingVersion(line);
       keep = version !== null && compareVersions(version, since) > 0;
     } else if (!sawSection) {
-      // Keep only the `#` title before the first section, not the introduction under it.
-      keep = /^#\s/.test(line);
+      keep = false;
     }
     if (keep) out.push(line);
   }
   return out.join("\n").trim() + "\n";
 }
 
-/** True if CHANGELOG.md has at least one section newer than `since`. */
+/** True if the notes have at least one section newer than `since`. */
 export function hasChangesSince(markdown: string, since: string): boolean {
   return markdown.split("\n").some((line) => {
     const version = /^##\s/.test(line) ? headingVersion(line) : null;
     return version !== null && compareVersions(version, since) > 0;
   });
+}
+
+/** Marker between the English and the Russian notes in the update feed (see release-notes.mjs). */
+export const RU_NOTES_MARKER = "<!-- lang:ru -->";
+
+/** The part of the feed's notes in the app's language; English when there is no Russian part. */
+export function notesFor(notes: string, language: string): string {
+  const [en, ru] = notes.split(RU_NOTES_MARKER);
+  return (language === "ru" && ru?.trim() ? ru : en).trim();
 }

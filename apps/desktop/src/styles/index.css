@@ -94,13 +94,12 @@ h3 {
     0 10px 26px -10px color-mix(in oklab, var(--color-accent) 75%, transparent);
   color: var(--color-accent-fg);
 }
-/* A selected option among several (segmented controls): the strong fill without the glow,
-   so a row of settings does not light up like a row of buttons. */
+/* A selected option among several (segmented controls, target tiles): an outline, not a fill,
+   so the one loud element of a view stays the main action. */
 @utility fill-selected {
-  background-color: var(--color-strong);
-  background-image: linear-gradient(color-mix(in oklab, var(--color-strong), white 18%), var(--color-strong));
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3);
-  color: var(--color-on-strong);
+  background-color: var(--color-raised);
+  box-shadow: inset 0 0 0 2px var(--color-fg);
+  color: var(--color-fg);
 }
 /* The loudest fill: ink in the light theme, the accent in the dark ones. */
 @utility fill-strong {
@@ -110,6 +109,13 @@ h3 {
     inset 0 1px 0 rgb(255 255 255 / 0.35),
     0 10px 26px -10px color-mix(in oklab, var(--color-strong) 70%, transparent);
   color: var(--color-on-strong);
+}
+
+/* After Effects theme: white text on its blue needs the full blue at the top (WCAG AA), so the
+   fills darken downwards instead of lightening upwards. */
+[data-theme="ae"] .fill-accent,
+[data-theme="ae"] .fill-strong {
+  background-image: linear-gradient(var(--color-strong), color-mix(in oklab, var(--color-strong), black 14%));
 }
 
 /* Indeterminate progress: a bar sliding by transform only. Runs only while a file converts. */
@@ -122,10 +128,11 @@ h3 {
   }
 }
 .indeterminate {
-  animation: slide 1.2s var(--ease-out-quint) infinite;
+  animation: slide 1.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 
-/* Empty state only: rings pulse outward, the icon bobs. Both are transform/opacity. */
+/* Empty state only: the rings pulse outward and the icon bobs while the pointer is over the drop
+   zone or files are dragged over the window; at rest they stand still. Transform/opacity only. */
 @keyframes pulse {
   from {
     transform: scale(0.62);
@@ -141,15 +148,47 @@ h3 {
     transform: translateY(5px);
   }
 }
-.ring {
-  animation: pulse 3s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+.drop-zone:hover .ring,
+.drop-target-active .ring {
+  animation: pulse 1.6s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
 }
-.bob {
-  animation: bob 1.8s ease-in-out infinite;
+.drop-zone:hover .bob,
+.drop-target-active .bob {
+  animation: bob 1.4s ease-in-out infinite;
 }
-.drop-zone:hover .ring {
-  animation-duration: 1.6s;
+/* The circle and its rings follow the height of the drop zone itself, not of the window, so the
+   content stays centred under the update banner, with the log open and in a small window. The
+   outer ring reaches 108 px from the centre (56 px past the 104 px circle): the margins keep that
+   room above and room plus 24 px of air below, at every scale. */
+.drop-zone {
+  container-type: size;
 }
+.drop-circle {
+  margin: 56px 0 80px;
+}
+/* Heights are of the content box (the zone minus its 24 px padding). The full size needs about 360 px. */
+@container (max-height: 380px) {
+  .drop-circle {
+    margin: 36px 0 58px;
+    scale: 0.8;
+  }
+}
+@container (max-height: 320px) {
+  .drop-circle {
+    margin: 22px 0 42px;
+    scale: 0.66;
+  }
+}
+@container (max-height: 260px) {
+  .drop-circle {
+    margin: 8px 0 30px;
+    scale: 0.52;
+  }
+  .drop-chips {
+    display: none;
+  }
+}
+
 /* The drop zone says "drop here" with a dashed outline inside its surface. */
 .drop-zone::before {
   content: "";
@@ -169,8 +208,8 @@ h3 {
 /* While files are dragged over the window the drop zone glows in the accent. */
 .drop-target-active {
   box-shadow:
-    inset 0 0 0 3px var(--color-accent),
-    0 0 60px -12px color-mix(in oklab, var(--color-accent) 60%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--color-accent) 50%, transparent),
+    0 24px 60px -18px color-mix(in oklab, var(--color-accent) 45%, transparent),
     var(--surface-shadow);
 }
 
@@ -194,12 +233,19 @@ h3 {
   *::after {
     transition-duration: 0.001ms !important;
   }
-  .ring,
-  .bob {
+  .drop-zone:hover .ring,
+  .drop-target-active .ring,
+  .drop-zone:hover .bob,
+  .drop-target-active .bob {
     animation: none;
   }
   .indeterminate {
     animation: none;
     transform: translateX(80%);
   }
+}
+
+/* Long lists fade out at the bottom edge instead of cutting a row in half. */
+.scroll-fade {
+  mask-image: linear-gradient(to bottom, black calc(100% - 22px), transparent);
 }

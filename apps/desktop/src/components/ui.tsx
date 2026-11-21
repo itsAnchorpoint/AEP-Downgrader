@@ -41,21 +41,25 @@ export function IconButton({
   );
 }
 
-/** `pill` is a filled chip (report title), otherwise plain colored text (target tiles). */
-export function StatusBadge({ status, pill = false }: { status: "verified" | "experimental"; pill?: boolean }) {
+/** `pill` is an outlined chip (report title); `quiet` mutes it (target tiles that are not chosen). */
+export function StatusBadge({
+  status,
+  pill = false,
+  quiet = false,
+}: {
+  status: "verified" | "experimental";
+  pill?: boolean;
+  quiet?: boolean;
+}) {
   const { t } = useTranslation();
   const Icon = status === "verified" ? Check : FlaskConical;
-  const tone = pill
-    ? status === "verified"
-      ? "rounded-full px-2.5 py-0.5 text-accent-text shadow-[inset_0_0_0_1.5px_currentColor]"
-      : "rounded-full px-2.5 py-0.5 text-warn shadow-[inset_0_0_0_1.5px_currentColor]"
-    : status === "verified"
-      ? "text-ok"
-      : "text-warn";
+  const color = quiet ? "text-muted" : status === "verified" ? "text-ok" : "text-warn";
+  const shape = pill ? "rounded-full px-2.5 py-0.5 shadow-[inset_0_0_0_1.5px_currentColor]" : "";
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-bold ${tone}`}>
+    <span className={`inline-flex items-center gap-1 text-xs font-bold ${color} ${shape}`}>
       <Icon className="size-3" aria-hidden strokeWidth={3} />
-      {t(`target.${status}`)}
+      {/* A quiet badge in a narrow window keeps only its icon; the tile's tooltip says the word. */}
+      <span className={quiet ? "max-[820px]:sr-only" : ""}>{t(`target.${status}`)}</span>
     </span>
   );
 }
@@ -85,7 +89,7 @@ export function Segmented<T extends string>({
             disabled={disabled}
             onClick={() => onChange(o.value)}
             className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold transition-[translate,scale,background-color] duration-200 active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100 ${
-              on ? "fill-selected" : "shadow-outline enabled:hover:bg-hover"
+              on ? "fill-selected" : "text-muted shadow-[inset_0_0_0_1.5px_var(--color-line)] enabled:hover:bg-hover enabled:hover:text-fg"
             }`}
           >
             {o.leading}
@@ -98,13 +102,14 @@ export function Segmented<T extends string>({
 }
 
 /** The product's headline promise, shown on the first screen and while converting. */
+/** The footer of the start and progress screens: the privacy promise, and what the app is for. */
 export function PrivacyLine() {
   const { t } = useTranslation();
   return (
     <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 px-0.5 text-sm font-bold max-[820px]:text-xs">
       <Lock className="size-4.5 shrink-0 text-accent-text" aria-hidden strokeWidth={2.5} />
       <span>{t("drop.privacy")}</span>
-      <span className="ml-auto font-medium text-muted max-[820px]:hidden">{t("drop.privacySub")}</span>
+      <span className="ml-auto font-medium text-muted max-[820px]:hidden">{t("drop.tagline")}</span>
     </div>
   );
 }

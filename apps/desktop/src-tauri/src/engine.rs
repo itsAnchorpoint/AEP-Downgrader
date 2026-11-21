@@ -104,6 +104,15 @@ pub fn preflight(path: &str, target: u32) -> Preflight {
         Err(error) => return blocked(target, error_code(&error)),
     };
     notes.extend(effect_notes(&bytes, target));
+    // Copies for an experimental target were never opened in that After Effects: say so in the
+    // report, not only on the target tile.
+    let experimental = u8::try_from(target)
+        .ok()
+        .and_then(compat::target)
+        .is_some_and(|t| t.status == compat::Status::Experimental);
+    if experimental && !blocked_by_rules {
+        notes.push(Note { severity: Severity::Warn, code: "experimental-target".into(), params: Map::new() });
+    }
     Preflight { target, blocked: blocked_by_rules, notes }
 }
 
@@ -288,8 +297,10 @@ mod tests {
     fn preflight_reports_the_shadow_color_note() {
         let report = preflight(&fixture("TEST24-x.aep"), 23);
         assert!(!report.blocked);
-        assert_eq!(report.notes.len(), 1);
+        // 2023 is experimental, so its note follows the shadow colour one.
+        assert_eq!(report.notes.len(), 2);
         assert_eq!(report.notes[0].code, "shadow-color-removed");
+        assert_eq!(report.notes[1].code, "experimental-target");
         assert_eq!(report.notes[0].params["count"], 2);
     }
 
@@ -298,6 +309,15 @@ mod tests {
         let report = preflight(&fixture("TEST26-x.aep"), 24);
         assert!(!report.blocked);
         assert!(report.notes.is_empty());
+    }
+
+    #[test]
+    fn preflight_for_an_experimental_target_says_so() {
+        let report = preflight(&fixture("TEST26-x.aep"), 25);
+        assert!(!report.blocked);
+        assert!(report.notes.iter().any(|n| n.code == "experimental-target" && matches!(n.severity, Severity::Warn)));
+        // Verified targets carry no such note.
+        assert!(!preflight(&fixture("TEST26-x.aep"), 24).notes.iter().any(|n| n.code == "experimental-target"));
     }
 
     #[test]

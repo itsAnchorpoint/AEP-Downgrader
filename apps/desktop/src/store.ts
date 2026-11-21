@@ -15,7 +15,7 @@ import {
   setSettingsFile,
   type Settings,
 } from "./lib/settings";
-import changelog from "./content/CHANGELOG.md?raw";
+import changelog from "./content/whatsnew.en.md?raw";
 
 export type Phase = "queue" | "converting" | "done";
 export type UpdateStatus = "none" | "available" | "downloading" | "installing" | "installed" | "failed";
@@ -32,7 +32,7 @@ export interface UpdateState {
   bannerDismissed: boolean;
 }
 
-/** "update": notes of the available update. "history": the bundled changelog. */
+/** "update": notes of the available update. "history": the bundled notes (content/whatsnew.*.md). */
 export type WhatsNewView = "update" | "history";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -80,6 +80,8 @@ interface AppState {
   convert(): Promise<void>;
   handleProgress(event: ProgressEvent): void;
   reset(): void;
+  /** After a run: back to the queue with the same files, to convert them to another version. */
+  backToQueue(): void;
   setDragging(dragging: boolean): void;
   updateSettings(patch: Partial<Settings>): void;
   chooseFolder(): Promise<void>;
@@ -381,6 +383,11 @@ export const useAppStore = create<AppState>((set, get) => {
       const { phase, files, target, reports, expandedId, jobIds, progress } = initialState;
       // Only the batch starts over. The activity log, settings and update state belong to the session.
       set({ phase, files, target, reports, expandedId, jobIds, progress, view: "main", dragging: false });
+    },
+
+    backToQueue() {
+      const { jobIds, progress, expandedId } = initialState;
+      set({ phase: "queue", jobIds, progress, expandedId, view: "main" });
     },
 
     setDragging: (dragging) => set({ dragging }),
