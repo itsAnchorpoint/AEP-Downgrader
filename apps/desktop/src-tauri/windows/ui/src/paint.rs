@@ -281,10 +281,12 @@ pub fn draw_image(px: &mut Pixmap, img: &Pixmap, x: i32, y: i32, opacity: f32) {
 }
 
 /// Line icon on a 24-unit grid, drawn into a `size` DIP square at (`x`, `y`).
+#[derive(Clone, Copy, PartialEq)]
 pub enum Icon {
     Lock,
     Check,
     Download,
+    Folder,
     Minimize,
     Close,
 }
@@ -329,6 +331,22 @@ fn icon_path(icon: &Icon) -> Option<Path> {
             pb.line_to(17.0, 11.0);
             pb.move_to(5.0, 20.0);
             pb.line_to(19.0, 20.0);
+        }
+        Icon::Folder => {
+            // Lucide "folder": corners of radius 2, the tab on the top left.
+            pb.move_to(20.0, 20.0);
+            pb.quad_to(22.0, 20.0, 22.0, 18.0);
+            pb.line_to(22.0, 8.0);
+            pb.quad_to(22.0, 6.0, 20.0, 6.0);
+            pb.line_to(12.1, 6.0);
+            pb.quad_to(11.0, 6.0, 10.41, 5.1);
+            pb.line_to(9.6, 3.9);
+            pb.quad_to(9.0, 3.0, 7.93, 3.0);
+            pb.line_to(4.0, 3.0);
+            pb.quad_to(2.0, 3.0, 2.0, 5.0);
+            pb.line_to(2.0, 18.0);
+            pb.quad_to(2.0, 20.0, 4.0, 20.0);
+            pb.close();
         }
         Icon::Minimize => {
             pb.move_to(0.0, 13.2);

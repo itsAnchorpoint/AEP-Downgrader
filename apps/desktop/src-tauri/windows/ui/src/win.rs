@@ -446,10 +446,7 @@ unsafe extern "system" fn overlay_proc(
             }
         }
         WM_SETCURSOR => {
-            let link = with_app(|a| a.ui.hover == Some(Hit::Secondary) && a.ui.has_link())
-                .unwrap_or(false);
-            let cursor = LoadCursorW(None, if link { IDC_HAND } else { IDC_ARROW }).ok();
-            SetCursor(cursor);
+            SetCursor(LoadCursorW(None, IDC_ARROW).ok());
             LRESULT(1)
         }
         WM_MOUSEMOVE => {

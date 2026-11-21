@@ -98,13 +98,7 @@ struct Button {
     rect: R,
     style: ButtonStyle,
     label: Run,
-    download_icon: bool,
-}
-
-struct Link {
-    x: f32,
-    baseline: f32,
-    label: Run,
+    icon: Option<Icon>,
 }
 
 struct Check {
@@ -122,7 +116,6 @@ struct Layout {
     sub_baselines: Vec<f32>,
     primary: Option<Button>,
     secondary: Option<Button>,
-    link: Option<Link>,
     check: Option<Check>,
     track: Option<R>,
     status_baseline: f32,
@@ -356,19 +349,19 @@ fn markup(text: &str, open: &str, close: &str) -> Vec<(String, bool)> {
     out
 }
 
-fn button(label: &str, style_: ButtonStyle, x: f32, y: f32, download_icon: bool) -> Button {
+fn button(label: &str, style_: ButtonStyle, x: f32, y: f32, icon: Option<Icon>) -> Button {
     let color = if style_ == ButtonStyle::Ghost {
         FG
     } else {
         INK
     };
     let label = shape(label, style(Font::Onest800, 15.0, -0.01, color));
-    let w = 52.0 + label.width + if download_icon { 26.0 } else { 0.0 };
+    let w = 52.0 + label.width + if icon.is_some() { 26.0 } else { 0.0 };
     Button {
         rect: R::new(x, y, w, 44.0),
         style: style_,
         label,
-        download_icon,
+        icon,
     }
 }
 
@@ -447,15 +440,25 @@ fn layout(spec: &PageSpec, link_label: &str) -> Layout {
     let check_y = actions_y - 40.0;
     match spec.kind {
         Kind::Welcome => {
-            let b = button(&spec.primary, ButtonStyle::Lime, X0, actions_y, true);
-            let lx = b.rect.right() + 14.0;
+            let b = button(
+                &spec.primary,
+                ButtonStyle::Lime,
+                X0,
+                actions_y,
+                Some(Icon::Download),
+            );
+            let sx = b.rect.right() + 14.0;
             l.primary = Some(b);
+            // "Change folder", or the chosen folder once picked: a quiet button, not a bare link,
+            // so it reads as an option next to the one loud action.
             if !link_label.is_empty() {
-                l.link = Some(Link {
-                    x: lx,
-                    baseline: centred_baseline(Font::Onest700, 13.0, actions_y + 22.0),
-                    label: shape(link_label, style(Font::Onest700, 13.0, -0.01, FG)),
-                });
+                l.secondary = Some(button(
+                    link_label,
+                    ButtonStyle::Ghost,
+                    sx,
+                    actions_y,
+                    Some(Icon::Folder),
+                ));
             }
         }
         Kind::Progress => {
@@ -469,7 +472,7 @@ fn layout(spec: &PageSpec, link_label: &str) -> Layout {
             } else {
                 ButtonStyle::Lime
             };
-            let b = button(&spec.primary, primary_style, X0, actions_y, false);
+            let b = button(&spec.primary, primary_style, X0, actions_y, None);
             let sx = b.rect.right() + 14.0;
             l.primary = Some(b);
             if !spec.secondary.is_empty() {
@@ -478,7 +481,7 @@ fn layout(spec: &PageSpec, link_label: &str) -> Layout {
                     ButtonStyle::Ghost,
                     sx,
                     actions_y,
-                    false,
+                    None,
                 ));
             }
             if !spec.check.is_empty() {
@@ -493,9 +496,9 @@ fn layout(spec: &PageSpec, link_label: &str) -> Layout {
     l
 }
 
-/// Shortens a path for the folder link: keeps the drive and the last folders.
+/// Shortens a path for the folder button: keeps the drive and the last folders.
 pub fn shorten_path(path: &str, max_width: f32) -> String {
-    let st = style(Font::Onest700, 13.0, -0.01, FG);
+    let st = style(Font::Onest800, 15.0, -0.01, FG);
     if shape(path, st).width <= max_width {
         return path.to_owned();
     }
@@ -599,9 +602,9 @@ impl Ui {
         self.enter = if self.reduced_motion { 1.0 } else { 0.0 };
     }
 
-    /// Replaces the folder link's text (after the user picked a folder).
+    /// Replaces the folder button's text (after the user picked a folder).
     pub fn set_link(&mut self, text: String) {
-        self.link_label = shorten_path(&text, 280.0);
+        self.link_label = shorten_path(&text, 260.0);
         self.layout = layout(&self.page, &self.link_label);
     }
 
@@ -615,11 +618,7 @@ impl Ui {
             Hit::Minimize => Some(MINIMIZE),
             Hit::Close => Some(CLOSE),
             Hit::Primary => l.primary.as_ref().map(|b| b.rect),
-            Hit::Secondary => l.secondary.as_ref().map(|b| b.rect).or_else(|| {
-                l.link
-                    .as_ref()
-                    .map(|k| R::new(k.x - 4.0, k.baseline - 16.0, k.label.width + 8.0, 24.0))
-            }),
+            Hit::Secondary => l.secondary.as_ref().map(|b| b.rect),
             Hit::Check => l
                 .check
                 .as_ref()
@@ -647,10 +646,6 @@ impl Ui {
             .into_iter()
             .filter(|h| self.rect(*h).is_some())
             .collect()
-    }
-
-    pub fn has_link(&self) -> bool {
-        self.layout.link.is_some()
     }
 
     /// Advances animations by `dt` seconds; returns whether anything still moves.
@@ -848,26 +843,6 @@ impl Ui {
             }
         }
 
-        if let Some(k) = &l.link {
-            let h = self.amount(Hit::Secondary);
-            k.label
-                .draw(px, k.x, k.baseline + oy, s, None, Transform::identity());
-            let (_, d) = fonts().metrics(Font::Onest700, 13.0);
-            let line = R::new(k.x, k.baseline + d + 1.0 + oy, k.label.width, 1.5);
-            if let Some(p) = round_rect(line, 0.0, s) {
-                paint::fill(
-                    px,
-                    &p,
-                    &solid(rgba(214, 255, 61, 0.6 + 0.4 * h)),
-                    Transform::identity(),
-                );
-            }
-            if self.focus_visible && self.focus == Some(Hit::Secondary) {
-                let r = R::new(k.x - 4.0, k.baseline - 15.0 + oy, k.label.width + 8.0, 24.0);
-                inset_outline(px, r, 6.0, 2.0, hex(LIME), s, Transform::identity());
-            }
-        }
-
         if let Some(track) = l.track {
             let track = R {
                 y: track.y + oy,
@@ -1011,10 +986,15 @@ impl Ui {
                 inset_outline(px, r, 22.0, 2.0, rgba(243, 239, 230, 0.18 + 0.16 * h), s, t);
             }
         }
-        let content = b.label.width + if b.download_icon { 26.0 } else { 0.0 };
+        let content = b.label.width + if b.icon.is_some() { 26.0 } else { 0.0 };
         let mut x = r.x + (r.w - content) / 2.0;
-        if b.download_icon {
-            paint::icon(px, Icon::Download, x, r.y + 13.5, 17.0, 2.8, hex(INK), s, t);
+        if let Some(icon) = b.icon {
+            let (color, width) = if b.style == ButtonStyle::Ghost {
+                (hex(FG), 2.4)
+            } else {
+                (hex(INK), 2.8)
+            };
+            paint::icon(px, icon, x, r.y + 13.5, 17.0, width, color, s, t);
             x += 26.0;
         }
         b.label.draw(
