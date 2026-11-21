@@ -144,6 +144,8 @@ pub enum ProgressState {
     Done,
     Failed,
     Skipped,
+    /// Never started: the user stopped the batch first.
+    Cancelled,
 }
 
 #[derive(Serialize, Clone)]

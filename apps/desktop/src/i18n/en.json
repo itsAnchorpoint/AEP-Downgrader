@@ -106,7 +106,9 @@
   },
   "converting": {
     "title": "Converting",
-    "progress": "File {{current}} of {{total}}"
+    "progress": "File {{current}} of {{total}}",
+    "stop": "Stop",
+    "stopping": "Stopping…"
   },
   "state": {
     "queued": "Waiting",
@@ -116,7 +118,8 @@
     "skipped": "Skipped",
     "nothingToDo": "No conversion needed",
     "blocked": "Can’t convert",
-    "ignored": "Ignored"
+    "ignored": "Ignored",
+    "cancelled": "Stopped"
   },
   "error": {
     "write-failed": "Couldn’t save the copy. Check that the folder is writable and the disk has space.",
@@ -149,7 +152,10 @@
     "showFinder": "Show in Finder",
     "showExplorer": "Show in Explorer",
     "again": "Another version",
-    "changes": "Changes in the copy: {{count}}"
+    "changes": "Changes in the copy: {{count}}",
+    "cancelled_one": "{{count}} file not converted because you stopped.",
+    "cancelled_other": "{{count}} files not converted because you stopped.",
+    "cancelledFile": "Not converted: you stopped the conversion"
   },
   "update": {
     "title": "Version {{version}} is available",
@@ -267,7 +273,9 @@
       "updateUpToDate": "Update check: this is the latest version",
       "updateCheckFailed": "Update check failed",
       "updateInstalled": "Update {{version}} installed",
-      "updateInstallFailed": "Update {{version}} could not be installed"
+      "updateInstallFailed": "Update {{version}} could not be installed",
+      "jobCancelled": "{{file}}: stopped before converting",
+      "batchCancelled": "Stop pressed: the files converting now will finish"
     },
     "value": {
       "next-to-source": "next to the original",

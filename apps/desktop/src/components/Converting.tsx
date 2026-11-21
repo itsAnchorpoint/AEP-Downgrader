@@ -1,9 +1,10 @@
+import { CircleStop } from "lucide-react";
 import { animate, motion, useMotionValue, useTransform } from "motion/react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../store";
 import { JobList } from "./JobList";
-import { PrivacyLine } from "./ui";
+import { Button, PrivacyLine } from "./ui";
 
 /** Overall progress, counted up smoothly each time a file finishes. */
 function Percent({ value }: { value: number }) {
@@ -22,10 +23,12 @@ function Percent({ value }: { value: number }) {
 
 export function Converting() {
   const { t } = useTranslation();
-  const { files, jobIds, reports, progress, targets, target } = useAppStore();
+  const { files, jobIds, reports, progress, targets, target, cancelling, cancelConvert } = useAppStore();
   const jobs = files.filter((f) => jobIds.includes(f.id));
-  const finished = jobIds.filter((id) => ["done", "failed", "skipped"].includes(progress[id]?.state)).length;
+  const finished = jobIds.filter((id) => ["done", "failed", "skipped", "cancelled"].includes(progress[id]?.state)).length;
   const year = targets.find((x) => x.major === target)?.name ?? "";
+  // Stop only skips files that have not started, so it is offered while some are still waiting.
+  const waiting = jobIds.some((id) => (progress[id]?.state ?? "queued") === "queued");
 
   return (
     <div className="flex h-full flex-col gap-3">
@@ -43,7 +46,16 @@ export function Converting() {
       </div>
       <JobList files={jobs} reports={reports} progress={progress} year={year} finished={false} />
       <div className="mt-auto">
-        <PrivacyLine />
+        <PrivacyLine
+          action={
+            (waiting || cancelling) && (
+              <Button disabled={cancelling} onClick={() => void cancelConvert()}>
+                <CircleStop className="size-4" aria-hidden strokeWidth={2.5} />
+                {t(cancelling ? "converting.stopping" : "converting.stop")}
+              </Button>
+            )
+          }
+        />
       </div>
     </div>
   );

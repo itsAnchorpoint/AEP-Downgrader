@@ -59,6 +59,22 @@ describe("converting", () => {
     expect(store().phase).toBe("done");
   });
 
+  it("stops a batch: the rest come back cancelled and the batch still finishes", async () => {
+    await store().addPaths(["/a/Intro.aep", "/a/Lower.aep", "/a/Outro.aep"]);
+    await store().setTarget(22);
+    await store().convert();
+    const [first, ...rest] = store().jobIds;
+    store().handleProgress({ id: first, state: "running" });
+    await store().cancelConvert();
+    expect(store().cancelling).toBe(true);
+    store().handleProgress({ id: first, state: "done", outputPath: "/a/x.aep" });
+    for (const id of rest) store().handleProgress({ id, state: "cancelled" });
+    expect(store().phase).toBe("done");
+    expect(store().cancelling).toBe(false);
+    const keys = store().log.map((e) => e.key);
+    expect(keys).toEqual(expect.arrayContaining(["batchCancelled", "jobCancelled", "batchFinished"]));
+  });
+
   it("ignores events for unknown ids and does nothing without convertible files", async () => {
     await store().addPaths(["/a/._Intro.aep"]);
     await store().convert();

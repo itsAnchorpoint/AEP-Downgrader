@@ -51,6 +51,8 @@ interface AppState {
   dragging: boolean;
   supportDismissed: boolean;
   whatsNewOpen: boolean;
+  /** Stop was pressed; the batch is finishing the files that are converting. */
+  cancelling: boolean;
   whatsNewView: WhatsNewView;
   /** In the history view, show only versions newer than this (after an update); null shows all. */
   whatsNewSince: string | null;
@@ -78,6 +80,8 @@ interface AppState {
   setTarget(target: number): Promise<void>;
   toggleExpanded(id: string): void;
   convert(): Promise<void>;
+  /** Stop after the files converting now. */
+  cancelConvert(): Promise<void>;
   handleProgress(event: ProgressEvent): void;
   reset(): void;
   /** After a run: back to the queue with the same files, to convert them to another version. */
@@ -112,6 +116,7 @@ const initialState = {
   dragging: false,
   supportDismissed: false,
   whatsNewOpen: false,
+  cancelling: false,
   whatsNewView: "history" as WhatsNewView,
   whatsNewSince: null as string | null,
   appInfo: null as AppInfo | null,
@@ -135,7 +140,7 @@ const initialState = {
 
 let initialized = false;
 let nextLogId = 1;
-const TERMINAL = new Set<ProgressEvent["state"]>(["done", "failed", "skipped"]);
+const TERMINAL = new Set<ProgressEvent["state"]>(["done", "failed", "skipped", "cancelled"]);
 
 /** A file can be converted when it has no problem and its report does not block it. */
 export function isConvertible(file: FileInfo, reports: Record<string, Preflight>): boolean {
@@ -367,6 +372,8 @@ export const useAppStore = create<AppState>((set, get) => {
         } else if (event.state === "failed") {
           const code = event.errorCode ?? "unknown";
           record("error", "jobFailed", { file: file.path, error: code }, `code=${code}`, file.id);
+        } else if (event.state === "cancelled") {
+          record("info", "jobCancelled", { file: file.path }, undefined, file.id);
         } else {
           record("warning", "jobSkipped", { file: file.path }, undefined, file.id);
         }
@@ -374,15 +381,26 @@ export const useAppStore = create<AppState>((set, get) => {
       if (finished && get().phase !== "done") {
         const states = jobIds.map((id) => progress[id]?.state);
         const count = (state: string) => states.filter((x) => x === state).length;
-        record("info", "batchFinished", { done: count("done"), failed: count("failed"), skipped: count("skipped") });
+        record("info", "batchFinished", {
+          done: count("done"),
+          failed: count("failed"),
+          skipped: count("skipped") + count("cancelled"),
+        });
       }
-      set({ progress, phase: finished ? "done" : "converting" });
+      set({ progress, phase: finished ? "done" : "converting", ...(finished ? { cancelling: false } : {}) });
     },
 
     reset() {
       const { phase, files, target, reports, expandedId, jobIds, progress } = initialState;
       // Only the batch starts over. The activity log, settings and update state belong to the session.
       set({ phase, files, target, reports, expandedId, jobIds, progress, view: "main", dragging: false });
+    },
+
+    async cancelConvert() {
+      if (get().phase !== "converting" || get().cancelling) return;
+      set({ cancelling: true });
+      record("info", "batchCancelled", {});
+      await ipc.cancelConversion();
     },
 
     backToQueue() {

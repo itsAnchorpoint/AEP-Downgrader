@@ -137,8 +137,14 @@ export function createMockIpc(stepMs = 700): Ipc {
   const emit = (event: ProgressEvent) => listeners.forEach((l) => l(event));
   const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+  let cancelled = false;
   async function run(jobs: Job[], options: OutputOptions) {
+    cancelled = false;
     for (const job of jobs) {
+      if (cancelled) {
+        emit({ id: job.id, state: "cancelled" });
+        continue;
+      }
       emit({ id: job.id, state: "running" });
       await wait(stepMs);
       if (job.path.toLowerCase().includes("fail")) {
@@ -156,6 +162,9 @@ export function createMockIpc(stepMs = 700): Ipc {
     async convert(jobs, options) {
       jobs.forEach((job) => emit({ id: job.id, state: "queued" }));
       void run(jobs, options);
+    },
+    cancelConversion: async () => {
+      cancelled = true;
     },
     revealInFolder: async () => {},
     async onProgress(handler) {

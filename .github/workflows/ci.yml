@@ -65,7 +65,7 @@ jobs:
           cache-dependency-path: apps/desktop/pnpm-lock.yaml
       - uses: dtolnay/rust-toolchain@stable
         with:
-          components: clippy
+          components: clippy, rustfmt
           targets: ${{ runner.os == 'macOS' && 'aarch64-apple-darwin,x86_64-apple-darwin' || runner.os == 'Windows' && 'i686-pc-windows-msvc' || '' }}
       - uses: Swatinem/rust-cache@v2
         with:
@@ -80,6 +80,7 @@ jobs:
       - name: Rust tests and lint
         working-directory: apps/desktop/src-tauri
         run: |
+          cargo fmt --check
           cargo clippy --all-targets -- -D warnings
           cargo test
       - name: Lint the Windows installer window

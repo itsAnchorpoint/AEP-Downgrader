@@ -1,4 +1,4 @@
-import { ArrowRight, Check, CircleAlert, CircleX, Clock, FolderOpen, LoaderCircle, MinusCircle } from "lucide-react";
+import { ArrowRight, Ban, Check, CircleAlert, CircleX, Clock, FolderOpen, LoaderCircle, MinusCircle } from "lucide-react";
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -52,6 +52,7 @@ function Status({ state }: { state: ProgressEvent["state"] }) {
     done: { icon: <Check className="size-4.5" strokeWidth={3} />, tone: "text-ok" },
     failed: { icon: <CircleX className="size-4.5" />, tone: "text-danger" },
     skipped: { icon: <MinusCircle className="size-4.5" />, tone: "text-muted" },
+    cancelled: { icon: <Ban className="size-4.5" />, tone: "text-muted" },
   };
   return (
     <span className={`flex items-center gap-1.5 text-sm font-extrabold ${look[state].tone}`}>
@@ -82,6 +83,14 @@ function Outcome({ event, warnings, file }: { event: ProgressEvent; warnings: No
       <p className={`${line} font-bold text-muted`}>
         <MinusCircle className="mt-px size-4.5 shrink-0" aria-hidden />
         {t("done.skippedExists")}
+      </p>
+    );
+  }
+  if (event.state === "cancelled") {
+    return (
+      <p className={`${line} font-bold text-muted`}>
+        <Ban className="mt-px size-4.5 shrink-0" aria-hidden />
+        {t("done.cancelledFile")}
       </p>
     );
   }
@@ -129,7 +138,7 @@ export function JobList({
             initial={finished ? false : { opacity: 0, x: -16 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1], delay: Math.min(index, 6) * 0.04 }}
-            className={`border-b border-line ${!finished && event.state === "queued" ? "text-muted" : ""}`}
+            className={`border-b border-line ${event.state === "queued" || event.state === "cancelled" ? "text-muted" : ""}`}
           >
             <div className="grid min-h-[62px] grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-x-4 py-2 pr-1 pl-1">
               <FileTypeIcon file={file} />

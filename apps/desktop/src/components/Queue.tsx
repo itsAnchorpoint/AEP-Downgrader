@@ -2,6 +2,7 @@ import { ArrowRight, FlaskConical, Info, Plus, ShieldCheck } from "lucide-react"
 import type { KeyboardEvent } from "react";
 import { AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
+import { shortcut } from "../lib/platform";
 import { isConvertible, useAppStore } from "../store";
 import { FileRow } from "./FileRow";
 import { Button, StatusBadge } from "./ui";
@@ -73,7 +74,7 @@ export function Queue() {
           </span>
         </h2>
         <div className="flex gap-2">
-          <Button onClick={() => void browse()}>
+          <Button onClick={() => void browse()} title={`${t("queue.addMore")} (${shortcut("O")})`}>
             <Plus className="size-4" aria-hidden strokeWidth={2.5} />
             {t("queue.addMore")}
           </Button>
@@ -122,6 +123,7 @@ export function Queue() {
           <Button
             variant="primary"
             disabled={count === 0}
+            title={shortcut("Enter")}
             onClick={() => void convert()}
             className="group/convert h-14 shrink-0 px-8! text-xl tracking-tight max-[820px]:px-6!"
           >

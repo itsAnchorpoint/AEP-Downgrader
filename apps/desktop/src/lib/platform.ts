@@ -12,3 +12,8 @@ export const platform: Platform =
       : /Win/i.test(navigator.platform)
         ? "windows"
         : "linux";
+
+/** A shortcut as the system writes it: "⌘O" on macOS, "Ctrl+O" elsewhere. */
+export function shortcut(key: string): string {
+  return platform === "mac" ? `⌘${key === "Enter" ? "↩" : key}` : `Ctrl+${key}`;
+}

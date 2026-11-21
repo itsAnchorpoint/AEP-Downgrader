@@ -66,7 +66,7 @@ export interface OutputOptions {
 
 export interface ProgressEvent {
   id: string;
-  state: "queued" | "running" | "done" | "failed" | "skipped";
+  state: "queued" | "running" | "done" | "failed" | "skipped" | "cancelled";
   outputPath?: string;
   errorCode?: string;
 }

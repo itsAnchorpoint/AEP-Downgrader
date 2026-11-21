@@ -10,7 +10,7 @@ import { Settings } from "./components/Settings";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { WhatsNew } from "./components/WhatsNew";
 import { ipc } from "./lib/ipc";
-import { useAppStore } from "./store";
+import { isConvertible, useAppStore } from "./store";
 
 /** Keeps <html data-theme> in sync with the setting and, for "system", with the OS. */
 function useTheme() {
@@ -59,6 +59,34 @@ function useScreenKey() {
   return view === "settings" ? "settings" : phase === "queue" ? (hasFiles ? "queue" : "empty") : phase;
 }
 
+/**
+ * Keyboard: Ctrl/Cmd+O adds files, Ctrl/Cmd+Enter converts the queue, Esc leaves Settings.
+ * Keys typed into a field stay with the field (except Esc).
+ */
+function useShortcuts() {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const typing = e.target instanceof HTMLElement && e.target.closest("input, textarea, [contenteditable]");
+      const mod = e.ctrlKey || e.metaKey;
+      const { view, phase, files, reports, browse, convert, setView, whatsNewOpen } = useAppStore.getState();
+      if (e.key === "Escape" && view === "settings" && !whatsNewOpen) {
+        e.preventDefault();
+        setView("main");
+      } else if (!typing && mod && e.key.toLowerCase() === "o" && phase === "queue") {
+        e.preventDefault();
+        void browse();
+      } else if (!typing && mod && e.key === "Enter" && phase === "queue" && view === "main") {
+        if (files.some((f) => isConvertible(f, reports))) {
+          e.preventDefault();
+          void convert();
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+}
+
 export default function App() {
   const init = useAppStore((s) => s.init);
   const addPaths = useAppStore((s) => s.addPaths);
@@ -67,6 +95,7 @@ export default function App() {
   useAccent();
   const screenKey = useScreenKey();
   useLanguageAttribute();
+  useShortcuts();
 
   useEffect(() => {
     void init();

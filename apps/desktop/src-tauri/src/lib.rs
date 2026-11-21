@@ -19,6 +19,7 @@ pub fn run() {
             commands::list_targets,
             commands::preflight,
             commands::convert,
+            commands::cancel_conversion,
             commands::reveal_in_folder,
             commands::system_info,
             updater::app_info,

@@ -17,8 +17,9 @@ export function Done() {
   const done = count("done");
   const failed = count("failed");
   const skipped = count("skipped");
-  // Three endings: everything converted, some failed, nothing converted. Only the first one celebrates.
-  const outcome = done === 0 ? "none" : failed > 0 ? "partial" : "all";
+  const cancelled = count("cancelled");
+  // Three endings: everything converted, some failed or stopped, nothing converted. Only the first one celebrates.
+  const outcome = done === 0 ? "none" : failed > 0 || cancelled > 0 ? "partial" : "all";
 
   return (
     <div className="flex h-full flex-col gap-3">
@@ -28,7 +29,7 @@ export function Done() {
           animate={{ opacity: 1, scale: 1 }}
           transition={outcome === "all" ? { type: "spring", stiffness: 420, damping: 15 } : { duration: 0.25 }}
           className={`grid size-16 shrink-0 place-items-center rounded-full ${
-            outcome === "all" ? "fill-accent" : outcome === "partial" ? "surface text-warn" : "surface text-muted"
+            outcome === "all" ? "fill-accent" : failed > 0 ? "surface text-warn" : "surface text-muted"
           }`}
           aria-hidden
         >
@@ -46,6 +47,7 @@ export function Done() {
             {outcome !== "none" && t("done.sub")}
             {failed > 0 && <b className="font-bold text-danger"> {t("done.failed", { count: failed })}</b>}
             {skipped > 0 && ` ${t("done.skipped", { count: skipped })}`}
+            {cancelled > 0 && ` ${t("done.cancelled", { count: cancelled })}`}
           </p>
         </div>
         <div className="flex shrink-0 gap-2">

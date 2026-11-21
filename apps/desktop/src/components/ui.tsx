@@ -103,13 +103,18 @@ export function Segmented<T extends string>({
 
 /** The product's headline promise, shown on the first screen and while converting. */
 /** The footer of the start and progress screens: the privacy promise, and what the app is for. */
-export function PrivacyLine() {
+/** The footer line. `action` takes the tagline's place on the right (the Stop button while converting). */
+export function PrivacyLine({ action }: { action?: ReactNode }) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 px-0.5 text-sm font-bold max-[820px]:text-xs">
       <Lock className="size-4.5 shrink-0 text-accent-text" aria-hidden strokeWidth={2.5} />
       <span>{t("drop.privacy")}</span>
-      <span className="ml-auto font-medium text-muted max-[820px]:hidden">{t("drop.tagline")}</span>
+      {action ? (
+        <span className="ml-auto">{action}</span>
+      ) : (
+        <span className="ml-auto font-medium text-muted max-[820px]:hidden">{t("drop.tagline")}</span>
+      )}
     </div>
   );
 }

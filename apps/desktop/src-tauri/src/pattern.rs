@@ -13,7 +13,13 @@ fn is_blank(c: char) -> bool {
 fn clean(text: &str) -> String {
     let replaced: String = text
         .chars()
-        .map(|c| if "<>:\"/\\|?*".contains(c) || c < '\u{20}' { '_' } else { c })
+        .map(|c| {
+            if "<>:\"/\\|?*".contains(c) || c < '\u{20}' {
+                '_'
+            } else {
+                c
+            }
+        })
         .collect();
     replaced.trim_end_matches(['.', ' ']).to_string()
 }
@@ -24,10 +30,21 @@ pub fn output_name(pattern: &str, file_name: &str, year: u32) -> String {
         Some(dot) if dot > 0 => file_name.split_at(dot),
         _ => (file_name, ""),
     };
-    let fill = |p: &str| p.replace("{name}", stem).replace("{year}", &year.to_string());
+    let fill = |p: &str| {
+        p.replace("{name}", stem)
+            .replace("{year}", &year.to_string())
+    };
     let trimmed = pattern.trim_matches(is_blank);
-    let base = clean(&fill(if trimmed.is_empty() { DEFAULT_PATTERN } else { trimmed }));
-    let base = if base.is_empty() { clean(&fill(DEFAULT_PATTERN)) } else { base };
+    let base = clean(&fill(if trimmed.is_empty() {
+        DEFAULT_PATTERN
+    } else {
+        trimmed
+    }));
+    let base = if base.is_empty() {
+        clean(&fill(DEFAULT_PATTERN))
+    } else {
+        base
+    };
     base + ext
 }
 
@@ -37,22 +54,34 @@ mod tests {
 
     #[test]
     fn fills_name_and_year_and_keeps_the_extension() {
-        assert_eq!(output_name("{name}_AE{year}", "Intro_v05.aep", 2024), "Intro_v05_AE2024.aep");
+        assert_eq!(
+            output_name("{name}_AE{year}", "Intro_v05.aep", 2024),
+            "Intro_v05_AE2024.aep"
+        );
     }
 
     #[test]
     fn keeps_only_the_last_extension() {
-        assert_eq!(output_name("{name}-{year}", "my.comp.v2.aet", 2023), "my.comp.v2-2023.aet");
+        assert_eq!(
+            output_name("{name}-{year}", "my.comp.v2.aet", 2023),
+            "my.comp.v2-2023.aet"
+        );
     }
 
     #[test]
     fn empty_pattern_falls_back_to_the_default() {
-        assert_eq!(output_name("   ", "A.ffx", 2025), output_name(DEFAULT_PATTERN, "A.ffx", 2025));
+        assert_eq!(
+            output_name("   ", "A.ffx", 2025),
+            output_name(DEFAULT_PATTERN, "A.ffx", 2025)
+        );
     }
 
     #[test]
     fn illegal_characters_are_replaced() {
-        assert_eq!(output_name("{name}:{year}/x", "A.aep", 2024), "A_2024_x.aep");
+        assert_eq!(
+            output_name("{name}:{year}/x", "A.aep", 2024),
+            "A_2024_x.aep"
+        );
     }
 
     #[test]

@@ -20,6 +20,8 @@ export interface Ipc {
   listTargets(): Promise<TargetInfo[]>;
   preflight(path: string, target: number): Promise<Preflight>;
   convert(jobs: Job[], options: OutputOptions): Promise<void>;
+  /** Stops the running batch after the files converting now; the rest come back as "cancelled". */
+  cancelConversion(): Promise<void>;
   revealInFolder(path: string): Promise<void>;
   onProgress(handler: (event: ProgressEvent) => void): Promise<Unlisten>;
   pickFiles(): Promise<string[]>;

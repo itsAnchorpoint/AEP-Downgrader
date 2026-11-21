@@ -46,6 +46,19 @@ describe("mock ipc", () => {
     expect(events[2].outputPath).toBe("/a/Intro_AE2022.aep");
   });
 
+  it("stops starting files once cancelled", async () => {
+    const ipc = createMockIpc(1);
+    const events: ProgressEvent[] = [];
+    await ipc.onProgress((e) => events.push(e));
+    const jobs = ["/a/One.aep", "/a/Two.aep", "/a/Three.aep"].map((path, i) => ({ id: String(i), path, target: 22 }));
+    await ipc.convert(jobs, { location: "next-to-source", pattern: "{name}_AE{year}", onExists: "rename" });
+    await ipc.cancelConversion();
+    await new Promise((r) => setTimeout(r, 20));
+    const last = (id: string) => events.filter((e) => e.id === id).at(-1)?.state;
+    expect(last("0")).toBe("done");
+    expect([last("1"), last("2")]).toEqual(["cancelled", "cancelled"]);
+  });
+
   it("fails files whose name asks for it", async () => {
     const ipc = createMockIpc(0);
     const events: ProgressEvent[] = [];

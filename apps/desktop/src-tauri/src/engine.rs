@@ -10,6 +10,7 @@ use serde_json::{json, Map};
 use std::collections::VecDeque;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::thread;
 
@@ -22,14 +23,18 @@ pub fn list_targets() -> Vec<TargetInfo> {
         .iter()
         .map(|t| TargetInfo {
             major: u32::from(t.ae_major),
-            name: release_name(t.ae_major).map_or_else(|| (2000 + u32::from(t.ae_major)).to_string(), str::to_string),
+            name: release_name(t.ae_major).map_or_else(
+                || (2000 + u32::from(t.ae_major)).to_string(),
+                str::to_string,
+            ),
             status: t.status.as_str(),
         })
         .collect()
 }
 
 fn run_core(bytes: &[u8], target: u32) -> Result<Converted, ConvertError> {
-    let major = u8::try_from(target).map_err(|_| ConvertError::UnsupportedTarget { ae_major: u8::MAX })?;
+    let major =
+        u8::try_from(target).map_err(|_| ConvertError::UnsupportedTarget { ae_major: u8::MAX })?;
     convert(bytes, major)
 }
 
@@ -46,7 +51,9 @@ fn error_code(error: &ConvertError) -> &'static str {
         ConvertError::UnknownSource { format } if format.major < 94 => "not-a-downgrade",
         ConvertError::UnknownSource { .. } => "unsupported-source",
         ConvertError::NotRoundTrip => "structure-not-understood",
-        ConvertError::Unreadable(_) | ConvertError::NoHead | ConvertError::NotAProject(_) => "damaged",
+        ConvertError::Unreadable(_) | ConvertError::NoHead | ConvertError::NotAProject(_) => {
+            "damaged"
+        }
     }
 }
 
@@ -54,7 +61,11 @@ fn core_note(note: &CoreNote) -> Note {
     let mut params = Map::new();
     params.insert("count".into(), json!(note.count));
     Note {
-        severity: if note.code.is_blocker() { Severity::Block } else { Severity::Info },
+        severity: if note.code.is_blocker() {
+            Severity::Block
+        } else {
+            Severity::Info
+        },
         code: note.code.as_str().into(),
         params,
     }
@@ -64,7 +75,11 @@ fn blocked(target: u32, code: &str) -> Preflight {
     Preflight {
         target,
         blocked: true,
-        notes: vec![Note { severity: Severity::Block, code: code.into(), params: Map::new() }],
+        notes: vec![Note {
+            severity: Severity::Block,
+            code: code.into(),
+            params: Map::new(),
+        }],
     }
 }
 
@@ -75,20 +90,33 @@ fn effect_notes(bytes: &[u8], target: u32) -> Vec<Note> {
         return Vec::new();
     };
     let report = aep_core::effects::report(&file, major);
-    let names = |list: &[aep_core::effects::UsedEffect]| json!(list.iter().map(|e| e.name.as_str()).collect::<Vec<_>>());
+    let names = |list: &[aep_core::effects::UsedEffect]| {
+        json!(list.iter().map(|e| e.name.as_str()).collect::<Vec<_>>())
+    };
     let mut notes = Vec::new();
     if !report.missing.is_empty() {
         let mut params = Map::new();
         params.insert("count".into(), json!(report.missing.len()));
         params.insert("names".into(), names(&report.missing));
-        params.insert("year".into(), json!(release_name(major).map_or_else(|| (2000 + target).to_string(), str::to_string)));
-        notes.push(Note { severity: Severity::Warn, code: "effects-removed".into(), params });
+        params.insert(
+            "year".into(),
+            json!(release_name(major).map_or_else(|| (2000 + target).to_string(), str::to_string)),
+        );
+        notes.push(Note {
+            severity: Severity::Warn,
+            code: "effects-removed".into(),
+            params,
+        });
     }
     if !report.third_party.is_empty() {
         let mut params = Map::new();
         params.insert("count".into(), json!(report.third_party.len()));
         params.insert("names".into(), names(&report.third_party));
-        notes.push(Note { severity: Severity::Info, code: "plugins-kept".into(), params });
+        notes.push(Note {
+            severity: Severity::Info,
+            code: "plugins-kept".into(),
+            params,
+        });
     }
     notes
 }
@@ -111,9 +139,17 @@ pub fn preflight(path: &str, target: u32) -> Preflight {
         .and_then(compat::target)
         .is_some_and(|t| t.status == compat::Status::Experimental);
     if experimental && !blocked_by_rules {
-        notes.push(Note { severity: Severity::Warn, code: "experimental-target".into(), params: Map::new() });
+        notes.push(Note {
+            severity: Severity::Warn,
+            code: "experimental-target".into(),
+            params: Map::new(),
+        });
     }
-    Preflight { target, blocked: blocked_by_rules, notes }
+    Preflight {
+        target,
+        blocked: blocked_by_rules,
+        notes,
+    }
 }
 
 pub enum Outcome {
@@ -127,8 +163,14 @@ fn first_free(path: &Path) -> PathBuf {
     if !path.exists() {
         return path.to_path_buf();
     }
-    let stem = path.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
-    let ext = path.extension().map(|e| format!(".{}", e.to_string_lossy())).unwrap_or_default();
+    let stem = path
+        .file_stem()
+        .map(|s| s.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    let ext = path
+        .extension()
+        .map(|e| format!(".{}", e.to_string_lossy()))
+        .unwrap_or_default();
     (2..)
         .map(|n| path.with_file_name(format!("{stem} ({n}){ext}")))
         .find(|candidate| !candidate.exists())
@@ -141,7 +183,10 @@ fn is_same_file(a: &Path, b: &Path) -> bool {
 
 /// Writes next to the destination and renames into place; the temporary file never outlives an error.
 fn write_atomic(dest: &Path, bytes: &[u8], tag: &str) -> std::io::Result<()> {
-    let name = dest.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+    let name = dest
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_default();
     let temp = dest.with_file_name(format!(".{name}.{}.{tag}.tmp", std::process::id()));
     let result = fs::write(&temp, bytes).and_then(|()| fs::rename(&temp, dest));
     if result.is_err() {
@@ -170,7 +215,11 @@ pub fn run_job(job: &Job, options: &OutputOptions) -> Outcome {
         Ok(done) => done,
         Err(error) => return Outcome::Failed(error_code(&error)),
     };
-    let dest = if options.on_exists == OnExists::Rename { first_free(&wanted) } else { wanted };
+    let dest = if options.on_exists == OnExists::Rename {
+        first_free(&wanted)
+    } else {
+        wanted
+    };
     if is_same_file(&dest, source) {
         return Outcome::Failed("would-overwrite-source");
     }
@@ -180,8 +229,15 @@ pub fn run_job(job: &Job, options: &OutputOptions) -> Outcome {
     }
 }
 
-/// Runs the jobs on up to four threads and reports each state change through `emit`.
-pub fn run_batch(jobs: Vec<Job>, options: &OutputOptions, emit: &(dyn Fn(ProgressEvent) + Sync)) {
+/// Runs the jobs on up to four threads and reports each state change through `emit`. Once
+/// `cancel` is set, files already converting finish (no half-written copies) and the rest are
+/// reported as cancelled.
+pub fn run_batch(
+    jobs: Vec<Job>,
+    options: &OutputOptions,
+    cancel: &AtomicBool,
+    emit: &(dyn Fn(ProgressEvent) + Sync),
+) {
     let workers = MAX_PARALLEL.min(jobs.len());
     let queue = Mutex::new(VecDeque::from(jobs));
     let event = |id: &str, state, output: Option<&Path>, error: Option<&str>| {
@@ -197,11 +253,17 @@ pub fn run_batch(jobs: Vec<Job>, options: &OutputOptions, emit: &(dyn Fn(Progres
             scope.spawn(|| loop {
                 let next = queue.lock().expect("queue lock").pop_front();
                 let Some(job) = next else { break };
+                if cancel.load(Ordering::Relaxed) {
+                    event(&job.id, ProgressState::Cancelled, None, None);
+                    continue;
+                }
                 event(&job.id, ProgressState::Running, None, None);
                 match run_job(&job, options) {
                     Outcome::Done(path) => event(&job.id, ProgressState::Done, Some(&path), None),
                     Outcome::Skipped => event(&job.id, ProgressState::Skipped, None, None),
-                    Outcome::Failed(code) => event(&job.id, ProgressState::Failed, None, Some(code)),
+                    Outcome::Failed(code) => {
+                        event(&job.id, ProgressState::Failed, None, Some(code))
+                    }
                 }
             });
         }
@@ -222,14 +284,30 @@ mod tests {
             data.resize(40, 0);
             Node::Chunk { id: *b"tdmn", data }
         };
-        let defs = effects.iter().map(|e| Node::List { kind: *b"EfDf", children: vec![tdmn(e)] }).collect();
-        RiffFile { form: *b"Egg!", children: vec![Node::List { kind: *b"EfdG", children: defs }], trailer: Vec::new() }
-            .to_bytes()
+        let defs = effects
+            .iter()
+            .map(|e| Node::List {
+                kind: *b"EfDf",
+                children: vec![tdmn(e)],
+            })
+            .collect();
+        RiffFile {
+            form: *b"Egg!",
+            children: vec![Node::List {
+                kind: *b"EfdG",
+                children: defs,
+            }],
+            trailer: Vec::new(),
+        }
+        .to_bytes()
     }
 
     #[test]
     fn effect_notes_name_missing_effects_and_plug_ins() {
-        let notes = effect_notes(&project_using(&["ADBE Unmult", "tc Particular", "ADBE Glo2"]), 24);
+        let notes = effect_notes(
+            &project_using(&["ADBE Unmult", "tc Particular", "ADBE Glo2"]),
+            24,
+        );
         let codes: Vec<_> = notes.iter().map(|n| n.code.as_str()).collect();
         assert_eq!(codes, vec!["effects-removed", "plugins-kept"]);
         assert_eq!(notes[0].params["names"], json!(["Unmult"]));
@@ -251,14 +329,20 @@ mod tests {
 
     fn options(folder: &Path, on_exists: OnExists) -> OutputOptions {
         OutputOptions {
-            location: Location::Folder { folder: folder.to_string_lossy().into_owned() },
+            location: Location::Folder {
+                folder: folder.to_string_lossy().into_owned(),
+            },
             pattern: "{name}_AE{year}".into(),
             on_exists,
         }
     }
 
     fn job(path: String, target: u32) -> Job {
-        Job { id: "job1".into(), path, target }
+        Job {
+            id: "job1".into(),
+            path,
+            target,
+        }
     }
 
     fn done_path(outcome: Outcome) -> PathBuf {
@@ -273,24 +357,42 @@ mod tests {
     fn targets_follow_the_core_table() {
         let targets = list_targets();
         let majors: Vec<_> = targets.iter().map(|t| t.major).collect();
-        let table: Vec<_> = compat::TARGETS.iter().map(|t| u32::from(t.ae_major)).collect();
+        let table: Vec<_> = compat::TARGETS
+            .iter()
+            .map(|t| u32::from(t.ae_major))
+            .collect();
         assert_eq!(majors, table);
-        assert!(targets.windows(2).all(|w| w[0].major > w[1].major), "newest first");
-        assert!(targets.iter().all(|t| t.status == "verified" || t.status == "experimental"));
+        assert!(
+            targets.windows(2).all(|w| w[0].major > w[1].major),
+            "newest first"
+        );
+        assert!(targets
+            .iter()
+            .all(|t| t.status == "verified" || t.status == "experimental"));
         let verified: Vec<_> = targets.iter().filter(|t| t.status == "verified").collect();
         assert_eq!(verified.len(), 1);
         assert_eq!(verified[0].major, 24);
-        assert_eq!(targets.iter().find(|t| t.major == 25).map(|t| t.name.as_str()), Some("2025"));
+        assert_eq!(
+            targets
+                .iter()
+                .find(|t| t.major == 25)
+                .map(|t| t.name.as_str()),
+            Some("2025")
+        );
     }
 
     #[test]
     fn targets_for_a_file_are_a_subset_of_the_offered_ones() {
         let bytes = fs::read(fixture("TEST24-x.aep")).unwrap();
-        let head = inspect(&bytes[..bytes.len().min(4096)]).head.expect("a project has a head");
+        let head = inspect(&bytes[..bytes.len().min(4096)])
+            .head
+            .expect("a project has a head");
         let offered: Vec<_> = list_targets().iter().map(|t| t.major).collect();
         let for_file = compat::targets_for(&head);
         assert!(!for_file.is_empty());
-        assert!(for_file.iter().all(|t| offered.contains(&u32::from(t.ae_major))));
+        assert!(for_file
+            .iter()
+            .all(|t| offered.contains(&u32::from(t.ae_major))));
     }
 
     #[test]
@@ -315,9 +417,15 @@ mod tests {
     fn preflight_for_an_experimental_target_says_so() {
         let report = preflight(&fixture("TEST26-x.aep"), 25);
         assert!(!report.blocked);
-        assert!(report.notes.iter().any(|n| n.code == "experimental-target" && matches!(n.severity, Severity::Warn)));
+        assert!(report
+            .notes
+            .iter()
+            .any(|n| n.code == "experimental-target" && matches!(n.severity, Severity::Warn)));
         // Verified targets carry no such note.
-        assert!(!preflight(&fixture("TEST26-x.aep"), 24).notes.iter().any(|n| n.code == "experimental-target"));
+        assert!(!preflight(&fixture("TEST26-x.aep"), 24)
+            .notes
+            .iter()
+            .any(|n| n.code == "experimental-target"));
     }
 
     #[test]
@@ -339,8 +447,14 @@ mod tests {
         let dir = temp_dir("garbage");
         let file = dir.join("x.aep");
         fs::write(&file, "not a project").unwrap();
-        assert_eq!(preflight(&file.to_string_lossy(), 24).notes[0].code, "damaged");
-        assert_eq!(preflight(&fixture("TEST26-x.aep"), 21).notes[0].code, "unsupported-target");
+        assert_eq!(
+            preflight(&file.to_string_lossy(), 24).notes[0].code,
+            "damaged"
+        );
+        assert_eq!(
+            preflight(&fixture("TEST26-x.aep"), 21).notes[0].code,
+            "unsupported-target"
+        );
         fs::remove_dir_all(dir).unwrap();
     }
 
@@ -350,14 +464,20 @@ mod tests {
         let source = fixture("TEST24-x.aep");
         let before = fs::read(&source).unwrap();
 
-        let out = done_path(run_job(&job(source.clone(), 23), &options(&dir, OnExists::Rename)));
+        let out = done_path(run_job(
+            &job(source.clone(), 23),
+            &options(&dir, OnExists::Rename),
+        ));
 
         assert_eq!(out, dir.join("TEST24-x_AE2023.aep"));
         let written = fs::read(&out).unwrap();
         let format = inspect(&written).head.unwrap().format;
         assert_eq!((format.major, format.minor), (94, 9));
         assert_eq!(fs::read(&source).unwrap(), before);
-        let files: Vec<_> = fs::read_dir(&dir).unwrap().map(|e| e.unwrap().file_name()).collect();
+        let files: Vec<_> = fs::read_dir(&dir)
+            .unwrap()
+            .map(|e| e.unwrap().file_name())
+            .collect();
         assert_eq!(files.len(), 1, "no temporary file may remain: {files:?}");
         fs::remove_dir_all(dir).unwrap();
     }
@@ -369,16 +489,28 @@ mod tests {
         let existing = dir.join("TEST24-x_AE2023.aep");
         fs::write(&existing, "old").unwrap();
 
-        let renamed = done_path(run_job(&job(source.clone(), 23), &options(&dir, OnExists::Rename)));
+        let renamed = done_path(run_job(
+            &job(source.clone(), 23),
+            &options(&dir, OnExists::Rename),
+        ));
         assert_eq!(renamed, dir.join("TEST24-x_AE2023 (2).aep"));
-        let again = done_path(run_job(&job(source.clone(), 23), &options(&dir, OnExists::Rename)));
+        let again = done_path(run_job(
+            &job(source.clone(), 23),
+            &options(&dir, OnExists::Rename),
+        ));
         assert_eq!(again, dir.join("TEST24-x_AE2023 (3).aep"));
         assert_eq!(fs::read(&existing).unwrap(), b"old");
 
-        assert!(matches!(run_job(&job(source.clone(), 23), &options(&dir, OnExists::Skip)), Outcome::Skipped));
+        assert!(matches!(
+            run_job(&job(source.clone(), 23), &options(&dir, OnExists::Skip)),
+            Outcome::Skipped
+        ));
         assert_eq!(fs::read(&existing).unwrap(), b"old");
 
-        let replaced = done_path(run_job(&job(source, 23), &options(&dir, OnExists::Overwrite)));
+        let replaced = done_path(run_job(
+            &job(source, 23),
+            &options(&dir, OnExists::Overwrite),
+        ));
         assert_eq!(replaced, existing);
         assert_ne!(fs::read(&existing).unwrap(), b"old");
         fs::remove_dir_all(dir).unwrap();
@@ -401,7 +533,10 @@ mod tests {
     #[test]
     fn a_missing_source_fails_as_unreadable() {
         let dir = temp_dir("missing");
-        let outcome = run_job(&job("/no/such/file.aep".into(), 23), &options(&dir, OnExists::Rename));
+        let outcome = run_job(
+            &job("/no/such/file.aep".into(), 23),
+            &options(&dir, OnExists::Rename),
+        );
         assert!(matches!(outcome, Outcome::Failed("unreadable")));
         fs::remove_dir_all(dir).unwrap();
     }
@@ -410,16 +545,66 @@ mod tests {
     fn a_batch_reports_running_then_a_final_state_per_job() {
         let dir = temp_dir("batch");
         let jobs = vec![
-            Job { id: "a".into(), path: fixture("TEST24-x.aep"), target: 23 },
-            Job { id: "b".into(), path: "/no/such/file.aep".into(), target: 23 },
+            Job {
+                id: "a".into(),
+                path: fixture("TEST24-x.aep"),
+                target: 23,
+            },
+            Job {
+                id: "b".into(),
+                path: "/no/such/file.aep".into(),
+                target: 23,
+            },
         ];
         let events = Mutex::new(Vec::new());
-        run_batch(jobs, &options(&dir, OnExists::Rename), &|e| events.lock().unwrap().push(e));
+        run_batch(
+            jobs,
+            &options(&dir, OnExists::Rename),
+            &AtomicBool::new(false),
+            &|e| events.lock().unwrap().push(e),
+        );
         let events = events.into_inner().unwrap();
         let last = |id: &str| events.iter().rev().find(|e| e.id == id).unwrap().state;
         assert!(matches!(last("a"), ProgressState::Done));
         assert!(matches!(last("b"), ProgressState::Failed));
-        assert_eq!(events.iter().filter(|e| matches!(e.state, ProgressState::Running)).count(), 2);
+        assert_eq!(
+            events
+                .iter()
+                .filter(|e| matches!(e.state, ProgressState::Running))
+                .count(),
+            2
+        );
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn a_cancelled_batch_starts_nothing_more() {
+        let dir = temp_dir("cancelled");
+        let jobs = vec![
+            Job {
+                id: "a".into(),
+                path: fixture("TEST24-x.aep"),
+                target: 23,
+            },
+            Job {
+                id: "b".into(),
+                path: fixture("TEST24-x.aep"),
+                target: 22,
+            },
+        ];
+        let events = Mutex::new(Vec::new());
+        run_batch(
+            jobs,
+            &options(&dir, OnExists::Rename),
+            &AtomicBool::new(true),
+            &|e| events.lock().unwrap().push(e),
+        );
+        let events = events.into_inner().unwrap();
+        assert!(events
+            .iter()
+            .all(|e| matches!(e.state, ProgressState::Cancelled)));
+        assert_eq!(events.len(), 2);
+        assert_eq!(fs::read_dir(&dir).unwrap().count(), 0, "no copy written");
         fs::remove_dir_all(dir).unwrap();
     }
 }

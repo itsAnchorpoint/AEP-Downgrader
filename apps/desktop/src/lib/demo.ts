@@ -4,7 +4,7 @@
 //   http://localhost:1420/?demo=queue&theme=dark&lang=en&accent=lime
 //
 // States: empty, queue, report, converting, done, settings, update, installing, installed, whatsnew,
-// history, log. Without ?demo the app starts normally.
+// history, log, stopped. Without ?demo the app starts normally.
 import { initialState, useAppStore } from "../store";
 import { ACCENTS, THEMES, type Accent, type Theme } from "./settings";
 
@@ -74,6 +74,13 @@ export async function runDemo() {
       await queue();
       progress(99);
       break;
+    case "stopped": {
+      await queue();
+      progress(1);
+      const { jobIds } = useAppStore.getState();
+      jobIds.slice(1).forEach((id) => useAppStore.getState().handleProgress({ id, state: "cancelled" }));
+      break;
+    }
     case "settings":
       store.setView("settings");
       break;

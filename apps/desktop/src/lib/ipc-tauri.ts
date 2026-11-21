@@ -16,6 +16,7 @@ export function createTauriIpc(): Ipc {
     listTargets: () => invoke("list_targets"),
     preflight: (path, target) => invoke("preflight", { path, target }),
     convert: (jobs, options) => invoke("convert", { jobs, options }),
+    cancelConversion: () => invoke("cancel_conversion"),
     revealInFolder: (path) => invoke("reveal_in_folder", { path }),
     onProgress: (handler) => listen<ProgressEvent>("convert://progress", (e) => handler(e.payload)),
     async pickFiles() {

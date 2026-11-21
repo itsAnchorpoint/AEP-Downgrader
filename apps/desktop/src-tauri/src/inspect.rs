@@ -22,8 +22,9 @@ fn extension(path: &Path) -> String {
 }
 
 fn fnv(text: &str) -> u64 {
-    text.bytes()
-        .fold(0xcbf29ce484222325, |h, b| (h ^ u64::from(b)).wrapping_mul(0x100000001b3))
+    text.bytes().fold(0xcbf29ce484222325, |h, b| {
+        (h ^ u64::from(b)).wrapping_mul(0x100000001b3)
+    })
 }
 
 /// Folders become their .aep/.aet/.ffx files (non-recursive, sorted by name);
@@ -84,14 +85,20 @@ fn version(app: AppVersion) -> Version {
 }
 
 fn format(f: FormatVersion) -> Format {
-    Format { major: u32::from(f.major), minor: u32::from(f.minor) }
+    Format {
+        major: u32::from(f.major),
+        minor: u32::from(f.minor),
+    }
 }
 
 fn describe(path: &Path) -> FileInfo {
     let key = path.to_string_lossy().into_owned();
     let mut info = FileInfo {
         id: format!("{:016x}", fnv(&key)),
-        name: path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(),
+        name: path
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default(),
         path: key,
         size: fs::metadata(path).map(|m| m.len()).unwrap_or(0),
         kind: FileKind::Unknown,
@@ -109,7 +116,11 @@ fn describe(path: &Path) -> FileInfo {
     let found = inspect(&prefix);
     match found.kind {
         CoreKind::Project => {
-            info.kind = if extension(path) == "aet" { FileKind::Template } else { FileKind::Project };
+            info.kind = if extension(path) == "aet" {
+                FileKind::Template
+            } else {
+                FileKind::Project
+            };
             match found.head {
                 Some(head) => {
                     info.version = Some(version(head.app));
@@ -214,7 +225,10 @@ mod tests {
         fs::write(&empty, "").unwrap();
         assert!(matches!(one(&empty).problem, Some(Problem::NotAeFile)));
 
-        assert!(matches!(one(&dir.join("missing.aep")).problem, Some(Problem::Unreadable)));
+        assert!(matches!(
+            one(&dir.join("missing.aep")).problem,
+            Some(Problem::Unreadable)
+        ));
         fs::remove_dir_all(dir).unwrap();
     }
 
