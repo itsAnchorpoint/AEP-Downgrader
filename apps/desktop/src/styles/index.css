@@ -249,3 +249,18 @@ h3 {
 .scroll-fade {
   mask-image: linear-gradient(to bottom, black calc(100% - 22px), transparent);
 }
+
+/*
+ * The Fold ribbon takes the accent. Lime keeps the drawn colors (the fallbacks inside the SVG);
+ * other accents and the After Effects theme mix the faces from the accent in the same proportions.
+ */
+[data-accent]:not([data-accent="lime"]) .fold-ribbon,
+[data-theme="ae"] .fold-ribbon {
+  --ribbon-a1: color-mix(in oklab, var(--color-accent), white 31%);
+  --ribbon-a2: color-mix(in oklab, var(--color-accent), black 1%);
+  --ribbon-b1: color-mix(in oklab, var(--color-accent), black 27%);
+  --ribbon-b2: color-mix(in oklab, var(--color-accent), black 14%);
+  --ribbon-c1: color-mix(in oklab, var(--color-accent), white 16%);
+  --ribbon-c2: color-mix(in oklab, var(--color-accent), black 5%);
+  --ribbon-ink: var(--color-accent-fg);
+}

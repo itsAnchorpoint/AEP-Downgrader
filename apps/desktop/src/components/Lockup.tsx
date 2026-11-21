@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import foldRibbon from "../assets/fold-ribbon.svg";
+import foldRibbon from "../assets/fold-ribbon.svg?raw";
 import { useAppStore } from "../store";
 
 // The intro plays once per session, not every time the start screen comes back.
@@ -26,13 +26,14 @@ export function Lockup() {
     >
       {/* The shadow is on the wrapper: the clip that reveals the ribbon would cut a shadow on the image itself. */}
       <span className="pointer-events-none absolute top-[-31px] left-[180px] drop-shadow-[0_10px_12px_var(--lockup-shadow)] [@media(max-height:620px)]:top-[-25px] [@media(max-height:620px)]:left-[144px]">
-        <motion.img
-          src={foldRibbon}
-          alt=""
+        {/* Inline, not an <img>: its faces read the accent through CSS variables (index.css, .fold-ribbon). */}
+        <motion.span
+          aria-hidden
           initial={play ? { clipPath: "inset(0 100% 0 0)", x: -14, y: 6 } : false}
           animate={{ clipPath: "inset(0 0% 0 0)", x: 0, y: 0 }}
           transition={{ duration: 0.62, ease: [0.22, 1, 0.36, 1] }}
-          className="block h-[108px] w-auto [@media(max-height:620px)]:h-[86px]"
+          className="fold-ribbon block h-[108px] w-[178px] [@media(max-height:620px)]:h-[86px] [@media(max-height:620px)]:w-[142px] [&>svg]:block [&>svg]:size-full"
+          dangerouslySetInnerHTML={{ __html: foldRibbon }}
         />
       </span>
       <motion.span
