@@ -8,7 +8,7 @@ Thanks for helping. This page says how to build and test the project, and the fe
 2. **A target is Verified only if converted files were opened in a real After Effects of that version.** Otherwise it is Experimental. The status and its one-sentence basis live in `crates/aep-core/src/compat.rs`. Do not change a status without that evidence.
 3. **Never commit a real client project.** Project files contain the paths of footage and may contain names and unreleased work. Only small synthetic projects belong in `tests/fixtures/`. Real projects stay on your machine (`tests/fixtures-local/` is ignored by git, as is every other `.aep`).
 4. **Keep the privacy promise.** No telemetry, no uploads, no network access except the update check. A change that adds any of these will not be merged. See [docs/PRIVACY.md](docs/PRIVACY.md).
-5. **Say what a conversion cannot do.** If a change alters what is removed or blocked, update [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) and the app's wording (`apps/desktop/src/i18n/en.json`, and the Russian file next to it).
+5. **Say what a conversion cannot do.** If a change alters what is removed or blocked, update [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) and the app's wording (`apps/desktop/src/i18n/en.json`, and the Russian file next to it). Terms and style: [docs/WRITING.md](docs/WRITING.md).
 6. **Follow the design guidelines.** New screens and assets use the existing tokens and match [docs/DESIGN.md](docs/DESIGN.md). Include a screenshot in the pull request.
 
 ## Layout

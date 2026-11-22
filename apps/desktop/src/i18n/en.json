@@ -53,7 +53,7 @@
   "problem": {
     "not-ae-file": "not an After Effects file",
     "sidecar": "macOS metadata file, not a project",
-    "xml-project": "XML project (.aepx) is not supported",
+    "xml-project": "XML projects (.aepx) aren’t supported",
     "truncated": "file is incomplete",
     "damaged": "file is damaged",
     "too-new": "saved in a version this app doesn’t know yet",
@@ -168,7 +168,7 @@
     "downloadingPercent": "Downloading the update… {{percent}}%",
     "restart": "Restart",
     "download": "Download",
-    "failed": "The update could not be installed. Download it from the release page."
+    "failed": "The update couldn’t be installed. Download it from the release page."
   },
   "whatsNew": {
     "title": "What’s new",
@@ -273,7 +273,7 @@
       "updateUpToDate": "Update check: this is the latest version",
       "updateCheckFailed": "Update check failed",
       "updateInstalled": "Update {{version}} installed",
-      "updateInstallFailed": "Update {{version}} could not be installed",
+      "updateInstallFailed": "Update {{version}} couldn’t be installed",
       "jobCancelled": "{{file}}: stopped before converting",
       "batchCancelled": "Stop pressed: the files converting now will finish"
     },
@@ -288,7 +288,7 @@
   },
   "problemHint": {
     "not-ae-file": "AEP Downgrader works with .aep, .aet and .ffx files saved by After Effects.",
-    "sidecar": "macOS creates these next to files on some drives. You can ignore it.",
+    "sidecar": "macOS creates files like this next to projects on some drives. You don’t need to convert it.",
     "xml-project": "Open it in After Effects, save it as .aep and convert that file.",
     "truncated": "The file ends too early: it may not have finished copying or downloading.",
     "damaged": "Try a backup or an auto-saved version of the project.",

@@ -45,6 +45,7 @@
     ],
     "category": "Utility",
     "shortDescription": "Open After Effects files in older versions",
+    "longDescription": "Makes copies of After Effects projects, templates and presets that older versions of After Effects can open. Files are processed on this computer and never uploaded.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
