@@ -39,7 +39,7 @@ pub struct Target {
 ///
 /// | ae_major | status | evidence |
 /// |----------|--------|----------|
-/// | 26 | Experimental | `Matches the file After Effects 27.0 saves for 26.x except colour settings of sources. Not yet opened in After Effects 2026.` |
+/// | 26 | Experimental | `Matches the file After Effects 27.0 saves for 26.x except color settings of sources. Not yet opened in After Effects 2026.` |
 /// | 25 | Experimental | `Matches the file After Effects 27.0 saves for 25.x except one migrated effect. Not yet opened in After Effects 2025.` |
 /// | 24 | Verified | `Projects from 25.6 and 26.0 opened in After Effects 24.5.` |
 /// | 23 | Experimental | `Matches the file After Effects 24.5 saves for 23.x except panel state. Not yet opened in After Effects 2023.` |
@@ -48,7 +48,7 @@ pub const TARGETS: [Target; 5] = [
     Target {
         ae_major: 26,
         status: Status::Experimental,
-        evidence: "Matches the file After Effects 27.0 saves for 26.x except colour settings of sources. Not yet opened in After Effects 2026.",
+        evidence: "Matches the file After Effects 27.0 saves for 26.x except color settings of sources. Not yet opened in After Effects 2026.",
     },
     Target {
         ae_major: 25,
@@ -92,7 +92,7 @@ pub fn targets_for(head: &Head) -> Vec<Target> {
 /// The compatibility table as Markdown, for the documentation:
 /// a header row `| Target | Status | Basis |`, the separator row
 /// `|---|---|---|`, then one row per entry of [`TARGETS`] in order, formatted
-/// `| After Effects <name> (<major>.x) | <Status, capitalised> | <evidence> |`,
+/// `| After Effects <name> (<major>.x) | <Status, capitalized> | <evidence> |`,
 /// where `<name>` comes from [`crate::version::release_name`] (use the major
 /// number itself if there is no name). Lines are joined with `\n` and the
 /// text ends with a single `\n`.

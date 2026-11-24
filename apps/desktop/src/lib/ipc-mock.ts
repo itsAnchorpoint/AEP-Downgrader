@@ -25,6 +25,8 @@ const DEMO_PATHS = [
 ];
 const MAJORS = [22, 23, 24, 25, 25, 26, 26, 27];
 const PLATFORMS: Platform[] = ["windows", "mac-arm", "mac-intel"];
+// The newest minor version of each After Effects release, so screenshots show versions that exist.
+const LAST_MINOR: Record<number, number> = { 22: 6, 23: 6, 24: 6, 25: 6, 26: 2, 27: 0 };
 const TARGETS: TargetInfo[] = [26, 25, 24, 23, 22].map((major) => ({
   major,
   name: String(2000 + major),
@@ -78,11 +80,11 @@ function describe(path: string): FileInfo {
     ...info,
     version: {
       major,
-      minor: (h >>> 8) % 7,
+      minor: (h >>> 8) % ((LAST_MINOR[major] ?? 6) + 1),
       patch: 0,
-      build: 40 + ((h >>> 16) % 160),
+      build: major === 27 ? 78 : 40 + ((h >>> 16) % 160), // 27.0 build 78 is the real After Effects 2027 release
       platform: PLATFORMS[(h >>> 4) % PLATFORMS.length],
-      release: major !== 27,
+      release: true,
       name: String(2000 + major),
     },
     format: { major: 2, minor: major },
@@ -126,7 +128,7 @@ function outputPath(job: Job, options: OutputOptions): string {
 
 const MOCK_UPDATE: UpdateInfo = {
   version: "2.1.0",
-  notes: "### Added\n\n- Presets (`.ffx`) can be converted.\n\n### Fixed\n\n- Copies keep the colour settings of sources.\n",
+  notes: "### Added\n\n- Presets (`.ffx`) can be converted.\n\n### Fixed\n\n- Copies keep the color settings of sources.\n",
   date: "2026-12-01",
   installKind: "installer",
 };

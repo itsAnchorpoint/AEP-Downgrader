@@ -9,18 +9,18 @@ AEP Downgrader 2.0 is a rewrite. It no longer just edits the file header. It mak
 ### Added
 
 - A new desktop app for Windows, macOS and Linux. Drop files or whole folders, see which After Effects version saved each one, and convert several at once.
-- A **Before you convert** panel. It lists what will change for each file and target, and what will be lost, before anything is written.
+- A report for every file: what will change in the copy for the chosen version, and what will be lost, before anything is written. Each file also says it in a word: nothing lost, a number of changes, or can't convert.
 - Conversion to After Effects 2026, 2025, 2024, 2023 and 2022 (see the compatibility table in the README).
-- After Effects 27 projects can be converted.
+- Files from After Effects 2027 can be converted.
 - Templates (`.aet`) and animation presets (`.ffx`) are converted too, with the same rules as projects.
-- Every target is labelled **Verified** or **Experimental**. Verified means converted files were opened in a real After Effects of that version. Today that is 2024 only.
+- Every target is labeled **Verified** or **Experimental**. Verified means converted files were opened in a real After Effects of that version. Today that is 2024 only.
 - Settings: where to save copies, the file name pattern, what to do when a file already exists (add a number, overwrite or skip), and automatic update checks on or off.
 - **Stop** during a conversion: files already converting finish, the rest are left out. Keyboard shortcuts: Ctrl+O (⌘O) to add files, Ctrl+Enter (⌘↩) to convert.
-- Updates inside the app. It checks GitHub at most once a day, shows the release notes, and installs a new version when you click **Update**, after checking its signature. After an update it shows what changed. Works for the Windows installer and portable app, the macOS app and the Linux AppImage.
+- Updates inside the app. It checks GitHub at most once a day, shows the release notes, and installs a new version when you click **Update**, after checking its signature. After an update it shows what changed. Works for the Windows installer and portable app, the macOS app and the Linux AppImage. The update check is the only network request the app makes, and it can be turned off.
 - A portable Windows version: one `.exe`, no installation, settings kept next to it.
 - A Windows installer in the app's design: one window and one click, in English or Russian, with no administrator rights needed. Updates and uninstalling use the same window.
-- An activity log of what the app did in this session, and **Copy report** for bug reports, with file names hidden by default.
-- Light, dark and After Effects-style themes, five accent colours, English and Russian.
+- An activity log of what the app did in this session, and **Copy log** for bug reports, with file names hidden by default.
+- Light, dark and After Effects-style themes, five accent colors, English and Russian.
 - A check for track mattes that are not the layer directly above their layer. After Effects 2022 cannot represent them, so the conversion to 2022 is stopped instead of producing a file that may not open correctly.
 - A command-line tool, `aep`, to convert, inspect and compare projects.
 - A tester kit for After Effects users who want to help check the older versions.
@@ -28,12 +28,11 @@ AEP Downgrader 2.0 is a rewrite. It no longer just edits the file header. It mak
 
 ### Changed
 
-- Converted copies now follow what After Effects itself writes, not only a changed version number. Removed features are listed before you convert.
+- Converted copies now follow what After Effects itself writes, not only a changed version number.
 - Copies are named like `project_AE2024.aep`. In 1.x the name looked like `project_AE24x.aep`. You can change the pattern in Settings.
 - If the copy name is taken, the app adds a number instead of overwriting the earlier copy. This is the default and can be changed.
 - Files are identified by reading their structure, not a fixed position in the file.
 - Windows installer and portable app, macOS disk image, Linux AppImage and `.deb` package replace the 1.x zip and tar.gz archives. Each release lists SHA-256 checksums and carries build provenance attestations.
-- Everything is processed on your computer. There is no account and no telemetry. The only network request is the update check, which can be turned off.
 
 ### Fixed
 
@@ -71,7 +70,7 @@ AEP Downgrader 2.0 is a rewrite. It no longer just edits the file header. It mak
 
 ### Changed
 
-- The licence changed from MIT to GPLv3.
+- The license changed from MIT to GPLv3.
 - macOS builds are a `.app` bundle in a `.dmg`.
 
 ## [1.0.0] - 2026-01-19

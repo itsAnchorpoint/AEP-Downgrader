@@ -26,6 +26,8 @@ jobs:
       - run: cargo test
       - name: Core builds for WebAssembly
         run: cargo check -p aep-core --target wasm32-unknown-unknown
+      - name: Compatibility tables in the docs match the core
+        run: node .github/scripts/check-compat-table.mjs
 
   app:
     name: App (${{ matrix.name }})

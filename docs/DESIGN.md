@@ -42,17 +42,18 @@ What turns minimal into finished. Use all of them lightly, so that each is felt 
 
 - **Trail** is the app icon and the small mark in the header.
 - **Fold**, the folded `.aep` ribbon with an arrowhead, is the illustrative motif for the site, the disk image, the installer and marketing. It reads as "this file goes down a version".
-- **The lockup** on the app's start screen (`components/Lockup.tsx`): the Fold ribbon above the word "Downgrader", its arrow running down past the end of the word to the depth of the "g". The word's left edge sits on the content edge; the ribbon floats above it and may reach into the title bar. Proportions to the font size: ribbon height 1.96, ribbon left edge 3.27 from the D, ribbon top 1.54 above the capitals, a visible gap between the "r" and the arrowhead. In the app the ribbon takes the chosen accent (lime keeps the drawn colours; other accents and the After Effects theme mix the faces from the accent, `.fold-ribbon` in `index.css`), so it is inlined rather than an `<img>`. The app icon and the brand surfaces stay lime. Its shadow sits on a wrapper, so the reveal animation's clip never cuts it.
+- **The lockup** on the app's start screen (`components/Lockup.tsx`): the Fold ribbon above the word "Downgrader", its arrow running down past the end of the word to the depth of the "g". The word's left edge sits on the content edge; the ribbon floats above it and may reach into the title bar. Proportions to the font size: ribbon height 1.96, ribbon left edge 3.27 from the D, ribbon top 1.54 above the capitals, a visible gap between the "r" and the arrowhead. In the app the ribbon takes the chosen accent (lime keeps the drawn colors; other accents and the After Effects theme mix the faces from the accent, `.fold-ribbon` in `index.css`), so it is inlined rather than an `<img>`. The app icon and the brand surfaces stay lime. Its shadow sits on a wrapper, so the reveal animation's clip never cuts it.
+- **The version staircase** is the marketing motif for wide formats (donation covers, the site): year pills in JetBrains Mono from `.aep 2027` down to 2022 on the Trail zigzag, the line fading in from the left and turning lime, one pill (2024, the verified target) filled lime, an arrowhead at the end. Keep it centered so narrow crops still show the middle years.
 - UI icons never use AI clichés (sparkles, magic wands, stars) for ordinary features.
 - UI icons are Lucide with stroke 2–3. Meaningful icons can be lime: for example, the lock in the privacy line and the shield in the first-launch hint.
 
 ## Working screens
 
-- **One loud element per view**: the main action (Convert) or the drop circle. A chosen option among several (target tiles, segmented settings) is an outline in the text colour on a raised surface, not an accent fill. Unchosen options are quieter: a thin outline in the line colour and muted text.
-- **Status colours mean status**: red only for "can't convert", amber for something that changes or is lost, green for verified or done. Files that are simply not projects (macOS sidecars) are muted, not red. An experimental target keeps its amber badge where it is chosen, and the report says so too.
+- **One loud element per view**: the main action (Convert) or the drop circle. A chosen option among several (target tiles, segmented settings) is an outline in the text color on a raised surface, not an accent fill. Unchosen options are quieter: a thin outline in the line color and muted text.
+- **Status colors mean status**: red only for "can't convert", amber for something that changes or is lost, green for verified or done. Files that are simply not projects (macOS sidecars) are muted, not red. An experimental target keeps its amber badge where it is chosen, and the report says so too.
 - **Say it in the row**: every file row states its report in a word (nothing lost, N changes, can't convert), so nobody has to open it to find out.
 - **The title bar** is the app's own on macOS (overlay, traffic lights in the bar) and Windows (no frame, own window buttons with a red close); Linux keeps the system frame and the bar becomes a toolbar. It carries only the tools; the product name is the start screen's lockup.
-- **Fit the space, not the window**: the drop circle and its rings size themselves to the drop zone's height (container queries), so the content stays centred under the update banner, with the log open and in a small window.
+- **Fit the space, not the window**: the drop circle and its rings size themselves to the drop zone's height (container queries), so the content stays centered under the update banner, with the log open and in a small window.
 
 ## Motion
 
@@ -77,16 +78,18 @@ Everything outside the app follows this page too, so the product looks like one 
 
 | Surface | State |
 |---|---|
-| App window (all themes) | Second pass done (title bar, lockup, working screens); final check on real Windows and macOS |
+| App window (all themes) | Done: second pass, checked on real Windows and macOS |
 | macOS disk image window | Done: the reference artifact |
-| Windows installer (the whole window, every page, also updates and uninstalling) | Done: drawn by our NSIS plug-in, `apps/desktop/src-tauri/windows` |
+| Windows installer (the whole window, every page, also updates and uninstalling) | Done: drawn by our NSIS plugin, `apps/desktop/src-tauri/windows` |
 | App icon (Trail) | Done |
-| Website, download and support pages | Later |
-| Link previews (Open Graph, GitHub social preview), README header | Later |
+| README header | Done: icon, one line, the app window with a report (`assets/screenshot.png`, a mock-backend shot framed as a macOS window) |
+| Donation pages (Boosty, Tribute) | Done: Trail avatar, covers with the version staircase |
+| Website, download and support pages | In progress (`site/`) |
+| Link previews (Open Graph, GitHub social preview) | Later |
 
 ## Making and reviewing assets
 
 - Build static assets (disk image background, social images) as HTML with the real fonts (`apps/desktop/src/assets/fonts`) and render them with headless Chromium at 1x and 2x. See `apps/desktop/src-tauri/dmg/render.sh`.
 - Review a rendered preview with the real surroundings (icons, Finder labels, window size) before shipping it.
-- **Windows installer window:** the plug-in in `apps/desktop/src-tauri/windows/ui` draws every page in software (tiny-skia, rustybuzz, the app's fonts), so it looks the same on every Windows version and under Wine. Preview all pages as PNGs without Windows: `AEPD_PREVIEW=<dir> cargo test --release preview -- --ignored` in that folder. Its art (Fold, Trail) is rendered by `windows/assets/render.sh`; the texts are in `windows/hooks.nsh`.
-- **Disk image window:** Finder draws file names in black whenever the window has a background picture, even in Dark Mode. Put a light plate behind each label (the app's plate is paper, the Applications plate is lime). Finder's labels use text size 16 and sit about 84 pt below the icon centre.
+- **Windows installer window:** the plugin in `apps/desktop/src-tauri/windows/ui` draws every page in software (tiny-skia, rustybuzz, the app's fonts), so it looks the same on every Windows version and under Wine. Preview all pages as PNGs without Windows: `AEPD_PREVIEW=<dir> cargo test --release preview -- --ignored` in that folder. Its art (Fold, Trail) is rendered by `windows/assets/render.sh`; the texts are in `windows/hooks.nsh`.
+- **Disk image window:** Finder draws file names in black whenever the window has a background picture, even in Dark Mode. Put a light plate behind each label (the app's plate is paper, the Applications plate is lime). Finder's labels use text size 16 and sit about 84 pt below the icon center.

@@ -35,13 +35,13 @@ The only network request is the **update check**. It downloads `latest.json`, a 
 
 **Installing an update** happens only when you click **Update**. The app then downloads the new version from the same GitHub release and checks its signature against the public key built into the app (`plugins.updater.pubkey` in `tauri.conf.json`) before installing it. A file that does not match the signature is not installed. Copies the app cannot update itself (a `.deb` package, an app started from the macOS disk image, a build from source) open the release page in your browser instead.
 
-The app opens a link in your web browser only when you click one (the project page on GitHub). Fonts and images are bundled in the app. It loads nothing from the internet to draw its window.
+The app opens a link in your web browser only when you click one, such as the project page on GitHub or the page about supporting the project. Fonts and images are bundled in the app. It loads nothing from the internet to draw its window.
 
 ## Settings
 
 The app remembers your choices in a small `settings.json` file in the app's per-user data folder. Which folder that is depends on your system. The portable Windows version keeps it next to its `.exe` instead, as `AEP Downgrader settings.json` (or in the data folder if it cannot write there). It holds:
 
-- language, theme and accent colour
+- language, theme and accent color
 - where to save copies (next to the original, or a chosen folder) and that folder's path
 - the file name pattern
 - what to do when a file name already exists
@@ -54,7 +54,15 @@ It does not hold a list of your files. Delete the file to reset the app.
 
 The **Activity log** (the pulse icon at the top of the window) lists what the app did in this session: files added, what was detected in them, the checks before converting, and the outcome of each conversion. It lives in memory and is gone when you close the app.
 
-**Copy report** copies the log as text, to paste into a bug report. It contains the app version, the operating system and processor type, and the log. File names and folders are hidden unless you tick **Include full paths**, which is off every time the app starts. You see the text before you paste it anywhere. The app never sends reports by itself.
+**Copy log** copies the log as text, to paste into a bug report. It contains the app version, the operating system and processor type, and the log. File names and folders are hidden unless you tick **Include full paths**, which is off every time the app starts. You see the text before you paste it anywhere. The app never sends reports by itself.
+
+## The website
+
+[aepdowngrader.com](https://aepdowngrader.com) is a set of static pages hosted on GitHub Pages. It has no analytics, no counters, no cookies and no ads, and loads nothing from other sites. Like any web host, GitHub sees the IP address of visitors. The download buttons lead to the files of the GitHub release.
+
+## Donations
+
+Donations go through [Boosty](https://boosty.to/aepdowngrader) and [Tribute](https://web.tribute.tg/d/UNE). They are separate services with their own terms and privacy policies, and your payment details go to them, not to this project. The project sees only what these services show their creators, such as the amount and the name and message you choose to leave. The app knows nothing about donations.
 
 ## Command line
 

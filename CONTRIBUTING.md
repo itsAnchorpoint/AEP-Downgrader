@@ -47,13 +47,13 @@ cargo test
 cargo clippy --all-targets -- -D warnings
 ```
 
-Run the app with `pnpm tauri dev`, and build installers with `pnpm tauri build`. On Windows the build first compiles the installer's window (an NSIS plug-in in `apps/desktop/src-tauri/windows/ui`) for 32-bit Windows; `scripts/installer-ui.mjs` adds that Rust target itself. The installer template (`windows/installer.nsi`) is a copy of Tauri's, so after updating `@tauri-apps/cli` or `tauri-plugin-updater` the build stops until the template is compared with Tauri's new one (`scripts/check-installer-template.mjs` says what to compare). CI runs all of this on every push and pull request, and builds the installers on Windows (NSIS), macOS (dmg) and Linux (AppImage and deb).
+Run the app with `pnpm tauri dev`, and build installers with `pnpm tauri build`. On Windows the build first compiles the installer's window (an NSIS plugin in `apps/desktop/src-tauri/windows/ui`) for 32-bit Windows; `scripts/installer-ui.mjs` adds that Rust target itself. The installer template (`windows/installer.nsi`) is a copy of Tauri's, so after updating `@tauri-apps/cli` or `tauri-plugin-updater` the build stops until the template is compared with Tauri's new one (`scripts/check-installer-template.mjs` says what to compare). CI runs all of this on every push and pull request, and builds the installers on Windows (NSIS), macOS (dmg) and Linux (AppImage and deb).
 
 The core also has to compile for WebAssembly: `cargo check -p aep-core --target wasm32-unknown-unknown`.
 
 ## Pull requests
 
-- Branch from `v2` until 2.0 is released.
+- Branch from `main`.
 - Keep a change small and say why it is needed.
 - Add a test for a new rule or a bug fix. Rules are tested against files in `tests/fixtures`.
 - Update `CHANGELOG.md` for anything a user would notice, in plain words a motion designer understands.
@@ -61,7 +61,7 @@ The core also has to compile for WebAssembly: `cargo check -p aep-core --target 
 
 ## Sending a file privately
 
-If a file is not recognised or a conversion fails, and the project is confidential:
+If a file is not recognized or a conversion fails, and the project is confidential:
 
 1. Do not attach it to an issue.
 2. [Open an issue](https://github.com/itsAnchorpoint/AEP-Downgrader/issues) that says only which After Effects version and system saved the file, what the app showed, and that you can share the file privately. A private way to send it can then be arranged.

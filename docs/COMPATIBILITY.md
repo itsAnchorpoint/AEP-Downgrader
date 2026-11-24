@@ -6,7 +6,7 @@ What AEP Downgrader can convert to, how far each target has been checked, and wh
 
 | Target | Status | Basis |
 |---|---|---|
-| After Effects 2026 (26.x) | Experimental | Matches the file After Effects 27.0 saves for 26.x except colour settings of sources. Not yet opened in After Effects 2026. |
+| After Effects 2026 (26.x) | Experimental | Matches the file After Effects 27.0 saves for 26.x except color settings of sources. Not yet opened in After Effects 2026. |
 | After Effects 2025 (25.x) | Experimental | Matches the file After Effects 27.0 saves for 25.x except one migrated effect. Not yet opened in After Effects 2025. |
 | After Effects 2024 (24.x) | Verified | Projects from 25.6 and 26.0 opened in After Effects 24.5. |
 | After Effects 2023 (23.x) | Experimental | Matches the file After Effects 24.5 saves for 23.x except panel state. Not yet opened in After Effects 2023. |
@@ -60,7 +60,7 @@ A downgrade passes through every version between the file and the target. Each s
 
 In every case the version stamp in the file header is rewritten to the one After Effects itself writes for the target. The platform recorded in the file (Windows, macOS Intel, macOS Apple silicon) is kept.
 
-The app shows the changes that apply to your file in **Before you convert**, before anything is written.
+The app shows the changes that apply to your file in its report (**Show report** next to the file), before anything is written.
 
 ## What a conversion cannot do
 
@@ -69,7 +69,7 @@ The app shows the changes that apply to your file in **Before you convert**, bef
 - **XML projects (`.aepx`) are not supported.**
 - **Some of After Effects's own changes are not reproduced yet.** They are the "except" in the Basis column:
   - 2023: when After Effects removes properties it also shortens the saved panel outline state (the `otln` chunk).
-  - 2026 and 2025: After Effects 27 also rewrites the colour settings of footage sources and migrates one effect (Compound Blur) when it saves for an older version.
+  - 2026 and 2025: After Effects 27 also rewrites the color settings of footage sources and migrates one effect (Compound Blur) when it saves for an older version.
 
 ## What blocks a conversion
 

@@ -26,7 +26,7 @@ The parser keeps a tree and writes it back byte for byte: `parse(bytes).to_bytes
 
 Two kinds of `LIST` are kept verbatim instead of being parsed: lists of kind `btdk`, and any list whose content does not parse cleanly as chunks. They are not altered.
 
-Two other things that are not projects are recognised by their first bytes: a macOS AppleDouble sidecar file (`._name.aep`, starts with `00 05 16 07`) and an XML project (`.aepx`).
+Two other things that are not projects are recognized by their first bytes: a macOS AppleDouble sidecar file (`._name.aep`, starts with `00 05 16 07`) and an XML project (`.aepx`).
 
 ### Start of a file (measured)
 
@@ -195,7 +195,7 @@ Removed or added chunks are never noise. `aep diff --no-noise` hides these diffe
 | Target | Gap |
 |---|---|
 | 23 | After Effects also shortens the `otln` chunk (panel outline state) when it removes properties. Not reproduced. |
-| 26 | After Effects 27's own copy differs in the colour settings of sources (chunks `dcui`, `apid` and an ICC profile in `Utf8`). Not reproduced. |
+| 26 | After Effects 27's own copy differs in the color settings of sources (chunks `dcui`, `apid` and an ICC profile in `Utf8`). Not reproduced. |
 | 25 | After Effects 27's own copy differs in one migrated effect (Compound Blur). Not reproduced. |
 
 ### Not understood

@@ -2,7 +2,7 @@
 
 Thank you for helping! AEP Downgrader rewrites After Effects project files so an older After Effects can open them. To get the rules right, we compare files that After Effects itself wrote with the copies it makes through **File > Save a Copy As > (older version)**. The maintainer only owns After Effects 2024, so we need your version and your Mac or PC.
 
-These scripts build a small **test project** (grey solids, shapes, placeholder text, effects, nothing personal, no footage, no file paths from your computer), save it, and let you save older-version copies of it. It takes about 10-15 minutes.
+These scripts build a small **test project** (gray solids, shapes, placeholder text, effects, nothing personal, no footage, no file paths from your computer), save it, and let you save older-version copies of it. It takes about 10-15 minutes.
 
 You do not need to know scripting. You only run three scripts from the File menu.
 

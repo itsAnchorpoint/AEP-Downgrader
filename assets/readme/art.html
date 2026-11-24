@@ -1,0 +1,91 @@
+<!-- README art: the header buttons and the support banner. One piece per URL hash (#download-en, #boosty-ru,
+     #banner-en, ...). Render them all with render.sh in this folder; it writes the PNGs next to this file. -->
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Onest;src:url(../../apps/desktop/src/assets/fonts/onest-latin-wght-normal.woff2) format("woff2");font-weight:100 900;unicode-range:U+0000-00FF,U+2000-206F}
+@font-face{font-family:Onest;src:url(../../apps/desktop/src/assets/fonts/onest-cyrillic-wght-normal.woff2) format("woff2");font-weight:100 900;unicode-range:U+0400-04FF}
+@font-face{font-family:JBM;src:url(../../apps/desktop/src/assets/fonts/jetbrains-mono-latin-wght-normal.woff2) format("woff2");font-weight:100 800}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:transparent}
+body{font-family:Onest;-webkit-font-smoothing:antialiased;color:#f3efe6}
+.piece{display:none}
+/* Buttons: pills, as in the app. Primary is lime; the others are raised dark surfaces with a thin light edge,
+   so they read on GitHub's light and dark pages alike. */
+.btns{padding:22px 26px 30px}
+.btn{display:inline-flex;align-items:center;gap:11px;height:54px;padding:0 28px 0 22px;border-radius:999px;
+  font-weight:800;font-size:19px;letter-spacing:-.015em;white-space:nowrap}
+.btn svg{width:22px;height:22px;flex:none}
+.lime{color:#0b0b0c;background:linear-gradient(180deg,#e6ff78,#d2fb36);
+  box-shadow:0 12px 26px -10px rgba(150,190,20,.75), inset 0 1px 0 rgba(255,255,255,.6), inset 0 -1px 0 rgba(0,0,0,.08)}
+.dark{color:#f3efe6;background:linear-gradient(180deg,#26262b,#151517);
+  box-shadow:0 12px 26px -10px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.10), inset 0 0 0 1.5px rgba(255,255,255,.13)}
+.dark svg{color:#d6ff3d}
+.btn small{font-weight:700;font-size:15px;opacity:.62;margin-left:2px}
+/* The support banner: a card in the brand surface style, the version staircase on the right. */
+.banner{position:relative;width:1200px;height:330px;border-radius:28px;overflow:hidden;background:#0b0b0c;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 0 1px rgba(255,255,255,.07)}
+.banner .light{position:absolute;inset:0;background:
+  radial-gradient(700px 300px at 12% -20%, rgba(255,255,255,.075), transparent 70%),
+  radial-gradient(520px 260px at 78% 70%, rgba(214,255,61,.13), transparent 72%),
+  linear-gradient(180deg,#151517,#0b0b0c)}
+.banner .dots,.banner .grain,.banner .vign,.banner .trail{position:absolute;inset:0}
+.banner .dots{opacity:.08}.banner .grain{opacity:.09;mix-blend-mode:overlay}
+.banner .vign{background:radial-gradient(120% 120% at 45% 40%, transparent 55%, rgba(0,0,0,.55))}
+.banner h2{position:absolute;left:56px;top:62px;font-weight:800;font-size:58px;line-height:1.04;letter-spacing:-.04em}
+.hl{position:relative;color:#0b0b0c;padding:0 14px 4px;margin-left:4px;border-radius:14px;
+  background:linear-gradient(180deg,#e6ff78,#d2fb36);box-shadow:0 10px 30px -10px rgba(214,255,61,.55), inset 0 1px 0 rgba(255,255,255,.55)}
+#banner-ru h2{font-size:50px;top:68px}
+.banner p{position:absolute;left:58px;top:160px;width:540px;font-weight:600;font-size:19px;line-height:1.45;color:#a19e97;letter-spacing:-.005em}
+.banner p b{color:#f3efe6;font-weight:800}
+.stair{position:absolute;inset:0}
+.pill{position:absolute;transform:translate(-50%,-50%);font-family:JBM;font-weight:700;font-size:16px;letter-spacing:-.01em;
+  padding:6px 13px 7px;border-radius:999px;color:#c9c5bc;background:linear-gradient(180deg,#1f1f23,#141416);
+  box-shadow:0 12px 24px -10px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 0 1.5px rgba(255,255,255,.10)}
+.pill.src{color:#f3efe6;box-shadow:0 12px 24px -10px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.1), inset 0 0 0 1.5px rgba(243,239,230,.35)}
+.pill .ext{color:#8d8a84;font-weight:600;margin-right:5px}
+.pill.on{color:#0b0b0c;background:linear-gradient(180deg,#e6ff78,#d2fb36);box-shadow:0 10px 24px -8px rgba(214,255,61,.6), inset 0 1px 0 rgba(255,255,255,.55)}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></symbol>
+</defs></svg>
+
+<div class="piece btns" id="download-en"><span class="btn lime"><svg><use href="#i-download"/></svg>Download for free</span></div>
+<div class="piece btns" id="boosty-en"><span class="btn dark"><svg><use href="#i-heart"/></svg>Support on Boosty</span></div>
+<div class="piece btns" id="tribute-en"><span class="btn dark"><svg><use href="#i-heart"/></svg>Support via Tribute</span></div>
+<div class="piece btns" id="download-ru"><span class="btn lime"><svg><use href="#i-download"/></svg>Скачать бесплатно</span></div>
+<div class="piece btns" id="boosty-ru"><span class="btn dark"><svg><use href="#i-heart"/></svg>Поддержать на Boosty</span></div>
+<div class="piece btns" id="tribute-ru"><span class="btn dark"><svg><use href="#i-heart"/></svg>Поддержать в Tribute</span></div>
+
+<template id="stair-tpl"><svg class="trail" width="1200" height="330" viewBox="0 0 1200 330"><defs><linearGradient id="lime" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f6f4ee" stop-opacity="0"/><stop offset=".14" stop-color="#f6f4ee" stop-opacity=".55"/><stop offset=".38" stop-color="#d6ff3d"/><stop offset="1" stop-color="#c8f526"/></linearGradient></defs><polyline points="POLY" fill="none" stroke="url(#lime)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="ARROW" fill="none" stroke="#c8f526" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>PILLS</template>
+
+<div class="piece" id="banner-en"><div class="banner"><div class="light"></div><svg class="dots" width="1200" height="330"><defs><pattern id="d" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".9" fill="#fff"/></pattern><radialGradient id="m" cx="70%" cy="55%" r="55%"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient><mask id="mk"><rect width="1200" height="330" fill="url(#m)"/></mask></defs><rect width="1200" height="330" fill="url(#d)" mask="url(#mk)"/></svg>
+  <h2>Free for <span class="hl">everyone</span></h2>
+  <p>No ads and no paid version. <b>Every After Effects release changes the file format</b>, and donations pay for the time it takes to keep up.</p>
+  <div class="stair"></div>
+  <svg class="grain" width="1200" height="330"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#n)"/></svg><div class="vign"></div></div></div>
+<div class="piece" id="banner-ru"><div class="banner"><div class="light"></div><svg class="dots" width="1200" height="330"><defs><pattern id="d2" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".9" fill="#fff"/></pattern><radialGradient id="m2" cx="70%" cy="55%" r="55%"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient><mask id="mk2"><rect width="1200" height="330" fill="url(#m2)"/></mask></defs><rect width="1200" height="330" fill="url(#d2)" mask="url(#mk2)"/></svg>
+  <h2>Бесплатно <span class="hl">для всех</span></h2>
+  <p>Без рекламы и без платной версии. <b>Каждый выпуск After Effects меняет формат файлов</b>, а донаты оплачивают время, чтобы успевать за ними.</p>
+  <div class="stair"></div>
+  <svg class="grain" width="1200" height="330"><filter id="n2"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#n2)"/></svg><div class="vign"></div></div></div>
+
+<script>
+// The staircase, as on the donation covers, cut to four steps (2027 down to 2024, the verified target) so it fits
+// the banner's right half. Coordinates are the banner's own.
+const xs = [700, 837, 951, 1065], ys = [84, 128, 172, 216], half = [53, 30, 30, 30];
+const labels = ['<span class="ext">.aep</span>2027', "2026", "2025", "2024"];
+const pts = [[xs[0] - half[0] - 44, ys[0]]];
+for (let i = 0; i < 3; i++) pts.push([xs[i] + half[i] + 12, ys[i]], [xs[i + 1] - half[i + 1] - 12, ys[i + 1]]);
+const end = xs[3] + half[3] + 62; pts.push([end, ys[3]]);
+const svg = document.getElementById("stair-tpl").innerHTML
+  .replace("POLY", pts.map((p) => p.join(",")).join(" "))
+  .replace("ARROW", `M${end - 12},${ys[3] - 16} L${end + 6},${ys[3]} L${end - 12},${ys[3] + 16}`)
+  .replace("PILLS", labels.map((l, i) => `<div class="pill${i === 0 ? " src" : i === 3 ? " on" : ""}" style="left:${xs[i]}px;top:${ys[i]}px">${l}</div>`).join(""));
+// Only into the piece on show: the gradient id would otherwise resolve inside a hidden piece and not paint.
+const piece = document.getElementById(location.hash.slice(1));
+if (piece) {
+  piece.style.display = "block";
+  piece.querySelectorAll(".stair").forEach((el) => (el.innerHTML = svg));
+}
+</script>
+</body></html>
