@@ -1,0 +1,144 @@
+---
+import type { Strings } from "../i18n/en";
+import Icon from "./Icon.astro";
+
+interface Props {
+  t: Strings;
+}
+const { t } = Astro.props;
+const p = t.supportPage;
+const repo = "https://github.com/itsAnchorpoint/AEP-Downgrader";
+const hrefs: Record<string, string> = {
+  tester: `${repo}/blob/main/tools/ae/README${t.lang === "ru" ? ".ru" : ""}.md`,
+  issues: `${repo}/issues`,
+};
+const home = t.lang === "ru" ? "/ru/" : "/";
+---
+
+<section class="section support-top">
+  <div class="container">
+    <div class="section-head">
+      <h1 class="h2">{p.titleBefore}<span class="plate">{p.plate}</span>{p.titleAfter}</h1>
+      <p class="lead">{p.lead}</p>
+    </div>
+
+    <div class="channels">
+      <div class="channel surface">
+        <div class="channel-name"><Icon name="heart" size={22} /><h2>{p.boosty.name}</h2></div>
+        <p>{p.boosty.text}</p>
+        <div class="channel-actions">
+          <a class="btn btn-quiet" href="https://boosty.to/aepdowngrader">{p.boosty.action}</a>
+        </div>
+      </div>
+      <div class="channel surface">
+        <div class="channel-name"><Icon name="heart" size={22} /><h2>{p.tribute.name}</h2></div>
+        <p>{p.tribute.text}</p>
+        <div class="channel-actions">
+          <a class="btn btn-quiet" href="https://web.tribute.tg/d/UNE">{p.tribute.action}</a>
+          <a class="btn btn-secondary btn-sm" href="https://t.me/tribute/app?startapp=dUNE">{p.tribute.telegram}</a>
+        </div>
+      </div>
+    </div>
+    <p class="support-notes">{p.declined} {p.thirdParty}</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <h2 class="h2 other-title">{p.otherTitle}</h2>
+    <ul class="other">
+      {
+        p.other.map((item) => (
+          <li>
+            <span>{item.text}</span>
+            {item.link && <a href={hrefs[item.href]}>{item.link}</a>}
+          </li>
+        ))
+      }
+    </ul>
+    <p class="back"><a href={home}>{p.back}</a></p>
+  </div>
+</section>
+
+<style>
+  .support-top {
+    padding-top: clamp(56px, 8vw, 104px);
+  }
+  .channels {
+    display: grid;
+    gap: 14px;
+  }
+  .channel {
+    display: grid;
+    grid-template-columns: 220px 1fr auto;
+    align-items: center;
+    gap: 24px;
+    padding: 24px 28px;
+    border-radius: var(--radius-lg);
+  }
+  .channel-name {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .channel-name :global(svg) {
+    color: var(--lime);
+  }
+  .channel h2 {
+    font-size: 24px;
+    letter-spacing: -0.02em;
+  }
+  .channel p {
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .channel-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+  .support-notes {
+    margin-top: 22px;
+    color: var(--faint);
+    font-weight: 600;
+    max-width: 72ch;
+  }
+  .other-title {
+    margin-bottom: 28px;
+  }
+  .other {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: 860px;
+  }
+  .other li {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 24px;
+    padding: 20px 0;
+    box-shadow: 0 -1px 0 var(--line-soft);
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .other a {
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .back {
+    margin-top: 40px;
+    font-weight: 700;
+  }
+  @media (max-width: 800px) {
+    .channel {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .channel-actions {
+      justify-content: flex-start;
+    }
+  }
+</style>

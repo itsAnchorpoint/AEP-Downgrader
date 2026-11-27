@@ -1,0 +1,14 @@
+[package]
+name = "aep-wasm"
+description = "aep-core for the website: identify a file in the browser. A C ABI, no dependencies."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+aep-core = { path = "../aep-core" }

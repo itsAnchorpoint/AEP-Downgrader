@@ -1,0 +1,11 @@
+---
+import Base from "../../layouts/Base.astro";
+import Home from "../../components/Home.astro";
+import Footer from "../../components/Footer.astro";
+import { ru } from "../../i18n/ru";
+---
+
+<Base t={ru} path="/">
+  <Home t={ru} />
+  <Footer t={ru} slot="footer" />
+</Base>

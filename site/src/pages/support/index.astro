@@ -1,0 +1,11 @@
+---
+import Base from "../../layouts/Base.astro";
+import SupportPage from "../../components/SupportPage.astro";
+import Footer from "../../components/Footer.astro";
+import { en } from "../../i18n/en";
+---
+
+<Base t={en} path="/support/" title={en.supportPage.title} description={en.supportPage.description}>
+  <SupportPage t={en} />
+  <Footer t={en} slot="footer" />
+</Base>

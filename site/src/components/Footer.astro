@@ -1,0 +1,118 @@
+---
+import type { Strings } from "../i18n/en";
+
+interface Props {
+  t: Strings;
+}
+const { t } = Astro.props;
+const home = t.lang === "ru" ? "/ru/" : "/";
+const repo = "https://github.com/itsAnchorpoint/AEP-Downgrader";
+const blob = `${repo}/blob/main`;
+---
+
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <a class="footer-mark" href={home}>
+        <img src="/brand/icon.png" alt="" width="36" height="36" loading="lazy" />
+        <span>AEP Downgrader</span>
+      </a>
+      <p>{t.footer.tagline}</p>
+    </div>
+    <nav aria-label={t.footer.product}>
+      <h2>{t.footer.product}</h2>
+      <a href={`${home}#download`}>{t.footer.links.download}</a>
+      <a href={`${home}#try`}>{t.footer.links.check}</a>
+      <a href={`${home}support/`}>{t.footer.links.support}</a>
+      <a href={`${blob}/CHANGELOG.md`}>{t.footer.links.changelog}</a>
+    </nav>
+    <nav aria-label={t.footer.project}>
+      <h2>{t.footer.project}</h2>
+      <a href={repo}>{t.footer.links.github}</a>
+      <a href={`${blob}/docs/PRIVACY.md`}>{t.footer.links.privacy}</a>
+      <a href={`${blob}/tools/ae/README${t.lang === "ru" ? ".ru" : ""}.md`}>{t.footer.links.testerKit}</a>
+      <a href={`${repo}/issues`}>{t.footer.links.issues}</a>
+    </nav>
+  </div>
+  <div class="container footer-legal">
+    <p>{t.footer.noTrackers}</p>
+    <p>
+      <a href={`${blob}/LICENSE`}>{t.footer.license}</a> · {t.footer.trademark}
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: clamp(96px, 12vw, 160px);
+    padding-block: 56px 40px;
+    box-shadow: 0 -1px 0 var(--line-soft);
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 40px;
+  }
+  .footer-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 800;
+    font-size: 19px;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+  }
+  .footer-mark img {
+    border-radius: 9px;
+  }
+  .footer-brand p {
+    margin-top: 14px;
+    color: var(--muted);
+    max-width: 34ch;
+    font-weight: 500;
+  }
+  .site-footer nav {
+    display: grid;
+    align-content: start;
+    gap: 10px;
+  }
+  .site-footer h2 {
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    color: var(--fg);
+    margin-bottom: 4px;
+  }
+  .site-footer nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    width: fit-content;
+  }
+  .site-footer nav a:hover {
+    color: var(--fg);
+  }
+  .footer-legal {
+    margin-top: 48px;
+    padding-top: 22px;
+    box-shadow: 0 -1px 0 var(--line-soft);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 10px 32px;
+    color: var(--faint);
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .footer-legal a {
+    color: var(--muted);
+  }
+  @media (max-width: 720px) {
+    .footer-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .footer-brand {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

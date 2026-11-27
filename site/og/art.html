@@ -1,0 +1,65 @@
+<!-- Link previews: the site's Open Graph images (#og-en, #og-ru, 1200x630) and the GitHub social preview
+     (#social, 1280x640). Render them with render.sh in this folder. -->
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Onest;src:url(../../apps/desktop/src/assets/fonts/onest-latin-wght-normal.woff2) format("woff2");font-weight:100 900;unicode-range:U+0000-00FF,U+2000-206F}
+@font-face{font-family:Onest;src:url(../../apps/desktop/src/assets/fonts/onest-cyrillic-wght-normal.woff2) format("woff2");font-weight:100 900;unicode-range:U+0400-04FF}
+@font-face{font-family:JBM;src:url(../../apps/desktop/src/assets/fonts/jetbrains-mono-latin-wght-normal.woff2) format("woff2");font-weight:100 800}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:#0b0b0c}
+body{font-family:Onest;-webkit-font-smoothing:antialiased;color:#f3efe6}
+.piece{display:none;position:relative;overflow:hidden;background:#0b0b0c}
+#og-en,#og-ru{width:1200px;height:630px}
+#social{width:1280px;height:640px}
+.light,.dots,.grain,.vign{position:absolute;inset:0}
+.light{background:
+  radial-gradient(760px 340px at 8% -18%, rgba(255,255,255,.08), transparent 70%),
+  radial-gradient(620px 420px at 82% 72%, rgba(214,255,61,.15), transparent 72%),
+  linear-gradient(180deg,#151517,#0b0b0c)}
+.dots{opacity:.08}.grain{opacity:.09;mix-blend-mode:overlay}
+.vign{background:radial-gradient(120% 120% at 40% 40%, transparent 55%, rgba(0,0,0,.55))}
+.brand{position:absolute;left:72px;top:64px;display:flex;align-items:center;gap:14px;font-weight:800;font-size:26px;letter-spacing:-.02em}
+.brand img{width:46px;height:46px;border-radius:11px}
+h1{position:absolute;left:68px;top:156px;font-weight:800;font-size:80px;line-height:1.12;letter-spacing:-.045em}
+#og-ru h1{font-size:66px;top:184px}
+.hl{color:#0b0b0c;padding:0 14px 2px;margin-left:-4px;border-radius:15px;
+  background:linear-gradient(180deg,#e6ff78,#d2fb36);box-shadow:0 12px 34px -10px rgba(214,255,61,.6), inset 0 1px 0 rgba(255,255,255,.55)}
+.meta{position:absolute;left:72px;bottom:62px;display:flex;gap:12px;align-items:center;font-weight:700;font-size:21px;color:#a19e97}
+.meta .url{font-family:JBM;font-weight:700;color:#d6ff3d;font-size:20px}
+.meta i{width:5px;height:5px;border-radius:50%;background:#4a4844}
+.shot{position:absolute;left:612px;top:118px;width:720px;filter:drop-shadow(0 40px 60px rgba(0,0,0,.65))}
+#social .shot{left:664px;top:112px;width:740px}
+#social h1{top:172px}
+</style></head><body>
+
+<template id="bg"><div class="light"></div><svg class="dots" width="1280" height="640"><defs><pattern id="dP" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".9" fill="#fff"/></pattern><radialGradient id="dM" cx="75%" cy="60%" r="55%"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient><mask id="dK"><rect width="1280" height="640" fill="url(#dM)"/></mask></defs><rect width="1280" height="640" fill="url(#dP)" mask="url(#dK)"/></svg></template>
+<template id="fx"><svg class="grain" width="1280" height="640"><filter id="gN"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#gN)"/></svg><div class="vign"></div></template>
+
+<div class="piece" id="og-en">
+  <div class="brand"><img src="../../assets/icon.png" alt="">AEP Downgrader</div>
+  <h1>New projects.<br><span class="hl">Older</span><br>After Effects.</h1>
+  <img class="shot" src="../../assets/screenshot.png" alt="">
+  <div class="meta"><span class="url">aepdowngrader.com</span><i></i>Free and open source</div>
+</div>
+<div class="piece" id="og-ru">
+  <div class="brand"><img src="../../assets/icon.png" alt="">AEP Downgrader</div>
+  <h1>Новые проекты.<br><span class="hl">Старый</span><br>After Effects.</h1>
+  <img class="shot" src="../../assets/screenshot.png" alt="">
+  <div class="meta"><span class="url">aepdowngrader.com</span><i></i>Бесплатно, открытый код</div>
+</div>
+<div class="piece" id="social">
+  <div class="brand"><img src="../../assets/icon.png" alt="">AEP Downgrader</div>
+  <h1>New projects.<br><span class="hl">Older</span><br>After Effects.</h1>
+  <img class="shot" src="../../assets/screenshot.png" alt="">
+  <div class="meta"><span class="url">aepdowngrader.com</span><i></i>Windows, macOS, Linux</div>
+</div>
+
+<script>
+// Background and grain go only into the piece on show, so the SVG ids resolve inside it.
+const piece = document.getElementById(location.hash.slice(1));
+if (piece) {
+  piece.style.display = "block";
+  piece.insertAdjacentHTML("afterbegin", document.getElementById("bg").innerHTML);
+  piece.insertAdjacentHTML("beforeend", document.getElementById("fx").innerHTML);
+}
+</script>
+</body></html>

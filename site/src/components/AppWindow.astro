@@ -1,0 +1,998 @@
+---
+// The app's window, drawn in HTML at its real size (920 x 640) and scaled to the column. It plays the
+// whole job once (drop, pick a version, the report, convert, done) and then takes the visitor's own
+// file: src/scripts/app-window.ts. Without JavaScript it stays on the report, like a screenshot.
+// Every label comes from the app's own translations (src/generated/app-strings.json).
+import strings from "../generated/app-strings.json";
+import data from "../generated/data.json";
+import Icon from "./Icon.astro";
+
+interface Props {
+  lang: "en" | "ru";
+  steps: string[];
+  replay: string;
+  modes: { demo: [string, string]; turn: [string, string]; own: [string, string] };
+}
+const { lang, steps, replay, modes } = Astro.props;
+const app = strings[lang];
+const plural = new Intl.PluralRules(lang);
+type Dict = Record<string, unknown>;
+const pick = (key: string): string => {
+  const value = key.split(".").reduce<unknown>((o, k) => (o as Dict | undefined)?.[k], app);
+  return typeof value === "string" ? value : key;
+};
+// i18next's plural keys (key_one, key_few, …) when the text has them, else the key itself.
+const s = (key: string, vars: Record<string, string | number> = {}) => {
+  const has = (k: string) => pick(k) !== k;
+  const count = typeof vars.count === "number" ? vars.count : null;
+  const plural_key = count !== null ? `${key}_${plural.select(count)}` : null;
+  const text = plural_key && has(plural_key) ? pick(plural_key) : has(`${key}_other`) && count !== null ? pick(`${key}_other`) : pick(key);
+  return text.replace(/\{\{(\w+)\}\}/g, (_, k) => String(vars[k] ?? ""));
+};
+const targets = data.targets;
+---
+
+<div class="aw-stage" data-appwin data-lang={lang} data-mode="demo" data-modes={JSON.stringify(modes)}>
+  <!-- What the window is doing right now: playing the demo, waiting for a file, or showing yours. -->
+  <div class="aw-caption" aria-live="polite">
+    <span class="aw-mode"><i></i><span data-aw-mode>{modes.demo[0]}</span></span>
+    <span class="aw-mode-hint" data-aw-mode-hint>{modes.demo[1]}</span>
+    <span class="aw-progress" aria-hidden="true"><span data-aw-progress></span></span>
+  </div>
+  <div class="aw-frame" tabindex="0" role="button" aria-label={modes.turn[1]}>
+    <svg class="aw-dash" aria-hidden="true"><rect></rect></svg>
+    <div class="aw" data-state="list" style="--k: 0.74">
+      <div class="aw-bar">
+        <span class="aw-lights"><i></i><i></i><i></i></span>
+        <span class="aw-tools">
+          <svg viewBox="0 0 24 24"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"></path></svg>
+          <svg viewBox="0 0 24 24"><path d="M15 12h-5"></path><path d="M15 8h-5"></path><path d="M19 17V5a2 2 0 0 0-2-2H4"></path><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"></path></svg>
+          <svg viewBox="0 0 24 24"><path d="M10 5H3"></path><path d="M12 19H3"></path><path d="M14 3v4"></path><path d="M16 17v4"></path><path d="M21 12h-9"></path><path d="M21 19h-5"></path><path d="M21 5h-7"></path><path d="M8 10v4"></path><path d="M8 12H3"></path></svg>
+        </span>
+      </div>
+
+      <!-- Empty: the lockup and the drop circle. -->
+      <section class="aw-screen aw-empty" aria-hidden="true">
+        <div class="aw-lockup"><img src="/brand/fold-ribbon.svg" alt="" /><span>Downgrader</span></div>
+        <button type="button" class="aw-drop" data-aw-choose tabindex="-1">
+          <span class="aw-rings"><i></i><i></i><span class="aw-disc"><Icon name="download" size={34} /></span></span>
+          <span class="aw-drop-title">{s("drop.title")}</span>
+          <span class="aw-drop-sub">{s("drop.sub")}</span>
+          <span class="aw-chips"><i>.aep</i><i>.aet</i><i>.ffx</i></span>
+        </button>
+        <div class="aw-foot"><span><Icon name="lock" size={16} />{s("drop.privacy")}</span><span>{s("drop.tagline")}</span></div>
+      </section>
+
+      <!-- The list, with one file and its report. -->
+      <section class="aw-screen aw-list">
+        <div class="aw-head">
+          <h3>{s("queue.files")} <i data-aw-count>1</i></h3>
+          <span class="aw-ghostbtn">+ {s("queue.addMore")}</span>
+        </div>
+        <div class="aw-rows">
+          <div class="aw-row" data-aw-row>
+            <span class="aw-ext" data-aw-ext>.aep</span>
+            <div class="aw-file">
+              <b data-aw-name>Intro_v05.aep</b>
+              <span data-aw-meta>{s("file.version", { name: "2027" })} <em>/</em> <code>27.0</code> <em>/</em> <code class="dim">6.9 MB</code></span>
+            </div>
+            <span class="aw-summary warn" data-aw-summary><Icon name="alert" size={17} />{s("queue.summary.changes", { count: 2 })}</span>
+          </div>
+          <div class="aw-report" data-aw-report>
+            <p class="aw-report-for">
+              <span data-aw-report-title>{s("report.for")} After Effects 2024</span>
+              <span class="aw-badge ok" data-aw-report-badge><Icon name="check" size={14} />{s("target.verified")}</span>
+            </p>
+            <ul data-aw-notes>
+              <li class="info"><Icon name="minus" size={18} /><span><b>{s("note.shadow-color-removed", { count: 2 })}</b></span></li>
+              <li class="warn"><Icon name="puzzle" size={18} /><span><b>{s("note.effects-removed", { count: 2, year: "2024", names: "Curl Noise, Unmult" })}</b><small>{s("note.effects-removed-hint")}</small></span></li>
+            </ul>
+            <p class="aw-safe"><Icon name="shield" size={15} />{s("report.safe")}</p>
+          </div>
+        </div>
+        <div class="aw-pick">
+          <p>{s("queue.convertTo")} <b>After Effects</b></p>
+          <div class="aw-tiles">
+            {
+              targets.map((x) => (
+                <span class:list={["aw-tile", { on: x.status === "verified" }]} data-aw-tile={x.major}>
+                  <b>{x.year}</b>
+                  <small class:list={[x.status === "verified" ? "ok" : "exp"]}>
+                    <Icon name={x.status === "verified" ? "check" : "flask"} size={13} />
+                    {x.status === "verified" ? s("target.verified") : s("target.experimental")}
+                  </small>
+                </span>
+              ))
+            }
+          </div>
+        </div>
+        <div class="aw-bottom">
+          <span class="aw-save" data-aw-save><Icon name="shield" size={16} />{s("queue.saveNext")}</span>
+          <span class="aw-convert" data-aw-convert>{s("queue.convert", { count: 1 })} <Icon name="arrow" size={22} /></span>
+        </div>
+      </section>
+
+      <!-- Converting. -->
+      <section class="aw-screen aw-converting" aria-hidden="true">
+        <div class="aw-head">
+          <h3>{s("converting.title")} <i>{s("converting.progress", { current: 1, total: 1 })}</i></h3>
+          <strong data-aw-pct>0%</strong>
+        </div>
+        <div class="aw-row aw-row-progress">
+          <span class="aw-ext">.aep</span>
+          <div class="aw-file"><b>Intro_v05.aep</b><span><code>2027</code> → <code>2024</code></span></div>
+          <span class="aw-summary">{s("state.running")}</span>
+          <span class="aw-bar-track"><span class="aw-bar-fill" data-aw-fill></span></span>
+        </div>
+      </section>
+
+      <!-- Done. -->
+      <section class="aw-screen aw-done" aria-hidden="true">
+        <div class="aw-done-head">
+          <span class="aw-check"><Icon name="check" size={30} /></span>
+          <div><h3>{s("done.title", { count: 1 })}</h3><p>{s("done.sub")}</p></div>
+        </div>
+        <div class="aw-row">
+          <span class="aw-ext">.aep</span>
+          <div class="aw-file">
+            <b>Intro_v05_AE2024.aep</b><span><code>2027</code> → <code>2024</code></span>
+            <span class="aw-copy-note"><Icon name="alert" size={15} />{s("done.changes", { count: 2 })}</span>
+          </div>
+          <span class="aw-ghostbtn">{s("done.showFolder")}</span>
+        </div>
+      </section>
+
+      <!-- The dragged file and the pointer of the demo. -->
+      <div class="aw-drag" aria-hidden="true"><span class="aw-ext">.aep</span><b>Intro_v05.aep</b></div>
+      <svg class="aw-pointer" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.04 2.91a.75.75 0 0 1 .82-.15l15 6.25a.75.75 0 0 1-.06 1.41l-6.13 2-2 6.13a.75.75 0 0 1-1.41.06L4 3.73a.75.75 0 0 1 .04-.82z"></path></svg>
+    </div>
+  </div>
+  <div class="aw-under">
+    <ol class="aw-steps">
+      {steps.map((step, i) => <li data-aw-step={i + 1}><span class="mono">{i + 1}</span>{step}</li>)}
+    </ol>
+    <button type="button" class="aw-replay" data-aw-replay hidden><Icon name="refresh" size={15} />{replay}</button>
+  </div>
+  <input type="file" accept=".aep,.aet,.ffx" class="visually-hidden" data-aw-input tabindex="-1" aria-hidden="true" />
+</div>
+
+<style is:global>
+  /* Global, not scoped: app-window.ts writes rows and report notes into the window. Every selector starts with .aw. */
+  .aw-stage {
+    position: relative;
+  }
+  .aw-frame {
+    position: relative;
+    aspect-ratio: 920 / 640;
+    width: 100%;
+  }
+  .aw-frame::before {
+    content: "";
+    position: absolute;
+    inset: 12% -4% -8%;
+    background: radial-gradient(closest-side, rgb(214 255 61 / 0.16), transparent);
+    filter: blur(24px);
+    z-index: -1;
+  }
+  /* The window at the app's size, scaled to the column by app-window.ts (--k). */
+  .aw {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 920px;
+    height: 640px;
+    transform: scale(var(--k));
+    transform-origin: top left;
+    border-radius: 20px;
+    overflow: hidden;
+    background:
+      radial-gradient(700px 400px at 12% -10%, rgb(255 255 255 / 0.05), transparent 70%),
+      linear-gradient(180deg, #121214, #0b0b0c);
+    box-shadow:
+      0 50px 100px -30px rgb(0 0 0 / 0.9),
+      0 0 0 1px rgb(255 255 255 / 0.1),
+      inset 0 1px 0 rgb(255 255 255 / 0.08);
+    color: var(--fg);
+    font-size: 15px;
+    line-height: 1.4;
+    user-select: none;
+  }
+  .aw.over {
+    box-shadow:
+      0 50px 100px -30px rgb(0 0 0 / 0.9),
+      0 0 0 2px var(--lime),
+      0 0 60px -10px rgb(214 255 61 / 0.5);
+  }
+  .aw-bar {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 3;
+  }
+  .aw-lights {
+    display: flex;
+    gap: 8px;
+  }
+  .aw-lights i {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ff5f57;
+  }
+  .aw-lights i:nth-child(2) {
+    background: #febc2e;
+  }
+  .aw-lights i:nth-child(3) {
+    background: #28c840;
+  }
+  .aw-tools {
+    display: flex;
+    gap: 18px;
+  }
+  .aw-tools svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: #aeaba2;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .aw-screen {
+    position: absolute;
+    inset: 52px 0 0;
+    padding: 0 24px 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 120ms ease-out,
+      visibility 0s 120ms;
+  }
+  .aw[data-state="empty"] .aw-empty,
+  .aw[data-state="list"] .aw-list,
+  .aw[data-state="converting"] .aw-converting,
+  .aw[data-state="done"] .aw-done {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 320ms 110ms var(--ease-out-quint);
+  }
+
+  /* Empty */
+  .aw-lockup {
+    position: relative;
+    height: 104px;
+  }
+  .aw-lockup img {
+    position: absolute;
+    left: 180px;
+    top: -28px;
+    width: 178px;
+    height: 108px;
+    filter: drop-shadow(0 10px 12px rgb(0 0 0 / 0.5));
+  }
+  .aw-lockup span {
+    position: absolute;
+    left: 0;
+    top: 46px;
+    font-size: 55px;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+  }
+  .aw-drop {
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    top: 112px;
+    bottom: 52px;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 10px;
+    border: 0;
+    border-radius: 26px;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    background: linear-gradient(180deg, #1c1c20, #141416);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.06),
+      inset 0 0 0 12px #161618,
+      inset 0 0 0 13.5px rgb(255 255 255 / 0.12);
+  }
+  .aw-rings {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 176px;
+    height: 176px;
+    margin-bottom: 26px;
+  }
+  .aw-rings i {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1.5px rgb(214 255 61 / 0.28);
+  }
+  .aw-rings i:nth-child(2) {
+    inset: 30px;
+    box-shadow: inset 0 0 0 1.5px rgb(214 255 61 / 0.45);
+  }
+  .aw-disc {
+    display: grid;
+    place-items: center;
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    color: var(--ink);
+    background: var(--lime-fill);
+    box-shadow: 0 14px 40px -8px rgb(214 255 61 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.6);
+  }
+  .aw.over .aw-rings i,
+  .aw[data-pulse] .aw-rings i {
+    animation: aw-ring 900ms var(--ease-out-quint) infinite;
+  }
+  .aw-drop-title {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+  .aw-drop-sub {
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .aw-chips {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .aw-chips i {
+    font: 600 14px var(--font-mono);
+    font-style: normal;
+    padding: 2px 10px 3px;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.3);
+  }
+  .aw-foot {
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    bottom: 18px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .aw-foot span:first-child {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--fg);
+    font-weight: 700;
+  }
+  .aw-foot svg {
+    color: var(--lime);
+  }
+
+  /* List */
+  .aw-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+  }
+  .aw-head h3 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 34px;
+    letter-spacing: -0.035em;
+  }
+  .aw-head h3 i {
+    font: 700 14px var(--font-sans);
+    font-style: normal;
+    letter-spacing: 0;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #1f1f22;
+  }
+  .aw-ghostbtn {
+    font-weight: 700;
+    font-size: 14px;
+    padding: 9px 16px;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.3);
+    white-space: nowrap;
+  }
+  .aw-rows {
+    margin-top: 8px;
+    box-shadow: 0 -1px 0 rgb(255 255 255 / 0.08);
+    max-height: 316px;
+    overflow: hidden;
+  }
+  .aw-row {
+    display: grid;
+    grid-template-columns: 52px 1fr auto;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 4px;
+  }
+  .aw-ext {
+    display: grid;
+    place-items: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    font: 600 14px var(--font-mono);
+    background: linear-gradient(180deg, #1f1f22, #18181a);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  }
+  .aw-file {
+    display: grid;
+    min-width: 0;
+  }
+  .aw-file b {
+    font-size: 17px;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .aw-file > span {
+    color: #d8d5cd;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .aw-file em {
+    font-style: normal;
+    color: #6a6a72;
+    margin: 0 4px;
+  }
+  .aw-file code {
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .aw-file code.dim {
+    color: #8d8a84;
+    font-weight: 500;
+  }
+  .aw-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .aw-summary.warn {
+    color: var(--warn);
+  }
+  .aw-summary.ok {
+    color: var(--ok);
+  }
+  .aw-summary.bad {
+    color: var(--danger);
+  }
+  .aw-report {
+    margin: 2px 0 8px 66px;
+    padding: 16px 20px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #1c1c20, #161618);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+    transition: opacity 260ms;
+  }
+  .aw-report-for {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    font-size: 17px;
+    letter-spacing: -0.015em;
+  }
+  .aw-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px 3px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .aw-badge.ok {
+    color: var(--ok);
+    box-shadow: inset 0 0 0 1.5px var(--ok);
+  }
+  .aw-badge.exp {
+    color: var(--warn);
+    box-shadow: inset 0 0 0 1.5px var(--warn);
+  }
+  .aw-report ul {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+  }
+  .aw-report li {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 10px;
+    font-size: 15px;
+  }
+  .aw-report li svg {
+    margin-top: 1px;
+  }
+  .aw-report li.warn svg {
+    color: var(--warn);
+  }
+  .aw-report li.info svg {
+    color: var(--warn);
+  }
+  .aw-report li.plain svg {
+    color: var(--muted);
+  }
+  .aw-report li.block svg,
+  .aw-report li.block b {
+    color: var(--danger);
+  }
+  .aw-report li.ok svg {
+    color: var(--ok);
+  }
+  .aw-report small {
+    display: block;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: 2px;
+  }
+  .aw-safe {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .aw-pick {
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    bottom: 92px;
+    padding-top: 14px;
+    box-shadow: 0 -1px 0 rgb(255 255 255 / 0.08);
+  }
+  .aw-pick p {
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .aw-pick p b {
+    color: var(--fg);
+  }
+  .aw-tiles {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .aw-tile {
+    display: grid;
+    gap: 2px;
+    padding: 9px 12px 10px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #1c1c20, #161618);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+    transition: box-shadow 200ms, opacity 200ms;
+  }
+  .aw-tile b {
+    font: 700 28px/1 var(--font-mono);
+    letter-spacing: -0.03em;
+  }
+  .aw-tile small {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+  .aw-tile small.ok {
+    color: var(--ok);
+  }
+  .aw-tile small.exp {
+    color: var(--muted);
+  }
+  .aw-tile.on {
+    box-shadow: inset 0 0 0 2px var(--fg);
+  }
+  .aw-tile.off {
+    opacity: 0.32;
+  }
+  .aw-tiles.pickable .aw-tile:not(.off) {
+    cursor: pointer;
+  }
+  .aw-tiles.pickable .aw-tile:not(.off):not(.on):hover {
+    box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.35);
+  }
+  .aw-bottom {
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    bottom: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .aw-save {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .aw-convert {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 56px;
+    padding: 0 30px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 21px;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    background: var(--lime-fill);
+    box-shadow: 0 16px 34px -12px rgb(170 210 30 / 0.65), inset 0 1px 0 rgb(255 255 255 / 0.6);
+    transition: transform 160ms var(--ease-pop);
+    text-decoration: none;
+  }
+  .aw-convert.press {
+    transform: scale(0.95);
+  }
+  a.aw-convert:hover {
+    box-shadow: 0 18px 38px -12px rgb(170 210 30 / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.7);
+  }
+
+  /* Converting */
+  .aw-converting .aw-head strong {
+    font-size: 40px;
+    font-weight: 800;
+    color: var(--lime);
+    letter-spacing: -0.03em;
+  }
+  .aw-converting .aw-head h3 i {
+    font-weight: 700;
+  }
+  .aw-row-progress {
+    margin-top: 8px;
+    box-shadow: 0 -1px 0 rgb(255 255 255 / 0.08);
+    grid-template-rows: auto auto;
+  }
+  .aw-bar-track {
+    grid-column: 2 / -1;
+    height: 6px;
+    border-radius: 999px;
+    background: #26262a;
+    overflow: hidden;
+  }
+  .aw-bar-fill {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: inherit;
+    background: var(--lime);
+  }
+
+  /* Done */
+  .aw-done-head {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 6px 0 18px;
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.08);
+  }
+  .aw-check {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    color: var(--ink);
+    background: var(--lime-fill);
+    box-shadow: 0 14px 30px -10px rgb(214 255 61 / 0.6);
+  }
+  .aw-done h3 {
+    font-size: 32px;
+    letter-spacing: -0.035em;
+  }
+  .aw-done-head p {
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .aw-copy-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    color: var(--warn) !important;
+    font-weight: 700 !important;
+    text-decoration: underline dotted;
+    text-underline-offset: 4px;
+  }
+
+  /* The demo's dragged file, pointer, and the hand-over. */
+  .aw-drag {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 18px 8px 8px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #26262b, #18181b);
+    box-shadow: 0 24px 40px -12px rgb(0 0 0 / 0.9), inset 0 0 0 1.5px rgb(255 255 255 / 0.15);
+    font-size: 16px;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 5;
+    transform: translate(700px, 700px);
+  }
+  .aw-drag .aw-ext {
+    width: 42px;
+    height: 42px;
+  }
+  .aw-pointer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 28px;
+    height: 28px;
+    fill: #f6f4ee;
+    stroke: #0b0b0c;
+    stroke-width: 1.4;
+    filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.6));
+    opacity: 0;
+    pointer-events: none;
+    z-index: 6;
+    transform: translate(720px, 720px);
+  }
+
+  /* The caption above the window: the mode, a hint, and the demo's progress. */
+  .aw-caption {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 34px;
+    margin-bottom: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .aw-mode {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+    padding: 6px 13px 7px 11px;
+    border-radius: 999px;
+    font-weight: 800;
+    color: var(--fg);
+    box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.2);
+    transition:
+      background 300ms,
+      color 300ms,
+      box-shadow 300ms;
+  }
+  .aw-mode i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ff5f57;
+  }
+  .aw-stage[data-mode="demo"] .aw-mode i {
+    animation: aw-blink 1.2s ease-in-out infinite;
+  }
+  .aw-stage[data-mode="turn"] .aw-mode,
+  .aw-stage[data-mode="own"] .aw-mode {
+    color: var(--ink);
+    background: var(--lime-fill);
+    box-shadow: 0 10px 24px -10px rgb(214 255 61 / 0.7);
+  }
+  .aw-stage[data-mode="turn"] .aw-mode i,
+  .aw-stage[data-mode="own"] .aw-mode i {
+    background: var(--ink);
+  }
+  .aw-stage[data-mode="turn"] .aw-mode-hint {
+    color: var(--fg);
+  }
+  .aw-progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -8px;
+    height: 2px;
+    border-radius: 2px;
+    background: rgb(255 255 255 / 0.08);
+    overflow: hidden;
+    transition: opacity 300ms;
+  }
+  .aw-progress span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: rgb(246 244 238 / 0.55);
+  }
+  .aw-stage:not([data-mode="demo"]) .aw-progress {
+    opacity: 0;
+  }
+
+  /* Waiting for a file: a dashed lime outline (dashed means "drop here"), breathing rings, a hand. */
+  .aw-dash {
+    position: absolute;
+    inset: -9px;
+    width: calc(100% + 18px);
+    height: calc(100% + 18px);
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 400ms;
+  }
+  .aw-dash rect {
+    x: 1px;
+    y: 1px;
+    width: calc(100% - 2px);
+    height: calc(100% - 2px);
+    rx: 26px;
+    fill: none;
+    stroke: var(--lime);
+    stroke-width: 2px;
+    stroke-dasharray: 9 9;
+    stroke-linecap: round;
+  }
+  .aw-stage[data-mode="turn"] .aw-dash {
+    opacity: 0.85;
+  }
+  .aw-stage[data-mode="turn"] .aw-dash rect {
+    animation: aw-march 1.6s linear infinite;
+  }
+  .aw-stage[data-mode="turn"] .aw-rings i {
+    animation: aw-breathe 2.4s var(--ease-out-quint) infinite;
+  }
+  .aw-stage[data-mode="turn"] .aw-rings i:nth-child(2) {
+    animation-delay: 0.3s;
+  }
+  .aw-frame {
+    cursor: pointer;
+  }
+  .aw-frame:hover .aw {
+    box-shadow:
+      0 50px 100px -30px rgb(0 0 0 / 0.9),
+      0 0 0 1.5px rgb(214 255 61 / 0.55),
+      inset 0 1px 0 rgb(255 255 255 / 0.08);
+  }
+  .aw-stage[data-mode="own"] .aw-frame {
+    cursor: default;
+  }
+  .aw-frame:focus-visible {
+    outline: 2px solid var(--lime);
+    outline-offset: 12px;
+    border-radius: 20px;
+  }
+  @keyframes aw-blink {
+    50% {
+      opacity: 0.25;
+    }
+  }
+  @keyframes aw-march {
+    to {
+      stroke-dashoffset: -36;
+    }
+  }
+  @keyframes aw-breathe {
+    0% {
+      transform: scale(0.94);
+      opacity: 0.5;
+    }
+    40% {
+      transform: scale(1.04);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(0.94);
+      opacity: 0.5;
+    }
+  }
+
+  /* Under the window: the three steps, lit in time with the demo. */
+  .aw-under {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 16px;
+    margin-top: 22px;
+  }
+  .aw-steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 22px;
+  }
+  .aw-steps li {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--faint);
+    transition: color 240ms;
+  }
+  .aw-steps li .mono {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-size: 13px;
+    color: var(--faint);
+    box-shadow: inset 0 0 0 1.5px #3a3a40;
+    transition:
+      background 240ms,
+      color 240ms,
+      box-shadow 240ms;
+  }
+  .aw-steps li.on {
+    color: var(--fg);
+  }
+  .aw-steps li.on .mono {
+    color: var(--ink);
+    background: var(--lime);
+    box-shadow: none;
+  }
+  .aw-replay {
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: 700 14px var(--font-sans);
+    cursor: pointer;
+    padding: 6px 2px;
+  }
+  .aw-replay:hover {
+    color: var(--fg);
+  }
+  @keyframes aw-ring {
+    from {
+      transform: scale(0.92);
+      opacity: 1;
+    }
+    to {
+      transform: scale(1.06);
+      opacity: 0.4;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .aw-screen {
+      transition: none;
+    }
+    .aw-stage .aw-dash rect,
+    .aw-stage .aw-rings i,
+    .aw-stage .aw-mode i {
+      animation: none !important;
+    }
+  }
+</style>

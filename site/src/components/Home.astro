@@ -1,0 +1,943 @@
+---
+import data from "../generated/data.json";
+import type { Strings } from "../i18n/en";
+import Icon from "./Icon.astro";
+import AppWindow from "./AppWindow.astro";
+
+interface Props {
+  t: Strings;
+}
+const { t } = Astro.props;
+const home = t.lang === "ru" ? "/ru/" : "/";
+const repo = "https://github.com/itsAnchorpoint/AEP-Downgrader";
+const blob = `${repo}/blob/main`;
+const fmt = (s: string, vars: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ""));
+const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+// "[Run anyway]" in the copy is a button name the system shows: drawn as a key cap.
+const keys = (s: string) =>
+  esc(s)
+    .replace(/\[([^\]]+)\]/g, '<span class="key">$1</span>')
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
+const count = data.downloadCount ? Math.floor(data.downloadCount / 1000) * 1000 : null;
+const countText = count ? fmt(t.hero.downloads, { n: new Intl.NumberFormat(t.locale).format(count) }) : null;
+
+const targets = data.targets;
+const defaultYear = targets.find((t) => t.status === "verified")?.year ?? targets[0].year;
+const sourcesFor = (year: number) => [2023, 2024, 2025, 2026, 2027].filter((y) => y > year);
+const list = (years: number[]) =>
+  years.length <= 1 ? String(years[0] ?? "") : `${years.slice(0, -1).join(", ")} ${t.versions.and} ${years.at(-1)}`;
+const statusOf = (year: number) => targets.find((x) => x.year === year)?.status ?? "experimental";
+const steps = [27, 26, 25, 24, 23];
+
+const pageData = {
+  lang: t.lang,
+  downloads: data.downloads,
+  os: t.os,
+  heroDownloadFor: t.hero.downloadFor,
+  targets,
+  versions: {
+    opens: t.versions.opens,
+    and: t.versions.and,
+    verifiedText: t.versions.verifiedText,
+    experimentalText: t.versions.experimentalText,
+    verified: t.versions.verified,
+    experimental: t.versions.experimental,
+  },
+};
+---
+
+<script type="application/json" id="page-data" set:html={JSON.stringify(pageData)} />
+
+<!-- Hero: the claim and the download on the left; on the right, the app doing the job, then taking yours. -->
+<section class="hero" id="try">
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <h1>
+        {t.hero.titleBefore}<br /><span class="plate">{t.hero.plate}</span>{" "}{t.hero.titleAfter}
+      </h1>
+      <p class="lead hero-lead">{t.hero.lead}</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#download" data-os-download>
+          <Icon name="download" />
+          <span data-os-label>{t.hero.download}</span>
+        </a>
+        <a class="btn btn-secondary" href="#try" data-aw-try>{t.hero.tryOwn}</a>
+      </div>
+      <p class="hero-meta">
+        <span>{t.hero.version} <span class="mono">{data.version}</span></span>
+        <span>{t.hero.free}</span>
+        {countText && <span>{countText}</span>}
+        <a href="#download">{t.hero.otherSystems}</a>
+      </p>
+    </div>
+    <div class="hero-window" data-site={JSON.stringify({
+        neverLeft: t.hero.neverLeft,
+        downloadToConvert: t.hero.downloadToConvert,
+        bigFile: t.hero.bigFile,
+        bigFileSummary: t.hero.bigFileSummary,
+        reportFailed: t.hero.reportFailed,
+      })}>
+      <AppWindow
+        lang={t.lang as "en" | "ru"}
+        steps={t.hero.steps}
+        replay={t.hero.replay}
+        modes={{
+          demo: [t.hero.demo, t.hero.demoHint],
+          turn: [t.hero.yourTurn, t.hero.yourTurnHint],
+          own: [t.hero.yourFile, t.hero.yourFileHint],
+        }}
+      />
+    </div>
+  </div>
+</section>
+
+<!-- Pick your After Effects: what it opens after conversion, and what each step down removes. -->
+<section class="section" id="versions">
+  <div class="container">
+    <div class="section-head">
+      <h2 class="h2">{t.versions.title}</h2>
+      <p class="lead">{t.versions.lead}</p>
+    </div>
+    <div class="versions">
+      <div class="picker" role="radiogroup" aria-label={t.versions.pickLabel}>
+        {
+          targets.map((x) => (
+            <button type="button" role="radio" class="picker-year" data-year={x.year} aria-checked={x.year === defaultYear ? "true" : "false"}>
+              <span class="mono">{x.year}</span>
+              <span class:list={["picker-status", `status-${x.status}`]}>
+                <Icon name={x.status === "verified" ? "check" : "flask"} size={14} />
+                {x.status === "verified" ? t.versions.verified : t.versions.experimental}
+              </span>
+            </button>
+          ))
+        }
+      </div>
+      <div class="versions-body surface">
+        <p class="opens" data-opens>
+          {fmt(t.versions.opens, { list: list(sourcesFor(defaultYear)), year: defaultYear })}
+        </p>
+        <p class:list={["status", `status-${statusOf(defaultYear)}`, "versions-status"]} data-status>
+          <Icon name={statusOf(defaultYear) === "verified" ? "check" : "flask"} size={16} />
+          <span data-status-text>
+            {statusOf(defaultYear) === "verified"
+              ? fmt(t.versions.verifiedText, { year: defaultYear })
+              : fmt(t.versions.experimentalText, { year: defaultYear })}
+          </span>
+        </p>
+        <h3 class="steps-title">{t.versions.stepsTitle}</h3>
+        <ol class="steps">
+          {
+            steps.map((m) => (
+              <li data-leaves={m} hidden={m - 1 < defaultYear - 2000}>
+                <span class="step-years mono">
+                  {2000 + m} <Icon name="arrow" size={14} /> {1999 + m}
+                </span>
+                <span class="step-text">{t.versions.steps[m]}</span>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- The report, shown in the app itself. -->
+<section class="section" id="report">
+  <div class="container">
+    <div class="section-head">
+      <h2 class="h2">{t.report.titleBefore}<span class="plate">{t.report.plate}</span>{t.report.titleAfter}</h2>
+      <p class="lead">{t.report.lead}</p>
+    </div>
+    <figure class="shot">
+      <img src="/brand/screenshot.png" alt={t.report.alt} width="1400" height="1005" decoding="async" />
+    </figure>
+  </div>
+</section>
+
+<!-- Privacy. -->
+<section class="section" id="privacy">
+  <div class="container">
+    <div class="section-head">
+      <h2 class="h2">{t.privacy.title}</h2>
+      <p class="lead">{t.privacy.lead}</p>
+    </div>
+    <ul class="facts">
+      {
+        t.privacy.items.map((item, i) => (
+          <li>
+            <Icon name={["cloudOff", "eyeOff", "refresh"][i]} size={22} />
+            <h3>{item.title}</h3>
+            <p>{item.text}</p>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="more"><a href={`${blob}/docs/PRIVACY.md`}>{t.privacy.more}</a></p>
+  </div>
+</section>
+
+<!-- Compatibility, as the core prints it. -->
+<section class="section" id="compatibility">
+  <div class="container">
+    <div class="section-head">
+      <h2 class="h2">{t.compat.title}</h2>
+      <p class="lead">{t.compat.lead}</p>
+    </div>
+    <div class="table-wrap surface">
+      <table class="compat">
+        <thead>
+          <tr><th scope="col">{t.compat.version}</th><th scope="col">{t.compat.status}</th>{t.compat.showBasis && <th scope="col">{t.compat.basis}</th>}</tr>
+        </thead>
+        <tbody>
+          {
+            targets.map((x) => (
+              <tr>
+                <th scope="row">After Effects <span class="mono">{x.year}</span></th>
+                <td>
+                  <span class:list={["status", `status-${x.status}`]}>
+                    <Icon name={x.status === "verified" ? "check" : "flask"} size={16} />
+                    {x.status === "verified" ? t.versions.verified : t.versions.experimental}
+                  </span>
+                </td>
+                {t.compat.showBasis && <td class="basis">{x.basis}</td>}
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="more">{t.compat.help} <a href={`${blob}/tools/ae/README${t.lang === "ru" ? ".ru" : ""}.md`}>{t.compat.helpLink}</a></p>
+  </div>
+</section>
+
+<!-- First launch, per system. -->
+<section class="section" id="first-launch">
+  <div class="container">
+    <div class="section-head">
+      <h2 class="h2">{t.firstLaunch.title}</h2>
+      <p class="lead">{t.firstLaunch.lead}</p>
+    </div>
+    <div class="tabs" data-tabs>
+      <div class="tablist" role="tablist">
+        {
+          (["windows", "macos", "linux"] as const).map((os, i) => (
+            <button type="button" role="tab" id={`tab-${os}`} aria-controls={`panel-${os}`} aria-selected={i === 0 ? "true" : "false"} data-os={os}>
+              {t.os[os]}
+            </button>
+          ))
+        }
+      </div>
+      {
+        (["windows", "macos", "linux"] as const).map((os, i) => (
+          <ol class="tabpanel launch-steps" role="tabpanel" id={`panel-${os}`} aria-labelledby={`tab-${os}`} hidden={i !== 0}>
+            {t.firstLaunch[os].map((step) => (
+              <li><span set:html={keys(step)} /></li>
+            ))}
+          </ol>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<!-- Free, and how to support it. -->
+<section class="section" id="support">
+  <div class="container">
+    <div class="support-card surface">
+      <div>
+        <h2 class="h2">{t.support.titleBefore}<span class="plate">{t.support.plate}</span>{t.support.titleAfter}</h2>
+        <p class="lead">{t.support.lead}</p>
+      </div>
+      <div class="support-actions">
+        <a class="btn btn-quiet" href="https://boosty.to/aepdowngrader"><Icon name="heart" />{t.support.boosty}</a>
+        <a class="btn btn-quiet" href="https://web.tribute.tg/d/UNE"><Icon name="heart" />{t.support.tribute}</a>
+      </div>
+      <p class="support-note">{t.support.declined} <a href={`${home}support/`}>{t.support.more}</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- Download, per system. -->
+<section class="section" id="download">
+  <div class="container">
+    <div class="section-head">
+      <h2 class="h2">{t.download.title}</h2>
+      <p class="lead">{t.download.lead} {t.hero.version} <span class="mono">{data.version}</span>.</p>
+    </div>
+    <div class="downloads">
+      <div class="dl-row surface" data-os-row="windows">
+        <div class="dl-os"><Icon name="windows" size={24} /><div><h3>{t.download.windows.name}</h3><p>{t.download.windows.detail}</p></div></div>
+        <div class="dl-choice">
+          <div class="segmented" role="radiogroup" aria-label={t.download.windows.name}>
+            <button type="button" role="radio" aria-checked="true" data-href={data.downloads.windowsSetup} data-text={t.download.installerText}>{t.download.installer}</button>
+            <button type="button" role="radio" aria-checked="false" data-href={data.downloads.windowsPortable} data-text={t.download.portableText}>{t.download.portable}</button>
+          </div>
+          <p class="dl-text" data-text-out>{t.download.installerText}</p>
+        </div>
+        <a class="btn btn-secondary dl-btn" href={data.downloads.windowsSetup} data-href-out><Icon name="download" />{t.download.button}</a>
+      </div>
+      <div class="dl-row surface" data-os-row="macos">
+        <div class="dl-os"><Icon name="laptop" size={24} /><div><h3>{t.download.macos.name}</h3><p>{t.download.macos.detail}</p></div></div>
+        <div class="dl-choice"><p class="dl-text">{t.download.dmgText}</p></div>
+        <a class="btn btn-secondary dl-btn" href={data.downloads.macos}><Icon name="download" />{t.download.button}</a>
+      </div>
+      <div class="dl-row surface" data-os-row="linux">
+        <div class="dl-os"><Icon name="terminal" size={24} /><div><h3>{t.download.linux.name}</h3><p>{t.download.linux.detail}</p></div></div>
+        <div class="dl-choice">
+          <div class="segmented" role="radiogroup" aria-label={t.download.linux.name}>
+            <button type="button" role="radio" aria-checked="true" data-href={data.downloads.appimage} data-text={t.download.appimageText}>{t.download.appimage}</button>
+            <button type="button" role="radio" aria-checked="false" data-href={data.downloads.deb} data-text={t.download.debText}>{t.download.deb}</button>
+          </div>
+          <p class="dl-text" data-text-out>{t.download.appimageText}</p>
+        </div>
+        <a class="btn btn-secondary dl-btn" href={data.downloads.appimage} data-href-out><Icon name="download" />{t.download.button}</a>
+      </div>
+    </div>
+    <p class="dl-links">
+      <a href={data.downloads.checksums}>{t.download.checksums}</a>
+      <a href={data.downloads.release}>{t.download.notes}</a>
+      <a href={`${repo}/releases`}>{t.download.all}</a>
+      <a href={repo}>{t.download.source}</a>
+    </p>
+  </div>
+</section>
+
+<!-- Questions. -->
+<section class="section" id="faq">
+  <div class="container faq">
+    <h2 class="h2">{t.faq.title}</h2>
+    <div class="faq-list">
+      {
+        t.faq.items.map((item) => (
+          <details>
+            <summary>
+              {item.q}
+              <Icon name="chevron" size={20} />
+            </summary>
+            <p>{item.a}</p>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<script>
+  import "../scripts/home.ts";
+  import "../scripts/app-window.ts";
+</script>
+
+<style>
+  /* Hero */
+  .hero {
+    padding-top: clamp(40px, 5vw, 72px);
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(32px, 4vw, 64px);
+    align-items: center;
+  }
+  .hero h1 {
+    font-size: clamp(44px, 4.9vw, 68px);
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+  }
+  /* Russian words run longer: keep the claim to three lines beside the window. */
+  :global(html[lang="ru"]) .hero h1 {
+    font-size: clamp(40px, 4.1vw, 58px);
+  }
+  .hero-lead {
+    margin-top: 24px;
+    max-width: 46ch;
+  }
+  .hero-meta a {
+    color: var(--muted);
+  }
+  @media (max-width: 1000px) {
+    .hero-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .hero-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 36px;
+  }
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+    margin-top: 22px;
+    color: var(--faint);
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+
+  /* Check a file */
+  .dropzone {
+    position: relative;
+    min-height: 340px;
+    border-radius: var(--radius-xl);
+    background: linear-gradient(180deg, rgb(214 255 61 / 0.08), rgb(214 255 61 / 0.02));
+    box-shadow: 0 30px 80px -40px rgb(214 255 61 / 0.35);
+    display: grid;
+    place-items: center;
+    padding: 40px 24px;
+    transition: background 200ms, box-shadow 200ms;
+  }
+  .dropzone.over {
+    background: linear-gradient(180deg, rgb(214 255 61 / 0.16), rgb(214 255 61 / 0.05));
+    box-shadow: 0 30px 90px -36px rgb(214 255 61 / 0.55);
+  }
+  .dz-dash {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .dz-dash rect {
+    x: 1px;
+    y: 1px;
+    width: calc(100% - 2px);
+    height: calc(100% - 2px);
+    rx: 27px;
+    fill: none;
+    stroke: rgb(214 255 61 / 0.7);
+    stroke-width: 2px;
+    stroke-dasharray: 8 8;
+    stroke-linecap: round;
+  }
+  .dropzone[data-state="result"] .dz-dash rect {
+    stroke: rgb(255 255 255 / 0.1);
+    stroke-dasharray: none;
+  }
+  .dz-idle {
+    display: grid;
+    justify-items: center;
+    gap: 14px;
+    text-align: center;
+  }
+  .dz-icon {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    color: var(--lime);
+    background: var(--surface-fill);
+    box-shadow: var(--surface-depth);
+  }
+  .dz-title {
+    font-size: clamp(20px, 2.2vw, 26px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .dz-or {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--faint);
+    font-weight: 600;
+  }
+  .dz-busy {
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .dz-result {
+    width: min(100%, 760px);
+  }
+  .check-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 18px;
+  }
+  .check-note :global(svg) {
+    color: var(--lime);
+    flex: none;
+    margin-top: 3px;
+  }
+
+  /* Versions */
+  .versions {
+    display: grid;
+    gap: 20px;
+  }
+  .picker {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .picker-year {
+    display: grid;
+    gap: 8px;
+    justify-items: start;
+    padding: 20px 22px 18px;
+    border: 0;
+    border-radius: var(--radius-lg);
+    color: var(--faint);
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px var(--line);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: box-shadow 180ms, color 180ms, background 180ms;
+  }
+  .picker-year .mono {
+    font-size: clamp(26px, 3vw, 40px);
+    font-weight: 700;
+    line-height: 1;
+    color: var(--muted);
+    letter-spacing: -0.03em;
+  }
+  .picker-year:hover {
+    box-shadow: inset 0 0 0 1.5px #4a4a52;
+  }
+  .picker-year[aria-checked="true"] {
+    background: var(--surface-fill);
+    box-shadow: var(--surface-depth), inset 0 0 0 2px var(--fg);
+  }
+  .picker-year[aria-checked="true"] .mono {
+    color: var(--fg);
+  }
+  .picker-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .picker-status.status-verified {
+    color: var(--ok);
+  }
+  .picker-status.status-experimental {
+    color: var(--warn);
+  }
+  .versions-body {
+    padding: clamp(24px, 4vw, 44px);
+  }
+  .opens {
+    font-size: clamp(22px, 2.6vw, 32px);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    max-width: 30ch;
+    text-wrap: balance;
+  }
+  .versions-status {
+    margin-top: 16px;
+    align-items: flex-start;
+    white-space: normal;
+    font-size: 16px;
+    max-width: 70ch;
+  }
+  .versions-status :global(svg) {
+    margin-top: 3px;
+    flex: none;
+  }
+  .steps-title {
+    margin-top: 36px;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    color: var(--muted);
+  }
+  .steps {
+    list-style: none;
+    margin: 14px 0 0;
+    padding: 0;
+    display: grid;
+  }
+  .steps li {
+    display: grid;
+    grid-template-columns: 168px 1fr;
+    gap: 20px;
+    padding: 16px 0;
+    box-shadow: 0 -1px 0 var(--line-soft);
+  }
+  .step-years {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--fg);
+    font-size: 16px;
+  }
+  .step-years :global(svg) {
+    color: var(--lime);
+  }
+  .step-text {
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* Report */
+  .shot {
+    margin: 0;
+    position: relative;
+  }
+  .shot::before {
+    content: "";
+    position: absolute;
+    inset: 20% 15% 0;
+    background: radial-gradient(closest-side, rgb(214 255 61 / 0.14), transparent);
+    filter: blur(20px);
+    z-index: -1;
+  }
+  .shot img {
+    width: min(100%, 1040px);
+    height: auto;
+    margin-inline: auto;
+  }
+
+  /* Privacy */
+  .facts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    box-shadow: 0 -1px 0 var(--line-soft);
+  }
+  .facts li {
+    padding: 28px 32px 8px 0;
+  }
+  .facts li + li {
+    padding-left: 32px;
+    box-shadow: -1px 0 0 var(--line-soft);
+  }
+  .facts :global(svg) {
+    color: var(--lime);
+  }
+  .facts h3 {
+    margin-top: 18px;
+    font-size: 21px;
+    letter-spacing: -0.02em;
+  }
+  .facts p {
+    margin-top: 8px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .more {
+    margin-top: 28px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  /* Compatibility */
+  .table-wrap {
+    overflow-x: auto;
+    padding: 8px clamp(8px, 2vw, 28px);
+  }
+  .compat {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 640px;
+  }
+  .compat th,
+  .compat td {
+    text-align: left;
+    padding: 18px 16px;
+    vertical-align: top;
+  }
+  .compat thead th {
+    font-size: 14px;
+    color: var(--faint);
+    font-weight: 700;
+  }
+  .compat tbody tr {
+    box-shadow: 0 -1px 0 var(--line-soft);
+  }
+  .compat tbody th {
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .compat .basis {
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 15px;
+  }
+
+  /* First launch */
+  .tablist {
+    display: inline-flex;
+    gap: 4px;
+    padding: 5px;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1.5px var(--line);
+  }
+  .tablist button {
+    border: 0;
+    border-radius: 999px;
+    padding: 10px 22px;
+    font: 700 16px var(--font-sans);
+    color: var(--muted);
+    background: transparent;
+    cursor: pointer;
+    transition: color 160ms, background 160ms;
+  }
+  .tablist button[aria-selected="true"] {
+    color: var(--fg);
+    background: var(--surface-fill);
+    box-shadow: var(--surface-depth), inset 0 0 0 1.5px rgb(246 244 238 / 0.5);
+  }
+  .launch-steps {
+    margin: 28px 0 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+    display: grid;
+    gap: 0;
+    max-width: 860px;
+  }
+  .launch-steps li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    padding: 20px 0;
+    box-shadow: 0 -1px 0 var(--line-soft);
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.6;
+  }
+  .launch-steps li::before {
+    content: counter(step);
+    font: 700 18px var(--font-mono);
+    color: var(--lime);
+  }
+  .launch-steps :global(code) {
+    font-size: 0.9em;
+    padding: 2px 8px;
+    border-radius: 8px;
+    background: #1d1d21;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+    word-break: break-word;
+  }
+  .launch-steps :global(.key) {
+    display: inline-block;
+    padding: 0 10px 2px;
+    border-radius: 999px;
+    font-weight: 800;
+    color: var(--fg);
+    box-shadow: inset 0 0 0 1.5px rgb(246 244 238 / 0.3);
+    white-space: nowrap;
+  }
+
+  /* Support */
+  .support-card {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 24px 48px;
+    align-items: end;
+    padding: clamp(28px, 5vw, 64px);
+    background:
+      radial-gradient(600px 300px at 90% 110%, rgb(214 255 61 / 0.1), transparent 70%),
+      var(--surface-fill);
+  }
+  .support-card .lead {
+    margin-top: 20px;
+  }
+  .support-actions {
+    display: grid;
+    gap: 12px;
+    justify-items: stretch;
+  }
+  .support-note {
+    grid-column: 1 / -1;
+    color: var(--faint);
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  /* Download */
+  .downloads {
+    display: grid;
+    gap: 14px;
+  }
+  .dl-row {
+    display: grid;
+    grid-template-columns: 260px 1fr auto;
+    align-items: center;
+    gap: 24px;
+    padding: 22px 26px;
+    border-radius: var(--radius-lg);
+  }
+  .dl-row.current {
+    box-shadow: var(--surface-depth), inset 0 0 0 2px rgb(214 255 61 / 0.6);
+  }
+  .dl-os {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  .dl-os :global(svg) {
+    color: var(--muted);
+    flex: none;
+  }
+  .dl-os h3 {
+    font-size: 21px;
+    letter-spacing: -0.02em;
+  }
+  .dl-os p {
+    color: var(--faint);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .dl-choice {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .segmented {
+    display: inline-flex;
+    padding: 4px;
+    gap: 2px;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1.5px var(--line);
+  }
+  .segmented button {
+    border: 0;
+    border-radius: 999px;
+    padding: 7px 16px;
+    font: 700 14px var(--font-sans);
+    color: var(--faint);
+    background: transparent;
+    cursor: pointer;
+  }
+  .segmented button[aria-checked="true"] {
+    color: var(--fg);
+    background: #26262b;
+    box-shadow: inset 0 0 0 1.5px rgb(246 244 238 / 0.35);
+  }
+  .dl-text {
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .dl-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    margin-top: 24px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  /* FAQ */
+  .faq {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 40px;
+    align-items: start;
+  }
+  .faq-list {
+    box-shadow: 0 -1px 0 var(--line-soft);
+  }
+  .faq details {
+    box-shadow: 0 1px 0 var(--line-soft);
+  }
+  .faq summary {
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 22px 0;
+    font-weight: 800;
+    font-size: 19px;
+    letter-spacing: -0.015em;
+    cursor: pointer;
+  }
+  .faq summary::-webkit-details-marker {
+    display: none;
+  }
+  .faq summary :global(svg) {
+    flex: none;
+    color: var(--faint);
+    transition: transform 220ms var(--ease-out-quint);
+  }
+  .faq details[open] summary :global(svg) {
+    transform: rotate(180deg);
+    color: var(--lime);
+  }
+  .faq details p {
+    padding: 0 48px 24px 0;
+    color: var(--muted);
+    font-weight: 500;
+    max-width: 66ch;
+  }
+
+  @media (max-width: 900px) {
+    .picker {
+      gap: 8px;
+    }
+    .picker-year {
+      padding: 14px 10px 12px;
+      justify-items: center;
+    }
+    .picker-year .mono {
+      font-size: clamp(18px, 5vw, 28px);
+    }
+    .picker-status {
+      font-size: 0;
+      gap: 0;
+    }
+    .steps li {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+    .facts {
+      grid-template-columns: 1fr;
+    }
+    .facts li,
+    .facts li + li {
+      padding: 24px 0 4px;
+      box-shadow: 0 -1px 0 var(--line-soft);
+    }
+    .support-card {
+      grid-template-columns: 1fr;
+    }
+    .dl-row {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .dl-btn {
+      justify-self: start;
+    }
+    .faq {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+  }
+  @media (max-width: 700px) {
+    .hero-meta {
+      flex-direction: column;
+      gap: 4px;
+    }
+    /* The table becomes one block per version: name and status, then what it rests on. */
+    .compat {
+      min-width: 0;
+    }
+    .compat thead {
+      display: none;
+    }
+    .compat tbody tr {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      padding: 16px 4px;
+    }
+    .compat tbody th,
+    .compat tbody td {
+      padding: 0;
+    }
+    .compat .basis {
+      grid-column: 1 / -1;
+      margin-top: 8px;
+    }
+  }
+</style>

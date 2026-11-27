@@ -10,7 +10,7 @@
   </p>
   <p>
     <a href="https://github.com/itsAnchorpoint/AEP-Downgrader/releases/latest"><img src="https://img.shields.io/github/v/release/itsAnchorpoint/AEP-Downgrader?style=flat-square&labelColor=1d1d21&color=d6ff3d&label=version" alt="Latest version"></a>
-    <a href="https://github.com/itsAnchorpoint/AEP-Downgrader/releases"><img src="https://img.shields.io/github/downloads/itsAnchorpoint/AEP-Downgrader/total?style=flat-square&labelColor=1d1d21&color=d6ff3d&label=downloads" alt="Downloads"></a>
+    <a href="https://github.com/itsAnchorpoint/AEP-Downgrader/releases"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Faepdowngrader.com%2Fbadge%2Fdownloads.json&style=flat-square" alt="Downloads"></a>
     <a href="https://aepdowngrader.com"><img src="https://img.shields.io/badge/Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-2b2b30?style=flat-square" alt="Windows, macOS, Linux"></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPLv3-2b2b30?style=flat-square&labelColor=1d1d21" alt="GPLv3"></a>
   </p>

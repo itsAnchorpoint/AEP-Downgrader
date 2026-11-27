@@ -1,0 +1,333 @@
+/*
+ * The site's styles. Tokens and rules come from docs/DESIGN.md and the app's tokens
+ * (apps/desktop/src/styles/tokens.css, dark theme): the dark brand surface, one lime per view,
+ * Onest for reading, JetBrains Mono only for data.
+ */
+@font-face {
+  font-family: "Onest";
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/brand/fonts/onest-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Onest";
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/brand/fonts/onest-cyrillic-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("/brand/fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+2000-206F, U+2191, U+2193, U+2212;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("/brand/fonts/jetbrains-mono-cyrillic-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0400-045F;
+}
+
+:root {
+  --bg: #0b0b0c;
+  --surface: #151517;
+  --raised: #1f1f22;
+  --line: #2c2c30;
+  --line-soft: rgb(255 255 255 / 0.07);
+  --fg: #f6f4ee;
+  --muted: #aeaba2;
+  --faint: #8d8a84;
+  --lime: #d6ff3d;
+  --lime-hi: #e6ff78;
+  --lime-lo: #d2fb36;
+  --ink: #0b0b0c;
+  --ok: #8ff0a4;
+  --warn: #ffb347;
+  --danger: #ff7a5c;
+
+  --font-sans: "Onest", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Mono", monospace;
+  --tracking-display: -0.035em;
+  --ease-out-quint: cubic-bezier(0.2, 0.9, 0.2, 1);
+  --ease-pop: cubic-bezier(0.3, 1.6, 0.5, 1);
+
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --surface-fill: linear-gradient(180deg, #1c1c20, #131315);
+  --surface-depth: 0 24px 48px -16px rgb(0 0 0 / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.07);
+  --lime-fill: linear-gradient(180deg, var(--lime-hi), var(--lime-lo));
+  --lime-depth: 0 14px 30px -12px rgb(170 210 30 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.6);
+
+  --container: 1200px;
+  --gutter: clamp(16px, 4vw, 40px);
+
+  color-scheme: dark;
+  scrollbar-color: #34343a var(--bg);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: 88px;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-variant-numeric: tabular-nums;
+  overflow-x: clip;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+::selection {
+  background: var(--lime);
+  color: var(--ink);
+}
+:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+a {
+  color: inherit;
+  text-decoration-color: rgb(214 255 61 / 0.45);
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 1.5px;
+}
+a:hover {
+  text-decoration-color: var(--lime);
+}
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+h1,
+h2,
+h3 {
+  font-weight: 800;
+  letter-spacing: var(--tracking-display);
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+code,
+.mono {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* The page: light from the top left, a vignette and pre-rendered grain, fixed behind everything. */
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1100px 620px at 12% -12%, rgb(255 255 255 / 0.07), transparent 70%),
+    radial-gradient(130% 110% at 50% 30%, transparent 58%, rgb(0 0 0 / 0.55)),
+    var(--bg);
+}
+.atmosphere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("/brand/grain.png");
+  background-size: 256px;
+  opacity: 0.07;
+  mix-blend-mode: overlay;
+}
+
+.container {
+  width: min(100% - 2 * var(--gutter), var(--container));
+  margin-inline: auto;
+}
+.section {
+  padding-block: clamp(96px, 12vw, 168px) 0;
+}
+.section-head {
+  display: grid;
+  gap: 20px;
+  max-width: 760px;
+  margin-bottom: clamp(40px, 5vw, 64px);
+}
+.h2 {
+  font-size: clamp(38px, 5.2vw, 64px);
+  line-height: 1.04;
+}
+.lead {
+  font-size: clamp(17px, 1.5vw, 20px);
+  line-height: 1.55;
+  color: var(--muted);
+  font-weight: 500;
+  max-width: 62ch;
+}
+.note {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--faint);
+  font-weight: 500;
+}
+
+/* The one highlighted word of a headline, on a lime plate. */
+.plate {
+  display: inline-block;
+  color: var(--ink);
+  background: var(--lime-fill);
+  padding: 0 0.16em 0.06em;
+  margin-inline: 0.02em;
+  border-radius: 0.17em;
+  box-shadow: 0 0.14em 0.42em -0.16em rgb(214 255 61 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.55);
+}
+
+/* Buttons are pills. Primary is lime (one per view); secondary is a 2px outline; quiet is a raised dark pill. */
+.btn {
+  --h: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: var(--h);
+  padding: 0 26px;
+  border-radius: 999px;
+  border: 0;
+  font: 800 18px/1 var(--font-sans);
+  letter-spacing: -0.015em;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform 160ms var(--ease-pop),
+    box-shadow 200ms var(--ease-out-quint),
+    background-color 200ms;
+}
+.btn svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn-primary {
+  color: var(--ink);
+  background: var(--lime-fill);
+  box-shadow: var(--lime-depth);
+}
+.btn-primary:hover {
+  box-shadow: 0 18px 36px -12px rgb(170 210 30 / 0.75), inset 0 1px 0 rgb(255 255 255 / 0.7);
+}
+.btn-secondary {
+  color: var(--fg);
+  background: transparent;
+  box-shadow: inset 0 0 0 2px rgb(246 244 238 / 0.22);
+}
+.btn-secondary:hover {
+  box-shadow: inset 0 0 0 2px rgb(246 244 238 / 0.5);
+}
+.btn-quiet {
+  color: var(--fg);
+  background: linear-gradient(180deg, #26262b, #151517);
+  box-shadow:
+    0 12px 26px -12px rgb(0 0 0 / 0.8),
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    inset 0 0 0 1.5px rgb(255 255 255 / 0.12);
+}
+.btn-quiet svg {
+  color: var(--lime);
+}
+.btn-quiet:hover {
+  box-shadow:
+    0 12px 26px -12px rgb(0 0 0 / 0.8),
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    inset 0 0 0 1.5px rgb(255 255 255 / 0.28);
+}
+.btn-sm {
+  --h: 42px;
+  padding: 0 18px;
+  font-size: 15px;
+}
+
+/* A raised surface: lighter at the top, a top highlight, a deep soft shadow. */
+.surface {
+  background: var(--surface-fill);
+  box-shadow: var(--surface-depth);
+  border-radius: var(--radius-xl);
+}
+
+/* Version pills: a year in mono, the data of this product. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 700 15px/1 var(--font-mono);
+  letter-spacing: -0.01em;
+  padding: 8px 13px 9px;
+  border-radius: 999px;
+  color: #c9c5bc;
+  background: linear-gradient(180deg, #1f1f23, #141416);
+  box-shadow:
+    0 12px 24px -10px rgb(0 0 0 / 0.9),
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    inset 0 0 0 1.5px rgb(255 255 255 / 0.1);
+}
+
+/* Status: green for verified, amber for experimental, as in the app. */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 15px;
+  white-space: nowrap;
+}
+.status svg {
+  width: 16px;
+  height: 16px;
+}
+.status-verified {
+  color: var(--ok);
+}
+.status-experimental {
+  color: var(--warn);
+}
+
+[hidden] {
+  display: none !important;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/aep-core", "crates/aep-cli"]
+members = ["crates/aep-core", "crates/aep-cli", "crates/aep-wasm"]
 
 [workspace.package]
 version = "2.0.0-alpha.0"

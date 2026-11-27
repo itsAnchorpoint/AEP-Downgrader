@@ -1,0 +1,43 @@
+---
+// GitHub Pages serves this for every missing path, in both languages: English with the Russian line under it.
+import Base from "../layouts/Base.astro";
+import Footer from "../components/Footer.astro";
+import { en } from "../i18n/en";
+import { ru } from "../i18n/ru";
+---
+
+<Base t={en} path="/" title={`${en.notFound.title} · AEP Downgrader`}>
+  <section class="section nf">
+    <div class="container">
+      <p class="nf-code mono">404</p>
+      <h1 class="h2">{en.notFound.heading}</h1>
+      <p class="lead">{en.notFound.text}</p>
+      <p class="lead" lang="ru">{ru.notFound.heading} {ru.notFound.text}</p>
+      <p class="nf-actions">
+        <a class="btn btn-primary" href="/">{en.notFound.home}</a>
+        <a class="btn btn-secondary" href="/ru/" lang="ru">{ru.notFound.home}</a>
+      </p>
+    </div>
+  </section>
+  <Footer t={en} slot="footer" />
+</Base>
+
+<style>
+  .nf {
+    padding-top: clamp(72px, 10vw, 140px);
+  }
+  .nf-code {
+    font-size: 18px;
+    color: var(--lime);
+    margin-bottom: 16px;
+  }
+  .nf .lead {
+    margin-top: 16px;
+  }
+  .nf-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 36px;
+  }
+</style>

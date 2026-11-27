@@ -29,6 +29,34 @@ jobs:
       - name: Compatibility tables in the docs match the core
         run: node .github/scripts/check-compat-table.mjs
 
+  site:
+    name: Site (check, build)
+    needs: core
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: site/pnpm-lock.yaml
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SITE_STRICT: "1"
+      - run: pnpm exec astro build
+
   app:
     name: App (${{ matrix.name }})
     needs: core

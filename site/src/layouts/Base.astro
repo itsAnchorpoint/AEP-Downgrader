@@ -1,0 +1,207 @@
+---
+import "../styles/global.css";
+import type { Strings } from "../i18n/en";
+
+interface Props {
+  t: Strings;
+  title?: string;
+  description?: string;
+  /** This page's path without the language prefix, e.g. "/" or "/support/". */
+  path: string;
+}
+const { t, title = t.meta.title, description = t.meta.description, path } = Astro.props;
+const site = "https://aepdowngrader.com";
+const en = `${site}${path}`;
+const ru = `${site}/ru${path}`;
+const canonical = t.lang === "ru" ? ru : en;
+const home = t.lang === "ru" ? "/ru/" : "/";
+const other = t.lang === "ru" ? path : `/ru${path}`;
+---
+
+<!doctype html>
+<html lang={t.lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="en" href={en} />
+    <link rel="alternate" hreflang="ru" href={ru} />
+    <link rel="alternate" hreflang="x-default" href={en} />
+    <meta name="theme-color" content="#0b0b0c" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" type="image/png" href="/brand/icon.png" />
+    <link rel="apple-touch-icon" href="/brand/icon.png" />
+    <link rel="preload" href="/brand/fonts/onest-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:locale" content={t.lang === "ru" ? "ru_RU" : "en_US"} />
+    <meta property="og:site_name" content="AEP Downgrader" />
+    <meta property="og:image" content={`${site}/og/og-${t.lang}.jpg`} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={t.meta.imageAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <div class="atmosphere" aria-hidden="true"></div>
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href={home}>
+          <img src="/brand/icon.png" alt="" width="30" height="30" />
+          <span>AEP Downgrader</span>
+        </a>
+        <nav class="header-nav" aria-label={t.nav.menu}>
+          <a href={`${home}#try`}>{t.nav.check}</a>
+          <a href={`${home}#versions`}>{t.nav.versions}</a>
+          <a href={`${home}#first-launch`}>{t.nav.firstLaunch}</a>
+          <a href={`${home}#support`}>{t.nav.support}</a>
+        </nav>
+        <div class="header-actions">
+          <a class="lang" href={other} hreflang={t.lang === "ru" ? "en" : "ru"} aria-label={t.nav.otherLangLabel}>{t.nav.otherLang}</a>
+          <a class="btn btn-secondary btn-sm" href={`${home}#download`}>{t.nav.download}</a>
+        </div>
+      </div>
+    </header>
+    {
+      t.langHint.text && (
+        <div class="lang-hint" data-lang-hint hidden>
+          <div class="container lang-hint-row">
+            <span lang="ru">{t.langHint.text}</span>
+            <a lang="ru" href={`/ru${path}`}>{t.langHint.go}</a>
+            <button type="button" lang="ru" aria-label={t.langHint.close} data-lang-hint-close>×</button>
+          </div>
+        </div>
+      )
+    }
+    <main>
+      <slot />
+    </main>
+    <slot name="footer" />
+  </body>
+</html>
+
+<script>
+  // A quiet offer of the Russian pages to browsers that prefer Russian or a close language. No redirect;
+  // closing it is remembered in this browser.
+  const hint = document.querySelector<HTMLElement>("[data-lang-hint]");
+  const KEY = "aepd-lang-hint-closed";
+  let closed = false;
+  try {
+    closed = localStorage.getItem(KEY) === "1";
+  } catch {}
+  if (hint && !closed && navigator.languages.some((l) => /^(ru|be|uk|kk)\b/i.test(l))) hint.hidden = false;
+  hint?.querySelector("[data-lang-hint-close]")?.addEventListener("click", () => {
+    hint.hidden = true;
+    try {
+      localStorage.setItem(KEY, "1");
+    } catch {}
+  });
+</script>
+
+<style>
+  .lang-hint {
+    background: #141416;
+    box-shadow: 0 1px 0 var(--line-soft);
+  }
+  .lang-hint-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 44px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .lang-hint-row a {
+    color: var(--fg);
+    font-weight: 800;
+  }
+  .lang-hint-row button {
+    margin-left: auto;
+    border: 0;
+    background: none;
+    color: var(--faint);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  .lang-hint-row button:hover {
+    color: var(--fg);
+  }
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgb(11 11 12 / 0.78);
+    backdrop-filter: blur(14px) saturate(1.2);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    box-shadow: 0 1px 0 var(--line-soft);
+  }
+  .header-row {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    height: 68px;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    font-weight: 800;
+    font-size: 17px;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+  }
+  .brand img {
+    border-radius: 8px;
+  }
+  .header-nav {
+    display: flex;
+    gap: 26px;
+    margin-left: 12px;
+  }
+  .header-nav a {
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 15px;
+    text-decoration: none;
+    transition: color 160ms;
+  }
+  .header-nav a:hover {
+    color: var(--fg);
+  }
+  .header-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .lang {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 6px 4px;
+  }
+  .lang:hover {
+    color: var(--fg);
+  }
+  .brand span {
+    white-space: nowrap;
+  }
+  @media (max-width: 860px) {
+    .header-nav {
+      display: none;
+    }
+  }
+  @media (max-width: 480px) {
+    .header-actions .btn {
+      display: none;
+    }
+  }
+</style>

@@ -10,7 +10,7 @@
   </p>
   <p>
     <a href="https://github.com/itsAnchorpoint/AEP-Downgrader/releases/latest"><img src="https://img.shields.io/github/v/release/itsAnchorpoint/AEP-Downgrader?style=flat-square&labelColor=1d1d21&color=d6ff3d&label=%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F" alt="Последняя версия"></a>
-    <a href="https://github.com/itsAnchorpoint/AEP-Downgrader/releases"><img src="https://img.shields.io/github/downloads/itsAnchorpoint/AEP-Downgrader/total?style=flat-square&labelColor=1d1d21&color=d6ff3d&label=%D0%B7%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BA%D0%B8" alt="Загрузки"></a>
+    <a href="https://github.com/itsAnchorpoint/AEP-Downgrader/releases"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Faepdowngrader.com%2Fbadge%2Fdownloads.json&style=flat-square&label=%D0%B7%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BA%D0%B8" alt="Загрузки"></a>
     <a href="https://aepdowngrader.com/ru/"><img src="https://img.shields.io/badge/Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-2b2b30?style=flat-square" alt="Windows, macOS, Linux"></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/%D0%BB%D0%B8%D1%86%D0%B5%D0%BD%D0%B7%D0%B8%D1%8F-GPLv3-2b2b30?style=flat-square&labelColor=1d1d21" alt="GPLv3"></a>
   </p>

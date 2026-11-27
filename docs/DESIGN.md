@@ -84,8 +84,8 @@ Everything outside the app follows this page too, so the product looks like one 
 | App icon (Trail) | Done |
 | README header | Done: icon, one line, the app window with a report (`assets/screenshot.png`, a mock-backend shot framed as a macOS window) |
 | Donation pages (Boosty, Tribute) | Done: Trail avatar, covers with the version staircase |
-| Website, download and support pages | In progress (`site/`) |
-| Link previews (Open Graph, GitHub social preview) | Later |
+| Website, download and support pages | Done: `site/`, the hero is a live copy of the app window (a demo, then the visitor's own file checked in the browser) |
+| Link previews (Open Graph, GitHub social preview) | Done: `site/og/art.html`, rendered by `site/og/render.sh` into `site/public/og/` and `assets/social-preview.jpg` |
 
 ## Making and reviewing assets
 

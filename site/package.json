@@ -1,0 +1,20 @@
+{
+  "name": "aepd-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare-data": "node scripts/prepare.mjs",
+    "dev": "node scripts/prepare.mjs && astro dev --port 4321",
+    "build": "node scripts/prepare.mjs && astro build",
+    "check": "node scripts/prepare.mjs && astro check",
+    "preview": "astro preview --port 4321"
+  },
+  "dependencies": {
+    "astro": "7.4.13",
+    "@astrojs/sitemap": "3.7.6"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.12",
+    "typescript": "6.0.3"
+  }
+}

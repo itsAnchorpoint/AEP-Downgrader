@@ -1,0 +1,100 @@
+name: Site
+
+# Builds site/ and publishes it to GitHub Pages (aepdowngrader.com). The download buttons point at the version in
+# apps/desktop/package.json, so the site goes out only once that release is published; a push to main before then
+# is skipped. Run it by hand with "placeholder" before launch to get the HTTPS certificate issued early.
+
+on:
+  release:
+    types: [published]
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "apps/desktop/package.json"
+      - "apps/desktop/src/i18n/**"
+      - "crates/aep-core/src/compat.rs"
+      - "crates/aep-wasm/**"
+      - ".github/workflows/site.yml"
+  workflow_dispatch:
+    inputs:
+      placeholder:
+        description: "Publish the one-line placeholder instead of the site"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.release.outputs.ready }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Is this version released?
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLACEHOLDER: ${{ inputs.placeholder }}
+        run: |
+          if [ "$PLACEHOLDER" = "true" ]; then echo "ready=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          version=$(node -p 'require("./apps/desktop/package.json").version')
+          draft=$(gh release view "v$version" --json isDraft --jq .isDraft 2>/dev/null || echo missing)
+          if [ "$draft" = "false" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::v$version is not published yet ($draft); the site waits for the release."
+          fi
+      - name: Placeholder
+        if: inputs.placeholder
+        run: mkdir -p site/dist && cp site/placeholder/index.html site/dist/ && cp site/public/CNAME site/dist/
+      - uses: pnpm/action-setup@v4
+        if: steps.release.outputs.ready == 'true' && !inputs.placeholder
+        with:
+          version: 12
+      - uses: actions/setup-node@v5
+        if: steps.release.outputs.ready == 'true' && !inputs.placeholder
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: site/pnpm-lock.yaml
+      - uses: dtolnay/rust-toolchain@stable
+        if: steps.release.outputs.ready == 'true' && !inputs.placeholder
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        if: steps.release.outputs.ready == 'true' && !inputs.placeholder
+      - name: Build
+        if: steps.release.outputs.ready == 'true' && !inputs.placeholder
+        working-directory: site
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SITE_STRICT: "1"
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+      - uses: actions/upload-pages-artifact@v4
+        if: steps.release.outputs.ready == 'true'
+        with:
+          path: site/dist
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.astro/
+# Written by scripts/prepare.mjs from the app and the core on every build.
+src/generated/
+public/brand/
+public/wasm/
+public/badge/
