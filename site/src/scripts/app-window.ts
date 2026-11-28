@@ -53,10 +53,33 @@ function init(stage: HTMLElement) {
   const modeLabel = stage.querySelector("[data-aw-mode]");
   const modeHint = stage.querySelector("[data-aw-mode-hint]");
   const progress = stage.querySelector<HTMLElement>("[data-aw-progress]");
+  const another = $<HTMLButtonElement>("[data-aw-another]");
+  const live = stage.querySelector<HTMLElement>("[data-aw-live]");
+  // Keyboard and screen readers: the tiles are radio buttons, reachable only while the visitor's own file is
+  // shown (one tab stop on the chosen tile, arrows between the others).
+  const syncTiles = () => {
+    const own = stage.dataset.mode === "own";
+    const usable = tiles.filter((t) => !t.classList.contains("off"));
+    const stop = usable.find((t) => t.classList.contains("on")) ?? usable[0];
+    for (const t of tiles) {
+      t.setAttribute("aria-checked", String(t.classList.contains("on")));
+      t.setAttribute("aria-disabled", String(t.classList.contains("off")));
+      t.tabIndex = own && t === stop ? 0 : -1;
+    }
+  };
+  // While the demo plays or waits, the whole window is one "choose a file" button. With the visitor's own
+  // file it becomes a group of real controls: the tiles and "Add more" for another file.
   const setMode = (mode: "demo" | "turn" | "own") => {
     stage.dataset.mode = mode;
     if (modeLabel) modeLabel.textContent = modes[mode]?.[0] ?? "";
     if (modeHint) modeHint.textContent = modes[mode]?.[1] ?? "";
+    const own = mode === "own";
+    frame.setAttribute("role", own ? "group" : "button");
+    frame.setAttribute("aria-label", own ? (modes.own?.[0] ?? "") : (modes.turn?.[1] ?? ""));
+    frame.tabIndex = own ? -1 : 0;
+    another.tabIndex = own ? 0 : -1;
+    if (live && !own) live.textContent = "";
+    syncTiles();
   };
 
   // 1. Scale to the column.
@@ -78,7 +101,10 @@ function init(stage: HTMLElement) {
     }
   };
   const lightStep = (n: number) => steps.forEach((s, i) => s.classList.toggle("on", i + 1 === n));
-  const choose = (major: number | null) => tiles.forEach((t) => t.classList.toggle("on", Number(t.dataset.awTile) === major));
+  const choose = (major: number | null) => {
+    tiles.forEach((t) => t.classList.toggle("on", Number(t.dataset.awTile) === major));
+    syncTiles();
+  };
   const restoreSample = () => {
     $("[data-aw-row]").innerHTML = sample.row;
     $("[data-aw-report]").innerHTML = sample.report;
@@ -86,6 +112,7 @@ function init(stage: HTMLElement) {
     $("[data-aw-convert]").outerHTML = sample.convert;
     tiles.forEach((t) => t.classList.remove("off"));
     tileRow.classList.remove("pickable");
+    syncTiles();
   };
 
   // 2. The demo.
@@ -252,6 +279,18 @@ function init(stage: HTMLElement) {
     const box = $("[data-aw-report]");
     box.innerHTML = `<p class="aw-report-for"><span>${esc(say("report.for"))} After Effects ${esc(year)}</span>${badge}</p><ul>${items}</ul>`;
     box.style.opacity = "1";
+    announce(box);
+  };
+  // The summary, then the report as plain sentences, for the live region.
+  const announce = (box: HTMLElement | null) => {
+    if (!live || !current) return;
+    const parts = [current.file.name, $("[data-aw-summary]").textContent ?? ""];
+    if (box) for (const el of box.querySelectorAll(".aw-report-for > span, li b, li small, .aw-badge")) parts.push(el.textContent ?? "");
+    live.textContent = parts
+      .map((p) => p.trim().replace(/[.:]$/, ""))
+      .filter(Boolean)
+      .join(". ")
+      .concat(".");
   };
 
   const pickTarget = async (major: number) => {
@@ -308,6 +347,7 @@ function init(stage: HTMLElement) {
       summary.innerHTML = found.problem ? `${svg("ban", 17)}${esc(say("state.blocked"))}` : esc(say("state.nothingToDo"));
       box.innerHTML = "";
       box.style.opacity = "0";
+      announce(null);
       return;
     }
     const verified = found.targets.find((t) => t.status === "verified");
@@ -323,11 +363,28 @@ function init(stage: HTMLElement) {
     const box = $("[data-aw-report]");
     box.innerHTML = `<ul><li class="plain">${svg("info", 18)}<span><b>${esc(text)}</b></span></li></ul>`;
     box.style.opacity = "1";
+    announce(box);
   };
 
   tileRow.addEventListener("click", (e) => {
     const tile = (e.target as Element).closest<HTMLElement>("[data-aw-tile]");
     if (current && tile && !tile.classList.contains("off")) pickTarget(Number(tile.dataset.awTile));
+  });
+  tileRow.addEventListener("keydown", (e) => {
+    const tile = (e.target as Element).closest<HTMLElement>("[data-aw-tile]");
+    if (!current || !tile) return;
+    const usable = tiles.filter((t) => !t.classList.contains("off"));
+    const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
+    if (step) {
+      e.preventDefault();
+      const next = usable[(usable.indexOf(tile) + step + usable.length) % usable.length];
+      if (!next) return;
+      pickTarget(Number(next.dataset.awTile));
+      next.focus();
+    } else if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      if (!tile.classList.contains("off")) pickTarget(Number(tile.dataset.awTile));
+    }
   });
   input.addEventListener("change", () => own(input.files?.[0]));
   // The whole window takes a file: click it (or press Enter on it) to choose one, any time but on
@@ -337,7 +394,7 @@ function init(stage: HTMLElement) {
     input.click();
   });
   frame.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
+    if (e.target === frame && (e.key === "Enter" || e.key === " ")) {
       e.preventDefault();
       input.click();
     }

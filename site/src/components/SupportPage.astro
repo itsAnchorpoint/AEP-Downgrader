@@ -141,4 +141,15 @@ const home = t.lang === "ru" ? "/ru/" : "/";
       justify-content: flex-start;
     }
   }
+  /* The narrowest phones: Tribute's two buttons stack and take the compact size, so the longer Russian labels fit. */
+  @media (max-width: 420px) {
+    .channel {
+      padding: 20px;
+    }
+    .channel-actions .btn {
+      --h: 48px;
+      padding: 0 18px;
+      font-size: 16px;
+    }
+  }
 </style>

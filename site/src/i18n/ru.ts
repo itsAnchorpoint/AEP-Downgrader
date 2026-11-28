@@ -21,6 +21,7 @@ export const ru: Strings = glue({
     otherLang: "EN",
     otherLangLabel: "English version",
     menu: "Меню",
+    skip: "Перейти к содержимому",
   },
   hero: {
     titleBefore: "Новые проекты.",

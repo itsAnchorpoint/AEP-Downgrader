@@ -1,6 +1,6 @@
 // Runs before every dev, build and check. It takes from the rest of the repository what the site shows,
 // so the site cannot drift from the app:
-// - the brand files (fonts, grain, the Fold ribbon, the icon, the app screenshot) into public/brand/;
+// - the brand files (fonts, grain, the Fold ribbon, the icon at 256 px) into public/brand/;
 // - the core built for the browser into public/wasm/aep.wasm (needs the wasm32-unknown-unknown target);
 // - src/generated/data.json: the app version and its download links, the compatibility table as the
 //   core prints it (`aep compat`), and the number of downloads of the app on GitHub (also written to
@@ -30,8 +30,7 @@ for (const font of [
 }
 copyFileSync(join(assets, "grain.png"), join(brand, "grain.png"));
 copyFileSync(join(assets, "fold-ribbon.svg"), join(brand, "fold-ribbon.svg"));
-copyFileSync(join(repo, "assets/icon.png"), join(brand, "icon.png"));
-copyFileSync(join(repo, "assets/screenshot.png"), join(brand, "screenshot.png"));
+copyFileSync(join(repo, "apps/desktop/src-tauri/icons/128x128@2x.png"), join(brand, "icon.png"));
 
 // The core for the "check a file" section, built for the browser (crates/aep-wasm).
 try {

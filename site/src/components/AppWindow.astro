@@ -39,6 +39,8 @@ const targets = data.targets;
     <span class="aw-mode-hint" data-aw-mode-hint>{modes.demo[1]}</span>
     <span class="aw-progress" aria-hidden="true"><span data-aw-progress></span></span>
   </div>
+  <!-- What a screen reader hears about the visitor's own file: the summary and the report, in words. -->
+  <p class="visually-hidden" aria-live="polite" data-aw-live></p>
   <div class="aw-frame" tabindex="0" role="button" aria-label={modes.turn[1]}>
     <svg class="aw-dash" aria-hidden="true"><rect></rect></svg>
     <div class="aw" data-state="list" style="--k: 0.74">
@@ -67,7 +69,7 @@ const targets = data.targets;
       <section class="aw-screen aw-list">
         <div class="aw-head">
           <h3>{s("queue.files")} <i data-aw-count>1</i></h3>
-          <span class="aw-ghostbtn">+ {s("queue.addMore")}</span>
+          <button type="button" class="aw-ghostbtn" data-aw-another tabindex="-1"><Icon name="plus" size={16} />{s("queue.addMore")}</button>
         </div>
         <div class="aw-rows">
           <div class="aw-row" data-aw-row>
@@ -92,10 +94,10 @@ const targets = data.targets;
         </div>
         <div class="aw-pick">
           <p>{s("queue.convertTo")} <b>After Effects</b></p>
-          <div class="aw-tiles">
+          <div class="aw-tiles" role="radiogroup" aria-label={`${s("queue.convertTo")} After Effects`}>
             {
               targets.map((x) => (
-                <span class:list={["aw-tile", { on: x.status === "verified" }]} data-aw-tile={x.major}>
+                <span class:list={["aw-tile", { on: x.status === "verified" }]} data-aw-tile={x.major} role="radio" aria-checked={x.status === "verified" ? "true" : "false"} tabindex="-1">
                   <b>{x.year}</b>
                   <small class:list={[x.status === "verified" ? "ok" : "exp"]}>
                     <Icon name={x.status === "verified" ? "check" : "flask"} size={13} />
@@ -402,6 +404,14 @@ const targets = data.targets;
     background: #1f1f22;
   }
   .aw-ghostbtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 0;
+    background: none;
+    color: inherit;
+    font-family: inherit;
+    cursor: pointer;
     font-weight: 700;
     font-size: 14px;
     padding: 9px 16px;

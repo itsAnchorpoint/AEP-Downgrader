@@ -150,7 +150,7 @@ const pageData = {
       <p class="lead">{t.report.lead}</p>
     </div>
     <figure class="shot">
-      <img src="/brand/screenshot.png" alt={t.report.alt} width="1400" height="1005" decoding="async" />
+      <img src={`/shots/report-${t.lang}.webp`} alt={t.report.alt} width="1400" height="1005" loading="lazy" decoding="async" />
     </figure>
   </div>
 </section>
@@ -739,6 +739,12 @@ const pageData = {
       radial-gradient(600px 300px at 90% 110%, rgb(214 255 61 / 0.1), transparent 70%),
       var(--surface-fill);
   }
+  .support-card > * {
+    min-width: 0;
+  }
+  .support-card .h2 {
+    font-size: min(clamp(38px, 5.2vw, 64px), 10vw);
+  }
   .support-card .lead {
     margin-top: 20px;
   }
@@ -938,6 +944,31 @@ const pageData = {
     .compat .basis {
       grid-column: 1 / -1;
       margin-top: 8px;
+    }
+  }
+  /* Phones up to 480 px: a version's status goes under its name, so the longer Russian label is never cut. */
+  @media (max-width: 480px) {
+    .compat tbody tr {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+  }
+  /* The narrowest phones (320 px): the OS tabs share the row, the support card gives its padding back. */
+  @media (max-width: 420px) {
+    .tablist {
+      display: flex;
+    }
+    .tablist button {
+      flex: 1;
+      padding: 10px 8px;
+    }
+    .support-card {
+      padding: 20px;
+    }
+    .support-actions .btn {
+      --h: 48px;
+      padding: 0 14px;
+      font-size: 15px;
     }
   }
 </style>

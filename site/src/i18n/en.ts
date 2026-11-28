@@ -20,6 +20,7 @@ export const en = glue({
     otherLang: "RU",
     otherLangLabel: "Русская версия",
     menu: "Menu",
+    skip: "Skip to content",
   },
   hero: {
     titleBefore: "New projects.",

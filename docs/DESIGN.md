@@ -82,7 +82,7 @@ Everything outside the app follows this page too, so the product looks like one 
 | macOS disk image window | Done: the reference artifact |
 | Windows installer (the whole window, every page, also updates and uninstalling) | Done: drawn by our NSIS plugin, `apps/desktop/src-tauri/windows` |
 | App icon (Trail) | Done |
-| README header | Done: icon, one line, the app window with a report (`assets/screenshot.png`, a mock-backend shot framed as a macOS window) |
+| README header | Done: icon, one line, the app window with a report (`assets/screenshot.png` and `screenshot-ru.png`, mock-backend shots framed as a macOS window; `assets/screenshot.sh` renders both languages for the READMEs, the site and the link previews) |
 | Donation pages (Boosty, Tribute) | Done: Trail avatar, covers with the version staircase |
 | Website, download and support pages | Done: `site/`, the hero is a live copy of the app window (a demo, then the visitor's own file checked in the browser) |
 | Link previews (Open Graph, GitHub social preview) | Done: `site/og/art.html`, rendered by `site/og/render.sh` into `site/public/og/` and `assets/social-preview.jpg` |

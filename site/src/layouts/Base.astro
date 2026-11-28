@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import type { Strings } from "../i18n/en";
+import Icon from "../components/Icon.astro";
 
 interface Props {
   t: Strings;
@@ -47,6 +48,7 @@ const other = t.lang === "ru" ? path : `/ru${path}`;
     <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
+    <a class="skip-link" href="#content">{t.nav.skip}</a>
     <div class="atmosphere" aria-hidden="true"></div>
     <header class="site-header">
       <div class="container header-row">
@@ -72,12 +74,12 @@ const other = t.lang === "ru" ? path : `/ru${path}`;
           <div class="container lang-hint-row">
             <span lang="ru">{t.langHint.text}</span>
             <a lang="ru" href={`/ru${path}`}>{t.langHint.go}</a>
-            <button type="button" lang="ru" aria-label={t.langHint.close} data-lang-hint-close>×</button>
+            <button type="button" lang="ru" aria-label={t.langHint.close} data-lang-hint-close><Icon name="x" size={18} /></button>
           </div>
         </div>
       )
     }
-    <main>
+    <main id="content" tabindex="-1">
       <slot />
     </main>
     <slot name="footer" />
@@ -103,6 +105,26 @@ const other = t.lang === "ru" ? path : `/ru${path}`;
 </script>
 
 <style>
+  /* Shown only when focused from the keyboard: the first stop on every page. */
+  .skip-link {
+    position: absolute;
+    left: 16px;
+    top: 12px;
+    z-index: 100;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: var(--lime);
+    color: var(--ink);
+    font-weight: 800;
+    text-decoration: none;
+    transform: translateY(-160%);
+  }
+  .skip-link:focus-visible {
+    transform: none;
+  }
+  main:focus {
+    outline: none;
+  }
   .lang-hint {
     background: #141416;
     box-shadow: 0 1px 0 var(--line-soft);
@@ -125,10 +147,13 @@ const other = t.lang === "ru" ? path : `/ru${path}`;
     border: 0;
     background: none;
     color: var(--faint);
-    font-size: 22px;
-    line-height: 1;
     cursor: pointer;
-    padding: 4px 8px;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    margin-right: -9px;
+    border-radius: 999px;
   }
   .lang-hint-row button:hover {
     color: var(--fg);

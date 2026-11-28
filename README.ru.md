@@ -15,7 +15,7 @@
     <a href="LICENSE"><img src="https://img.shields.io/badge/%D0%BB%D0%B8%D1%86%D0%B5%D0%BD%D0%B7%D0%B8%D1%8F-GPLv3-2b2b30?style=flat-square&labelColor=1d1d21" alt="GPLv3"></a>
   </p>
   <p><a href="README.md">English</a></p>
-  <img src="assets/screenshot.png" alt="AEP Downgrader с четырьмя файлами в списке. Отчёт по одному из них говорит, что изменится в копии для After Effects 2024." width="760">
+  <img src="assets/screenshot-ru.png" alt="AEP Downgrader с четырьмя файлами в списке. Отчёт по одному из них говорит, что изменится в копии для After Effects 2024." width="760">
 </div>
 
 AEP Downgrader делает копию проекта (`.aep`), шаблона (`.aet`) или пресета анимации (`.ffx`) After Effects, которую откроет более старая версия After Effects. Он вносит те же изменения, что и сам After Effects в **File > Save As > Save a Copy As** для старой версии, поэтому новый After Effects для этого не нужен.
