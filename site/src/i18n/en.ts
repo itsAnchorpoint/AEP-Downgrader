@@ -1,5 +1,7 @@
 // English copy of the site. Terms and style: docs/WRITING.md. The Russian file has the same shape.
-export const en = {
+import { glue } from "./glue";
+
+export const en = glue({
   lang: "en",
   locale: "en-US",
   meta: {
@@ -22,7 +24,7 @@ export const en = {
   hero: {
     titleBefore: "New projects.",
     plate: "Older",
-    titleAfter: "After\u00a0Effects.",
+    titleAfter: "After Effects.",
     lead: "AEP Downgrader makes a copy of an After Effects project, template or preset that an older After Effects can open. It makes the same changes After Effects makes in Save a Copy As, right on your computer.",
     downloadFor: "Download for {os}",
     download: "Download",
@@ -36,7 +38,7 @@ export const en = {
     yourTurn: "Your turn",
     yourTurnHint: "Drop a project on the window, or click it to choose one.",
     demo: "Demo",
-    demoHint: "A project goes from 2027 to 2024. Drop your own file any time.",
+    demoHint: "A 2027 project converts to 2024. Drop your own file any time.",
     yourFile: "Your file",
     yourFileHint: "Checked in your browser, nothing uploaded. Pick another version, or drop another file.",
     neverLeft: "Your file never left this page",
@@ -54,14 +56,14 @@ export const en = {
     verified: "Verified",
     experimental: "Experimental",
     verifiedText: "Converted files were opened in a real After Effects {year}.",
-    experimentalText: "The copy matches what After Effects itself writes, but nobody has opened it in After Effects {year} yet. Keep your originals.",
+    experimentalText: "Checked against the copy After Effects itself saves, but nobody has opened it in After Effects {year} yet. Keep your originals.",
     stepsTitle: "What each step removes",
     steps: {
-      27: "Data that only After Effects 2027 writes is removed. 3D material settings that 2026 doesn’t have are removed.",
-      26: "Data that only After Effects 2026 writes is removed. 3D material settings that 2025 doesn’t have are removed.",
+      27: "Data that only After Effects 2027 writes, and 3D material settings that 2026 doesn’t have.",
+      26: "Data that only After Effects 2026 writes, and 3D material settings that 2025 doesn’t have.",
       25: "Nothing but the version stamp.",
-      24: "The Shadow Color property is removed from the layers that have it.",
-      23: "Environment light settings and one layer style option are removed. A track matte that isn’t the layer directly above its layer stops the conversion.",
+      24: "The Shadow Color property on the layers that have it.",
+      23: "Environment light settings and one layer style option. If a track matte isn’t directly above its layer, the conversion stops.",
     } as Record<number, string>,
   },
   report: {
@@ -76,7 +78,7 @@ export const en = {
     lead: "AEP Downgrader works offline. There is nothing to sign up for and nothing to upload.",
     items: [
       { title: "No upload", text: "Files are read and written on your computer only." },
-      { title: "No account, no telemetry", text: "Open the app, drop a file. The app doesn’t report what you do." },
+      { title: "No account, no telemetry", text: "Open the app and drop a file. It doesn’t tell anyone what you do." },
       { title: "One request", text: "The update check, at most once a day. You can turn it off in Settings." },
     ],
     more: "Privacy notes",
@@ -84,7 +86,7 @@ export const en = {
   compat: {
     showBasis: true,
     title: "Honest about every version.",
-    lead: "A version is Verified only when converted files were opened in that After Effects. Otherwise it stays Experimental, even when the copy matches what After Effects writes.",
+    lead: "A version is Verified only when converted files were opened in that After Effects. Checking the copy against the one After Effects itself saves isn’t enough: until then the version stays Experimental.",
     version: "Version",
     status: "Status",
     basis: "What it rests on",
@@ -150,11 +152,11 @@ export const en = {
       },
       {
         q: "Will my project open in the older version?",
-        a: "For After Effects 2024, converted projects were opened in a real After Effects 2024 (Verified). For 2026, 2025, 2023 and 2022 the copy matches what After Effects itself writes, but it hasn’t been opened there yet (Experimental). Keep your originals.",
+        a: "For After Effects 2024, converted projects were opened in a real After Effects 2024 (Verified). For 2026, 2025, 2023 and 2022 the copy was checked against the one After Effects itself saves, but it hasn’t been opened there yet (Experimental). Keep your originals.",
       },
       {
         q: "What gets lost?",
-        a: "Only what the older version doesn’t have, the same as with Save a Copy As. Effects that exist only in the newer version show as missing. The report lists every change before you convert.",
+        a: "Only what the older version doesn’t have, the same as with Save a Copy As. Effects that exist only in the newer version stay in the file, and After Effects shows them as missing. The report lists every change before you convert.",
       },
       {
         q: "Which versions are supported?",
@@ -162,7 +164,7 @@ export const en = {
       },
       {
         q: "Do templates from marketplaces work?",
-        a: "Yes. Templates (.aet) and projects convert like any other file. Third-party plugins they use still need to be installed in your After Effects.",
+        a: "Yes. Templates (.aet) and projects from marketplaces convert like your own. Third-party plugins they use still need to be installed in your After Effects.",
       },
       {
         q: "Does it upload my files?",
@@ -170,7 +172,7 @@ export const en = {
       },
       {
         q: "Why do Windows and macOS warn me?",
-        a: "The app isn’t code-signed yet. The steps above get you through the warning once. The code is public, and every release has checksums and build attestations from GitHub.",
+        a: "The app isn’t code-signed yet. You see the warning on the first launch, and the steps above get you through it. The code is public, and every release has checksums and build attestations from GitHub.",
       },
       {
         q: "Can it convert to After Effects 2021 or older?",
@@ -216,7 +218,7 @@ export const en = {
     other: [
       { text: "Run the tester kit in your After Effects. It turns Experimental versions into Verified.", link: "Tester kit", href: "tester" },
       { text: "Tell us about a file the app doesn’t recognize, or a conversion that fails.", link: "Open an issue", href: "issues" },
-      { text: "Tell someone who has the same problem with a project from a newer After Effects.", link: "", href: "" },
+      { text: "Tell someone who can’t open a project from a newer After Effects.", link: "", href: "" },
     ],
     back: "Back to the home page",
   },
@@ -228,6 +230,6 @@ export const en = {
   },
   // Shown on the English pages to visitors whose browser prefers Russian (and close languages).
   langHint: { text: "Есть русская версия сайта.", go: "Открыть", close: "Закрыть" },
-};
+});
 
 export type Strings = typeof en;
