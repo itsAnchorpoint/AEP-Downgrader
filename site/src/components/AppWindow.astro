@@ -851,6 +851,7 @@ const targets = data.targets;
     inset: -9px;
     width: calc(100% + 18px);
     height: calc(100% + 18px);
+    max-width: none; /* the global svg rule would cap it at the frame and pull the right edge in */
     pointer-events: none;
     z-index: 2;
     opacity: 0;

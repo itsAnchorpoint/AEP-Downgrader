@@ -124,8 +124,9 @@ const pageData = {
               : fmt(t.versions.experimentalText, { year: defaultYear })}
           </span>
         </p>
-        <h3 class="steps-title">{t.versions.stepsTitle}</h3>
-        <ol class="steps">
+        <details class="steps-more">
+          <summary class="steps-title">{t.versions.stepsTitle}<Icon name="chevron" size={18} /></summary>
+          <ol class="steps">
           {
             steps.map((m) => (
               <li data-leaves={m} hidden={m - 1 < defaultYear - 2000}>
@@ -136,7 +137,8 @@ const pageData = {
               </li>
             ))
           }
-        </ol>
+          </ol>
+        </details>
       </div>
     </div>
   </div>
@@ -540,11 +542,34 @@ const pageData = {
     margin-top: 3px;
     flex: none;
   }
+  /* What each step removes: folded by default, so the card leads with what opens. */
+  .steps-more {
+    margin-top: 28px;
+  }
   .steps-title {
-    margin-top: 36px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
     font-size: 15px;
+    font-weight: 700;
     letter-spacing: -0.01em;
     color: var(--muted);
+    cursor: pointer;
+    list-style: none;
+    transition: color 160ms;
+  }
+  .steps-title::-webkit-details-marker {
+    display: none;
+  }
+  .steps-title:hover {
+    color: var(--fg);
+  }
+  .steps-title :global(svg) {
+    transition: transform 200ms var(--ease-out-quint);
+  }
+  .steps-more[open] .steps-title :global(svg) {
+    transform: rotate(180deg);
   }
   .steps {
     list-style: none;

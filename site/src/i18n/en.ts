@@ -50,7 +50,7 @@ export const en = glue({
   },
   versions: {
     title: "Which After Effects do you have?",
-    lead: "Pick your version to see which projects it opens after conversion, and what each step down removes.",
+    lead: "Pick your version to see which projects it opens after conversion.",
     pickLabel: "Your After Effects",
     opens: "Projects from After Effects {list} open in your {year} after conversion.",
     and: "and",
@@ -58,7 +58,7 @@ export const en = glue({
     experimental: "Experimental",
     verifiedText: "Converted files were opened in a real After Effects {year}.",
     experimentalText: "Checked against the copy After Effects itself saves, but nobody has opened it in After Effects {year} yet. Keep your originals.",
-    stepsTitle: "What each step removes",
+    stepsTitle: "What conversion removes",
     steps: {
       27: "Data that only After Effects 2027 writes, and 3D material settings that 2026 doesn’t have.",
       26: "Data that only After Effects 2026 writes, and 3D material settings that 2025 doesn’t have.",
