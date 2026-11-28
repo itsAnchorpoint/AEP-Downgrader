@@ -8,7 +8,7 @@ import notesRu from "../content/whatsnew.ru.md?raw";
 import { Children, isValidElement, type ReactNode } from "react";
 import { changelogSince, headingVersion, notesFor } from "../lib/changelog";
 import { ipc } from "../lib/ipc";
-import { releaseUrl, REPO_URL } from "../lib/links";
+import { releaseUrl, supportUrl } from "../lib/links";
 import { useAppStore } from "../store";
 import { Button, IconButton } from "./ui";
 
@@ -173,7 +173,7 @@ export function WhatsNew() {
                     )}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-6 pt-3 pb-5">
-                    <Button variant="link" onClick={() => void ipc.openUrl(REPO_URL)}>
+                    <Button variant="link" onClick={() => void ipc.openUrl(supportUrl(i18n.language))}>
                       <Heart className="size-4 text-accent-text" aria-hidden />
                       {t("done.support")}
                     </Button>

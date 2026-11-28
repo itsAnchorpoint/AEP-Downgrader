@@ -1,10 +1,10 @@
 import * as Switch from "@radix-ui/react-switch";
-import { ArrowLeft, ExternalLink, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ExternalLink, Heart, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { version } from "../../package.json";
 import { ipc } from "../lib/ipc";
-import { REPO_URL } from "../lib/links";
+import { REPO_URL, supportUrl } from "../lib/links";
 import { outputName } from "../lib/pattern";
 import { ACCENTS, usesOwnAccent } from "../lib/settings";
 import { useAppStore } from "../store";
@@ -33,7 +33,7 @@ function Row({ title, hint, children }: { title: ReactNode; hint?: ReactNode; ch
 }
 
 export function Settings() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { settings, targets, target } = useAppStore();
   const { updateSettings, chooseFolder, setView, checkUpdate, updateChecking, updateCheckResult } = useAppStore();
   const checkResult = {
@@ -192,10 +192,20 @@ export function Settings() {
             <h2 className="mb-1 text-xl leading-tight font-extrabold tracking-display">{t("privacy.title")}</h2>
             <p className="max-w-[62ch] text-sm text-muted">{t("privacy.body")}</p>
             <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
-              <Button variant="link" className="-ml-1 px-1 font-extrabold" onClick={() => void ipc.openUrl(REPO_URL)}>
-                {t("privacy.source")}
-                <ExternalLink className="size-3.5" aria-hidden />
-              </Button>
+              <div className="-ml-1 flex flex-wrap items-center gap-x-3">
+                <Button variant="link" className="px-1 font-extrabold" onClick={() => void ipc.openUrl(REPO_URL)}>
+                  {t("privacy.source")}
+                  <ExternalLink className="size-3.5" aria-hidden />
+                </Button>
+                <Button
+                  variant="link"
+                  className="px-1 font-extrabold"
+                  onClick={() => void ipc.openUrl(supportUrl(i18n.language))}
+                >
+                  <Heart className="size-3.5 text-accent-text" aria-hidden />
+                  {t("done.support")}
+                </Button>
+              </div>
               <span className="font-mono text-xs text-muted">{t("settings.version", { version })}</span>
             </div>
           </div>

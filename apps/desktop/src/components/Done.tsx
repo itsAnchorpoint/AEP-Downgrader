@@ -1,14 +1,14 @@
 import { Check, CircleAlert, Heart, Plus, Repeat, X } from "lucide-react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { REPO_URL } from "../lib/links";
+import { supportUrl } from "../lib/links";
 import { ipc } from "../lib/ipc";
 import { useAppStore } from "../store";
 import { Button, IconButton } from "./ui";
 import { JobList } from "./JobList";
 
 export function Done() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { files, jobIds, reports, progress, supportDismissed, targets, target } = useAppStore();
   const { reset, backToQueue, dismissSupport } = useAppStore();
   const jobs = files.filter((f) => jobIds.includes(f.id));
@@ -67,7 +67,7 @@ export function Done() {
           <Heart className="size-4.5 shrink-0 text-accent-text" aria-hidden />
           <span className="min-w-0 flex-1">
             {t("done.supportLine")}{" "}
-            <Button variant="link" className="min-h-0! text-fg" onClick={() => void ipc.openUrl(REPO_URL)}>
+            <Button variant="link" className="min-h-0! text-fg" onClick={() => void ipc.openUrl(supportUrl(i18n.language))}>
               {t("done.support")}
             </Button>
           </span>

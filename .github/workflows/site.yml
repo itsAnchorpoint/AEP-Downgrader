@@ -2,7 +2,8 @@ name: Site
 
 # Builds site/ and publishes it to GitHub Pages (aepdowngrader.com). The download buttons point at the version in
 # apps/desktop/package.json, so the site goes out only once that release is published; a push to main before then
-# is skipped. Run it by hand with "placeholder" before launch to get the HTTPS certificate issued early.
+# is skipped. A published release runs from its tag, and Pages deploys only from main, so on a release the workflow
+# starts itself again on main. Before launch the domain is served from the gh-pages branch (a placeholder).
 
 on:
   release:
@@ -17,11 +18,6 @@ on:
       - "crates/aep-wasm/**"
       - ".github/workflows/site.yml"
   workflow_dispatch:
-    inputs:
-      placeholder:
-        description: "Publish the one-line placeholder instead of the site"
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -31,7 +27,19 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Release events run on the tag; hand over to main, where the github-pages environment allows deploys.
+  handoff:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run site.yml --repo "$GITHUB_REPOSITORY" --ref main
+
   build:
+    if: github.event_name != 'release'
     runs-on: ubuntu-latest
     outputs:
       ready: ${{ steps.release.outputs.ready }}
@@ -41,9 +49,7 @@ jobs:
         id: release
         env:
           GH_TOKEN: ${{ github.token }}
-          PLACEHOLDER: ${{ inputs.placeholder }}
         run: |
-          if [ "$PLACEHOLDER" = "true" ]; then echo "ready=true" >> "$GITHUB_OUTPUT"; exit 0; fi
           version=$(node -p 'require("./apps/desktop/package.json").version')
           draft=$(gh release view "v$version" --json isDraft --jq .isDraft 2>/dev/null || echo missing)
           if [ "$draft" = "false" ]; then
@@ -52,27 +58,24 @@ jobs:
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "::notice::v$version is not published yet ($draft); the site waits for the release."
           fi
-      - name: Placeholder
-        if: inputs.placeholder
-        run: mkdir -p site/dist && cp site/placeholder/index.html site/dist/ && cp site/public/CNAME site/dist/
       - uses: pnpm/action-setup@v4
-        if: steps.release.outputs.ready == 'true' && !inputs.placeholder
+        if: steps.release.outputs.ready == 'true'
         with:
           version: 12
       - uses: actions/setup-node@v5
-        if: steps.release.outputs.ready == 'true' && !inputs.placeholder
+        if: steps.release.outputs.ready == 'true'
         with:
           node-version: 22
           cache: pnpm
           cache-dependency-path: site/pnpm-lock.yaml
       - uses: dtolnay/rust-toolchain@stable
-        if: steps.release.outputs.ready == 'true' && !inputs.placeholder
+        if: steps.release.outputs.ready == 'true'
         with:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
-        if: steps.release.outputs.ready == 'true' && !inputs.placeholder
+        if: steps.release.outputs.ready == 'true'
       - name: Build
-        if: steps.release.outputs.ready == 'true' && !inputs.placeholder
+        if: steps.release.outputs.ready == 'true'
         working-directory: site
         env:
           GITHUB_TOKEN: ${{ github.token }}
