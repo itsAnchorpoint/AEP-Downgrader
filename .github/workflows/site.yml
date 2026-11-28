@@ -4,6 +4,8 @@ name: Site
 # apps/desktop/package.json, so the site goes out only once that release is published; a push to main before then
 # is skipped. A published release runs from its tag, and Pages deploys only from main, so on a release the workflow
 # starts itself again on main. Before launch the domain is served from the gh-pages branch (a placeholder).
+# A daily run refreshes the download count on the page and the README badge (site/public/badge/downloads.json):
+# the count is fetched at build time, so visitors' browsers never call GitHub.
 
 on:
   release:
@@ -17,6 +19,8 @@ on:
       - "crates/aep-core/src/compat.rs"
       - "crates/aep-wasm/**"
       - ".github/workflows/site.yml"
+  schedule:
+    - cron: "17 4 * * *"
   workflow_dispatch:
 
 permissions:
